@@ -253,8 +253,7 @@ body.login-page-bg {
     width: 80px;
     height: 80px;
     margin-bottom: var(--spacing-md);
-    border-radius: 50%;
-    box-shadow: 0 4px 12px var(--shadow);
+    border-radius: 0%;
 }
 
 .logo h1 {
@@ -609,6 +608,7 @@ body.login-page-bg {
     font-weight: var(--font-weight-medium);
     font-size: var(--font-size-sm);
     color: var(--text-muted);
+    margin-left: 7px;
 }
 
 .toggle-option.active {
@@ -1283,7 +1283,7 @@ body.login-page-bg {
     appearance: none;
     width: 40px;
     height: 20px;
-    background-color: var(--border);
+    background-color: #3b4a4f;
     border-radius: 20px;
     position: relative;
     cursor: pointer;

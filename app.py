@@ -126,6 +126,7 @@ def init_db():
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_players_guild ON players(guild_id)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_sessions_date ON sessions(session_date)')
 
+        # Создание гильдий, если их нет
         if cursor.execute("SELECT COUNT(*) FROM guilds").fetchone()[0] == 0:
             guilds_data = [
                 ("Grey Knights", "GK123", "SECRET_GK_123"),
@@ -136,38 +137,44 @@ def init_db():
                 hashed_founder_code = hashlib.sha256(founder_code.encode()).hexdigest()
                 cursor.execute("INSERT INTO guilds (name, code, founder_code) VALUES (?, ?, ?)", (name, hashed_code, hashed_founder_code))
 
+        # Создание типов контента, если их нет
         if cursor.execute("SELECT COUNT(*) FROM content").fetchone()[0] == 0:
-            contents = ['Соло ПВЕ', 'Групповой ПВЕ', 'ПВП', 'Рейды', 'Скверны', 'Осады']
+            contents = ['Замки', 'Клаймы', 'Открытый мир', 'HG 5v5', 'Авалон', 'Скримы']
             cursor.executemany("INSERT INTO content (name) VALUES (?)", [(c,) for c in contents])
 
+        # +++ НАЧАЛО: ИЗМЕНЕННЫЙ БЛОК СОЗДАНИЯ ИГРОКОВ +++
+        # Создание только указанных игроков, если таблица пуста
         if cursor.execute("SELECT COUNT(*) FROM players").fetchone()[0] == 0:
+            # Получаем ID гильдий
             cursor.execute("SELECT id FROM guilds WHERE name = 'Grey Knights'")
-            guild_id = cursor.fetchone()[0]
+            grey_knights_id_row = cursor.fetchone()
             
-            players_data = [
-                ("guild_leader", guild_id, "founder"), ("mentor_player", guild_id, "mentor"),
-                ("lympeen", guild_id, "mentor"), ("CORPUS", guild_id, "founder"),
-                ("VoldeDron", guild_id, "active")
-            ]
-            cursor.executemany("INSERT INTO players (nickname, guild_id, status) VALUES (?, ?, ?)", players_data)
-            
-            for i in range(1, 21):
-                cursor.execute("INSERT INTO players (nickname, guild_id, status) VALUES (?, ?, 'active')", (f"regular_player{i}", guild_id))
-            
-            cursor.execute("SELECT id FROM players WHERE guild_id = ?", (guild_id,))
-            player_ids = [row[0] for row in cursor.fetchall()]
-            cursor.execute("SELECT id FROM content")
-            content_ids = [row[0] for row in cursor.fetchall()]
-            roles = ['DPS', 'Healer', 'Tank', 'Support', 'Battlemount', 'D-Tank', 'E-Tank']
-            
-            for pid in player_ids:
-                for i in range(15):
-                    cursor.execute(
-                        'INSERT INTO sessions (player_id, content_id, score, role, session_date) VALUES (?, ?, ?, ?, ?)',
-                        (pid, content_ids[i % len(content_ids)], 7.5 + (i % 5 * 0.5), roles[i % len(roles)], 
-                         (datetime.datetime.now() - datetime.timedelta(days=i)).strftime('%Y-%m-%d %H:%M:%S'))
-                    )
+            cursor.execute("SELECT id FROM guilds WHERE name = 'Mure'")
+            mure_id_row = cursor.fetchone()
+
+            # Проверяем, что гильдии существуют
+            if grey_knights_id_row and mure_id_row:
+                grey_knights_id = grey_knights_id_row[0]
+                mure_id = mure_id_row[0]
+
+                # Список игроков для добавления
+                # Статус 'member' соответствует статусу 'active' в вашей системе
+                players_to_insert = [
+                    ("CORPUS", grey_knights_id, "founder"),
+                    ("lympeen", grey_knights_id, "mentor"),
+                    ("VoldeDron", grey_knights_id, "active"),
+                    ("Solo111", mure_id, "active")
+                ]
+                
+                # Добавляем игроков в базу данных
+                cursor.executemany("INSERT INTO players (nickname, guild_id, status) VALUES (?, ?, ?)", players_to_insert)
+                logger.info("Successfully inserted initial players.")
+            else:
+                logger.error("Could not find required guilds 'Grey Knights' or 'Mure' to seed initial players.")
+        # +++ КОНЕЦ: ИЗМЕНЕННЫЙ БЛОК +++
+
         db.commit()
+
 
 # --- LOGGING MIDDLEWARE ---
 @app.before_request
@@ -291,43 +298,33 @@ def index():
         
     return redirect('/dashboard.html')
 
-# +++ НАЧАЛО: ИСПРАВЛЕНИЕ ОШИБКИ ERR_TOO_MANY_REDIRECTS +++
 @app.route('/<path:filename>')
 def serve_page(filename):
-    # Разрешаем доступ к странице входа для всех
     if filename == 'login.html':
-        # Если пользователь уже авторизован, отправляем его на дашборд
         if 'player_id' in session:
             return redirect('/') 
         return render_template('login.html')
 
-    # Для всех остальных страниц пользователь должен быть авторизован
     if 'player_id' not in session:
         return redirect('/login.html')
 
-    # Логика для авторизованных пользователей (проверка статуса)
     db = get_db()
     cursor = db.cursor()
     cursor.execute("SELECT status FROM players WHERE id = ?", (session['player_id'],))
     player = cursor.fetchone()
     player_status = player['status'] if player else None
 
-    # Если статус 'pending', разрешаем доступ только к pending.html
     if player_status == 'pending':
         if filename != 'pending.html':
             return redirect('/pending.html')
-    # Если статус подтвержден, не пускаем на pending.html
     elif player_status in ['active', 'mentor', 'founder']:
         if filename == 'pending.html':
             return redirect('/dashboard.html')
             
-    # Если все проверки пройдены, отдаем страницу
     if filename in ['dashboard.html', 'pending.html']:
         return render_template(filename)
         
-    # Отдаем другие файлы (например, из папки static, если они запрашиваются через этот маршрут)
     return send_from_directory(app.static_folder, filename)
-# +++ КОНЕЦ: ИСПРАВЛЕНИЕ ОШИБКИ +++
 
 
 @app.route('/static/<path:path>')
@@ -676,6 +673,8 @@ def internal_error(error):
     logger.error(f"Internal server error: {error}\n{traceback.format_exc()}")
     return jsonify({'status': 'error', 'message': 'Internal server error'}), 500
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+if __name__ == '__main__':
+    os.makedirs('data', exist_ok=True)
+    with app.app_context():
+        init_db()
+    app.run(port=3000, debug=True)
