@@ -1,0 +1,928 @@
+2025-09-03 08:14:43,165 - AlbionDB - INFO - Starting application on http://127.0.0.1:3000
+2025-09-03 08:14:43,184 - werkzeug - WARNING -  * Debugger is active!
+2025-09-03 08:14:43,187 - werkzeug - INFO -  * Debugger PIN: 403-339-784
+2025-09-03 08:14:59,708 - AlbionDB - INFO - Starting application on http://127.0.0.1:3000
+2025-09-03 08:14:59,736 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:3000
+2025-09-03 08:14:59,736 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-09-03 08:14:59,738 - werkzeug - INFO -  * Restarting with stat
+2025-09-03 08:15:00,060 - AlbionDB - INFO - Starting application on http://127.0.0.1:3000
+2025-09-03 08:15:00,080 - werkzeug - WARNING -  * Debugger is active!
+2025-09-03 08:15:00,083 - werkzeug - INFO -  * Debugger PIN: 403-339-784
+2025-09-03 08:15:00,875 - AlbionDB - DEBUG - Request: GET /
+2025-09-03 08:15:00,876 - AlbionDB - DEBUG - Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Sec-Ch-Ua-Platform': '"Windows"', 'Upgrade-Insecure-Requests': '1', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7', 'Sec-Fetch-Site': 'none', 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-User': '?1', 'Sec-Fetch-Dest': 'document', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6', 'Cookie': 'session=.eJyrVkovzcxJUbJSci9KrVTwzstMzygpVtJRKshJrEwtis8EShnCeXmJualApTmVuQWpqXlAVcUliSWlxUCh3NS8kvwipVoAUPobjw.aLenfA.gPYFTsDtwENAlvlsxXITmfBwLrw'}
+2025-09-03 08:15:00,877 - AlbionDB - INFO - Index route accessed
+2025-09-03 08:15:00,878 - AlbionDB - WARNING - Player not authorized, redirecting to login.html
+2025-09-03 08:15:00,878 - AlbionDB - DEBUG - Response status: 302
+2025-09-03 08:15:00,879 - werkzeug - INFO - 127.0.0.1 - - [03/Sep/2025 08:15:00] "[32mGET / HTTP/1.1[0m" 302 -
+2025-09-03 08:15:00,892 - AlbionDB - DEBUG - Request: GET /login.html
+2025-09-03 08:15:00,892 - AlbionDB - DEBUG - Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Upgrade-Insecure-Requests': '1', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7', 'Sec-Fetch-Site': 'none', 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-User': '?1', 'Sec-Fetch-Dest': 'document', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Sec-Ch-Ua-Platform': '"Windows"', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6', 'Cookie': 'session=.eJyrVkovzcxJUbJSci9KrVTwzstMzygpVtJRKshJrEwtis8EShnCeXmJualApTmVuQWpqXlAVcUliSWlxUCh3NS8kvwipVoAUPobjw.aLenfA.gPYFTsDtwENAlvlsxXITmfBwLrw'}
+2025-09-03 08:15:00,894 - AlbionDB - INFO - Login.html route accessed
+2025-09-03 08:15:00,923 - AlbionDB - DEBUG - Response status: 200
+2025-09-03 08:15:00,923 - werkzeug - INFO - 127.0.0.1 - - [03/Sep/2025 08:15:00] "GET /login.html HTTP/1.1" 200 -
+2025-09-03 08:15:00,967 - AlbionDB - DEBUG - Request: GET /static/css/style.css
+2025-09-03 08:15:00,969 - AlbionDB - DEBUG - Request: GET /static/js/auth.js
+2025-09-03 08:15:00,970 - AlbionDB - DEBUG - Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'text/css,*/*;q=0.1', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'style', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6', 'Cookie': 'session=.eJyrVkovzcxJUbJSci9KrVTwzstMzygpVtJRKshJrEwtis8EShnCeXmJualApTmVuQWpqXlAVcUliSWlxUCh3NS8kvwipVoAUPobjw.aLenfA.gPYFTsDtwENAlvlsxXITmfBwLrw', 'If-None-Match': '"1756868664.0768254-8021-3186232296"', 'If-Modified-Since': 'Wed, 03 Sep 2025 03:04:24 GMT'}
+2025-09-03 08:15:00,970 - AlbionDB - DEBUG - Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'script', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6', 'Cookie': 'session=.eJyrVkovzcxJUbJSci9KrVTwzstMzygpVtJRKshJrEwtis8EShnCeXmJualApTmVuQWpqXlAVcUliSWlxUCh3NS8kvwipVoAUPobjw.aLenfA.gPYFTsDtwENAlvlsxXITmfBwLrw', 'If-None-Match': '"1756869583.9501338-17275-2590771857"', 'If-Modified-Since': 'Wed, 03 Sep 2025 03:19:43 GMT'}
+2025-09-03 08:15:00,971 - AlbionDB - DEBUG - Request: GET /static/images/logo.png
+2025-09-03 08:15:00,974 - AlbionDB - DEBUG - Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'image', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6', 'Cookie': 'session=.eJyrVkovzcxJUbJSci9KrVTwzstMzygpVtJRKshJrEwtis8EShnCeXmJualApTmVuQWpqXlAVcUliSWlxUCh3NS8kvwipVoAUPobjw.aLenfA.gPYFTsDtwENAlvlsxXITmfBwLrw', 'If-None-Match': '"1756823141.2700312-0-3593866385"', 'If-Modified-Since': 'Tue, 02 Sep 2025 14:25:41 GMT'}
+2025-09-03 08:15:01,065 - AlbionDB - DEBUG - Response status: 304
+2025-09-03 08:15:01,066 - werkzeug - INFO - 127.0.0.1 - - [03/Sep/2025 08:15:01] "[36mGET /static/js/auth.js HTTP/1.1[0m" 304 -
+2025-09-03 08:15:01,068 - AlbionDB - DEBUG - Response status: 304
+2025-09-03 08:15:01,069 - werkzeug - INFO - 127.0.0.1 - - [03/Sep/2025 08:15:01] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-09-03 08:15:01,071 - AlbionDB - DEBUG - Response status: 304
+2025-09-03 08:15:01,072 - werkzeug - INFO - 127.0.0.1 - - [03/Sep/2025 08:15:01] "[36mGET /static/images/logo.png HTTP/1.1[0m" 304 -
+2025-09-03 08:15:01,209 - AlbionDB - DEBUG - Request: GET /api/system/status
+2025-09-03 08:15:01,209 - AlbionDB - DEBUG - Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6', 'Cookie': 'session=.eJyrVkovzcxJUbJSci9KrVTwzstMzygpVtJRKshJrEwtis8EShnCeXmJualApTmVuQWpqXlAVcUliSWlxUCh3NS8kvwipVoAUPobjw.aLenfA.gPYFTsDtwENAlvlsxXITmfBwLrw'}
+2025-09-03 08:15:01,210 - AlbionDB - INFO - API system status endpoint accessed
+2025-09-03 08:15:01,211 - AlbionDB - WARNING - Player is not authorized
+2025-09-03 08:15:01,211 - AlbionDB - DEBUG - Response status: 200
+2025-09-03 08:15:01,212 - werkzeug - INFO - 127.0.0.1 - - [03/Sep/2025 08:15:01] "GET /api/system/status HTTP/1.1" 200 -
+2025-09-03 08:15:01,331 - AlbionDB - DEBUG - Request: GET /api/guilds
+2025-09-03 08:15:01,331 - AlbionDB - DEBUG - Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6', 'Cookie': 'session=.eJyrVkovzcxJUbJSci9KrVTwzstMzygpVtJRKshJrEwtis8EShnCeXmJualApTmVuQWpqXlAVcUliSWlxUCh3NS8kvwipVoAUPobjw.aLenfA.gPYFTsDtwENAlvlsxXITmfBwLrw'}
+2025-09-03 08:15:01,332 - AlbionDB - INFO - API get guilds endpoint accessed
+2025-09-03 08:15:01,332 - AlbionDB - WARNING - Unauthorized access attempt to /api/guilds
+2025-09-03 08:15:01,333 - AlbionDB - DEBUG - Response status: 401
+2025-09-03 08:15:01,333 - werkzeug - INFO - 127.0.0.1 - - [03/Sep/2025 08:15:01] "[31m[1mGET /api/guilds HTTP/1.1[0m" 401 -
+2025-09-03 08:15:01,582 - AlbionDB - DEBUG - Request: GET /static/images/logo.png
+2025-09-03 08:15:01,583 - AlbionDB - DEBUG - Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'image', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6', 'Cookie': 'session=.eJyrVkovzcxJUbJSci9KrVTwzstMzygpVtJRKshJrEwtis8EShnCeXmJualApTmVuQWpqXlAVcUliSWlxUCh3NS8kvwipVoAUPobjw.aLenfA.gPYFTsDtwENAlvlsxXITmfBwLrw', 'If-None-Match': '"1756823141.2700312-0-3593866385"', 'If-Modified-Since': 'Tue, 02 Sep 2025 14:25:41 GMT'}
+2025-09-03 08:15:01,585 - AlbionDB - DEBUG - Response status: 304
+2025-09-03 08:15:01,586 - werkzeug - INFO - 127.0.0.1 - - [03/Sep/2025 08:15:01] "[36mGET /static/images/logo.png HTTP/1.1[0m" 304 -
+2025-09-03 08:15:01,590 - AlbionDB - DEBUG - Request: GET /static/images/logo.png
+2025-09-03 08:15:01,590 - AlbionDB - DEBUG - Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'image', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6', 'Cookie': 'session=.eJyrVkovzcxJUbJSci9KrVTwzstMzygpVtJRKshJrEwtis8EShnCeXmJualApTmVuQWpqXlAVcUliSWlxUCh3NS8kvwipVoAUPobjw.aLenfA.gPYFTsDtwENAlvlsxXITmfBwLrw', 'If-None-Match': '"1756823141.2700312-0-3593866385"', 'If-Modified-Since': 'Tue, 02 Sep 2025 14:25:41 GMT'}
+2025-09-03 08:15:01,592 - AlbionDB - DEBUG - Response status: 304
+2025-09-03 08:15:01,592 - werkzeug - INFO - 127.0.0.1 - - [03/Sep/2025 08:15:01] "[36mGET /static/images/logo.png HTTP/1.1[0m" 304 -
+2025-09-03 08:15:08,275 - AlbionDB - DEBUG - Request: GET /static/css/style.css
+2025-09-03 08:15:08,276 - AlbionDB - DEBUG - Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'If-None-Match': '"1756868664.0768254-8021-3186232296"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'If-Modified-Since': 'Wed, 03 Sep 2025 03:04:24 GMT', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'text/css,*/*;q=0.1', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'style', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6', 'Cookie': 'session=.eJyrVkovzcxJUbJSci9KrVTwzstMzygpVtJRKshJrEwtis8EShnCeXmJualApTmVuQWpqXlAVcUliSWlxUCh3NS8kvwipVoAUPobjw.aLenfA.gPYFTsDtwENAlvlsxXITmfBwLrw'}
+2025-09-03 08:15:08,278 - AlbionDB - DEBUG - Response status: 304
+2025-09-03 08:15:08,278 - werkzeug - INFO - 127.0.0.1 - - [03/Sep/2025 08:15:08] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-09-03 08:15:08,340 - AlbionDB - DEBUG - Request: GET /.well-known/appspecific/com.chrome.devtools.json
+2025-09-03 08:15:08,340 - AlbionDB - DEBUG - Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'empty', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6', 'Cookie': 'session=.eJyrVkovzcxJUbJSci9KrVTwzstMzygpVtJRKshJrEwtis8EShnCeXmJualApTmVuQWpqXlAVcUliSWlxUCh3NS8kvwipVoAUPobjw.aLenfA.gPYFTsDtwENAlvlsxXITmfBwLrw'}
+2025-09-03 08:15:08,341 - AlbionDB - DEBUG - Response status: 404
+2025-09-03 08:15:08,341 - werkzeug - INFO - 127.0.0.1 - - [03/Sep/2025 08:15:08] "[33mGET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1[0m" 404 -
+2025-09-03 08:27:53,136 - werkzeug - INFO -  * Detected change in 'C:\\AlbionDB\\app.py', reloading
+2025-09-03 08:27:53,191 - werkzeug - INFO -  * Restarting with stat
+2025-09-03 08:27:53,577 - AlbionDB - INFO - Starting application on http://127.0.0.1:3000
+2025-09-03 08:27:53,599 - werkzeug - WARNING -  * Debugger is active!
+2025-09-03 08:27:53,603 - werkzeug - INFO -  * Debugger PIN: 403-339-784
+2025-09-03 08:29:11,652 - AlbionDB - INFO - Starting application on http://127.0.0.1:3000
+2025-09-03 08:29:11,683 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:3000
+2025-09-03 08:29:11,684 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-09-03 08:29:11,686 - werkzeug - INFO -  * Restarting with stat
+2025-09-03 08:29:12,019 - AlbionDB - INFO - Starting application on http://127.0.0.1:3000
+2025-09-03 08:29:12,039 - werkzeug - WARNING -  * Debugger is active!
+2025-09-03 08:29:12,042 - werkzeug - INFO -  * Debugger PIN: 403-339-784
+2025-09-03 08:29:20,230 - AlbionDB - DEBUG - Request: GET /
+2025-09-03 08:29:20,231 - AlbionDB - DEBUG - Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Sec-Ch-Ua-Platform': '"Windows"', 'Upgrade-Insecure-Requests': '1', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7', 'Sec-Fetch-Site': 'none', 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-User': '?1', 'Sec-Fetch-Dest': 'document', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6', 'Cookie': 'session=.eJyrVkovzcxJUbJSci9KrVTwzstMzygpVtJRKshJrEwtis8EShnCeXmJualApTmVuQWpqXlAVcUliSWlxUCh3NS8kvwipVoAUPobjw.aLenfA.gPYFTsDtwENAlvlsxXITmfBwLrw'}
+2025-09-03 08:29:20,234 - AlbionDB - INFO - Index route accessed
+2025-09-03 08:29:20,235 - AlbionDB - WARNING - Player not authorized, redirecting to login.html
+2025-09-03 08:29:20,238 - AlbionDB - DEBUG - Response status: 302
+2025-09-03 08:29:20,239 - werkzeug - INFO - 127.0.0.1 - - [03/Sep/2025 08:29:20] "[32mGET / HTTP/1.1[0m" 302 -
+2025-09-03 08:29:20,248 - AlbionDB - DEBUG - Request: GET /login.html
+2025-09-03 08:29:20,249 - AlbionDB - DEBUG - Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Upgrade-Insecure-Requests': '1', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7', 'Sec-Fetch-Site': 'none', 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-User': '?1', 'Sec-Fetch-Dest': 'document', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Sec-Ch-Ua-Platform': '"Windows"', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6', 'Cookie': 'session=.eJyrVkovzcxJUbJSci9KrVTwzstMzygpVtJRKshJrEwtis8EShnCeXmJualApTmVuQWpqXlAVcUliSWlxUCh3NS8kvwipVoAUPobjw.aLenfA.gPYFTsDtwENAlvlsxXITmfBwLrw'}
+2025-09-03 08:29:20,251 - AlbionDB - INFO - Login.html route accessed
+2025-09-03 08:29:20,287 - AlbionDB - DEBUG - Response status: 200
+2025-09-03 08:29:20,288 - werkzeug - INFO - 127.0.0.1 - - [03/Sep/2025 08:29:20] "GET /login.html HTTP/1.1" 200 -
+2025-09-03 08:29:20,490 - AlbionDB - DEBUG - Request: GET /static/css/style.css
+2025-09-03 08:29:20,491 - AlbionDB - DEBUG - Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'text/css,*/*;q=0.1', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'style', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6', 'Cookie': 'session=.eJyrVkovzcxJUbJSci9KrVTwzstMzygpVtJRKshJrEwtis8EShnCeXmJualApTmVuQWpqXlAVcUliSWlxUCh3NS8kvwipVoAUPobjw.aLenfA.gPYFTsDtwENAlvlsxXITmfBwLrw', 'If-None-Match': '"1756868664.0768254-8021-3186232296"', 'If-Modified-Since': 'Wed, 03 Sep 2025 03:04:24 GMT'}
+2025-09-03 08:29:20,492 - AlbionDB - DEBUG - Request: GET /static/js/auth.js
+2025-09-03 08:29:20,493 - AlbionDB - DEBUG - Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'script', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6', 'Cookie': 'session=.eJyrVkovzcxJUbJSci9KrVTwzstMzygpVtJRKshJrEwtis8EShnCeXmJualApTmVuQWpqXlAVcUliSWlxUCh3NS8kvwipVoAUPobjw.aLenfA.gPYFTsDtwENAlvlsxXITmfBwLrw', 'If-None-Match': '"1756869583.9501338-17275-2590771857"', 'If-Modified-Since': 'Wed, 03 Sep 2025 03:19:43 GMT'}
+2025-09-03 08:29:20,495 - AlbionDB - DEBUG - Request: GET /static/images/logo.png
+2025-09-03 08:29:20,496 - AlbionDB - DEBUG - Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'image', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6', 'Cookie': 'session=.eJyrVkovzcxJUbJSci9KrVTwzstMzygpVtJRKshJrEwtis8EShnCeXmJualApTmVuQWpqXlAVcUliSWlxUCh3NS8kvwipVoAUPobjw.aLenfA.gPYFTsDtwENAlvlsxXITmfBwLrw', 'If-None-Match': '"1756823141.2700312-0-3593866385"', 'If-Modified-Since': 'Tue, 02 Sep 2025 14:25:41 GMT'}
+2025-09-03 08:29:20,582 - AlbionDB - DEBUG - Response status: 304
+2025-09-03 08:29:20,583 - werkzeug - INFO - 127.0.0.1 - - [03/Sep/2025 08:29:20] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-09-03 08:29:20,587 - AlbionDB - DEBUG - Response status: 304
+2025-09-03 08:29:20,587 - werkzeug - INFO - 127.0.0.1 - - [03/Sep/2025 08:29:20] "[36mGET /static/images/logo.png HTTP/1.1[0m" 304 -
+2025-09-03 08:29:20,603 - AlbionDB - DEBUG - Response status: 200
+2025-09-03 08:29:20,603 - werkzeug - INFO - 127.0.0.1 - - [03/Sep/2025 08:29:20] "GET /static/js/auth.js HTTP/1.1" 200 -
+2025-09-03 08:29:20,755 - AlbionDB - DEBUG - Request: GET /api/system/status
+2025-09-03 08:29:20,755 - AlbionDB - DEBUG - Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6', 'Cookie': 'session=.eJyrVkovzcxJUbJSci9KrVTwzstMzygpVtJRKshJrEwtis8EShnCeXmJualApTmVuQWpqXlAVcUliSWlxUCh3NS8kvwipVoAUPobjw.aLenfA.gPYFTsDtwENAlvlsxXITmfBwLrw'}
+2025-09-03 08:29:20,756 - AlbionDB - INFO - API system status endpoint accessed
+2025-09-03 08:29:20,756 - AlbionDB - INFO - Player is not authorized
+2025-09-03 08:29:20,756 - AlbionDB - DEBUG - Response status: 200
+2025-09-03 08:29:20,757 - werkzeug - INFO - 127.0.0.1 - - [03/Sep/2025 08:29:20] "GET /api/system/status HTTP/1.1" 200 -
+2025-09-03 08:29:23,333 - AlbionDB - DEBUG - Request: POST /api/auth/login
+2025-09-03 08:29:23,333 - AlbionDB - DEBUG - Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Content-Length': '41', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Content-Type': 'application/json', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Origin': 'http://127.0.0.1:3000', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6', 'Cookie': 'session=.eJyrVkovzcxJUbJSci9KrVTwzstMzygpVtJRKshJrEwtis8EShnCeXmJualApTmVuQWpqXlAVcUliSWlxUCh3NS8kvwipVoAUPobjw.aLenfA.gPYFTsDtwENAlvlsxXITmfBwLrw'}
+2025-09-03 08:29:23,335 - AlbionDB - DEBUG - Form data: ImmutableMultiDict([])
+2025-09-03 08:29:23,335 - AlbionDB - DEBUG - JSON data: {'nickname': 'lympeen', 'password': 'GK123'}
+2025-09-03 08:29:23,335 - AlbionDB - INFO - API login endpoint accessed
+2025-09-03 08:29:23,335 - AlbionDB - DEBUG - Login attempt for user: lympeen
+2025-09-03 08:29:23,335 - AlbionDB - DEBUG - Creating new database connection
+2025-09-03 08:29:23,336 - AlbionDB - ERROR - Unexpected error during login process
+Traceback (most recent call last):
+  File "C:\AlbionDB\app.py", line 126, in api_login
+    if not check_password_hash(player['password_hash'], password):
+                               ~~~~~~^^^^^^^^^^^^^^^^^
+IndexError: No item with that key
+2025-09-03 08:29:23,338 - AlbionDB - DEBUG - Response status: 500
+2025-09-03 08:29:23,339 - AlbionDB - DEBUG - Closing database connection
+2025-09-03 08:29:23,339 - werkzeug - INFO - 127.0.0.1 - - [03/Sep/2025 08:29:23] "[35m[1mPOST /api/auth/login HTTP/1.1[0m" 500 -
+2025-09-03 08:29:26,555 - AlbionDB - DEBUG - Request: GET /static/css/style.css
+2025-09-03 08:29:26,555 - AlbionDB - DEBUG - Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'If-None-Match': '"1756868664.0768254-8021-3186232296"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'If-Modified-Since': 'Wed, 03 Sep 2025 03:04:24 GMT', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'text/css,*/*;q=0.1', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'style', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6', 'Cookie': 'session=.eJyrVkovzcxJUbJSci9KrVTwzstMzygpVtJRKshJrEwtis8EShnCeXmJualApTmVuQWpqXlAVcUliSWlxUCh3NS8kvwipVoAUPobjw.aLenfA.gPYFTsDtwENAlvlsxXITmfBwLrw'}
+2025-09-03 08:29:26,557 - AlbionDB - DEBUG - Response status: 304
+2025-09-03 08:29:26,558 - werkzeug - INFO - 127.0.0.1 - - [03/Sep/2025 08:29:26] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-09-03 08:29:26,596 - AlbionDB - DEBUG - Request: GET /.well-known/appspecific/com.chrome.devtools.json
+2025-09-03 08:29:26,596 - AlbionDB - DEBUG - Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'empty', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh;q=0.6', 'Cookie': 'session=.eJyrVkovzcxJUbJSci9KrVTwzstMzygpVtJRKshJrEwtis8EShnCeXmJualApTmVuQWpqXlAVcUliSWlxUCh3NS8kvwipVoAUPobjw.aLenfA.gPYFTsDtwENAlvlsxXITmfBwLrw'}
+2025-09-03 08:29:26,598 - AlbionDB - DEBUG - Response status: 404
+2025-09-03 08:29:26,598 - werkzeug - INFO - 127.0.0.1 - - [03/Sep/2025 08:29:26] "[33mGET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1[0m" 404 -
+2025-09-03 08:37:37,604 - werkzeug - INFO -  * Detected change in 'C:\\AlbionDB\\app.py', reloading
+2025-09-03 08:37:37,649 - werkzeug - INFO -  * Restarting with stat
+2025-09-03 08:59:34,538 - werkzeug - INFO -  * Restarting with stat
+Request: GET /
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Sec-Ch-Ua-Platform': '"Windows"', 'Upgrade-Insecure-Requests': '1', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7', 'Sec-Fetch-Site': 'none', 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-User': '?1', 'Sec-Fetch-Dest': 'document', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {}>
+Accessing root route
+Session data: <SecureCookieSession {}>
+No player_id in session, redirecting to login
+Response status: 302 FOUND
+Session after: <SecureCookieSession {}>
+Request: GET /login.html
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Upgrade-Insecure-Requests': '1', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7', 'Sec-Fetch-Site': 'none', 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-User': '?1', 'Sec-Fetch-Dest': 'document', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Sec-Ch-Ua-Platform': '"Windows"', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {}>
+Serving login.html
+Response status: 200 OK
+Session after: <SecureCookieSession {}>
+Request: GET /static/style.css
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'text/css,*/*;q=0.1', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'style', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {}>
+Response status: 404 NOT FOUND
+Session after: <SecureCookieSession {}>
+Request: GET /static/images/logo.png
+Request: GET /static/auth.js
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'image', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'}
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'script', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'}
+Args: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+JSON: None
+Session before: <SecureCookieSession {}>
+Session before: <SecureCookieSession {}>
+Response status: 404 NOT FOUND
+Session after: <SecureCookieSession {}>
+Response status: 200 OK
+Session after: <SecureCookieSession {}>
+Request: GET /favicon.ico
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'image', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {}>
+Response status: 404 NOT FOUND
+Session after: <SecureCookieSession {}>
+Request: GET /login.html
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Cache-Control': 'max-age=0', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Sec-Ch-Ua-Platform': '"Windows"', 'Upgrade-Insecure-Requests': '1', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7', 'Sec-Fetch-Site': 'none', 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-User': '?1', 'Sec-Fetch-Dest': 'document', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {}>
+Serving login.html
+Response status: 200 OK
+Session after: <SecureCookieSession {}>
+Request: GET /static/css/style.css
+Request: GET /static/js/auth.js
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'text/css,*/*;q=0.1', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'style', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'}
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'script', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'}
+Request: GET /static/images/logo.png
+Args: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'image', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'If-None-Match': '"1756823141.2700312-0-3593866385"', 'If-Modified-Since': 'Tue, 02 Sep 2025 14:25:41 GMT'}
+Form: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+JSON: None
+JSON: None
+Form: ImmutableMultiDict([])
+Session before: <SecureCookieSession {}>
+Session before: <SecureCookieSession {}>
+JSON: None
+Session before: <SecureCookieSession {}>
+Response status: 200 OK
+Response status: 304 NOT MODIFIED
+Session after: <SecureCookieSession {}>
+Session after: <SecureCookieSession {}>
+Response status: 200 OK
+Session after: <SecureCookieSession {}>
+Request: GET /static/images/logo.png
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'image', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'If-None-Match': '"1756823141.2700312-0-3593866385"', 'If-Modified-Since': 'Tue, 02 Sep 2025 14:25:41 GMT'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {}>
+Response status: 304 NOT MODIFIED
+Session after: <SecureCookieSession {}>
+Request: GET /static/css/style.css
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'If-None-Match': '"1756908488.4277098-25197-3186232296"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'If-Modified-Since': 'Wed, 03 Sep 2025 14:08:08 GMT', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'text/css,*/*;q=0.1', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'style', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {}>
+Response status: 304 NOT MODIFIED
+Session after: <SecureCookieSession {}>
+Request: GET /.well-known/appspecific/com.chrome.devtools.json
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'empty', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {}>
+Response status: 404 NOT FOUND
+Session after: <SecureCookieSession {}>
+Request: GET /login.html
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Cache-Control': 'max-age=0', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Sec-Ch-Ua-Platform': '"Windows"', 'Upgrade-Insecure-Requests': '1', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7', 'Sec-Fetch-Site': 'none', 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-User': '?1', 'Sec-Fetch-Dest': 'document', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {}>
+Serving login.html
+Response status: 200 OK
+Session after: <SecureCookieSession {}>
+Request: GET /static/css/style.css
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'If-None-Match': '"1756908488.4277098-25197-3186232296"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'If-Modified-Since': 'Wed, 03 Sep 2025 14:08:08 GMT', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'text/css,*/*;q=0.1', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'style', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {}>
+Response status: 304 NOT MODIFIED
+Request: GET /static/images/logo.png
+Session after: <SecureCookieSession {}>
+Request: GET /static/js/auth.js
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'image', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'If-None-Match': '"1756823141.2700312-0-3593866385"', 'If-Modified-Since': 'Tue, 02 Sep 2025 14:25:41 GMT'}
+Request: GET /.well-known/appspecific/com.chrome.devtools.json
+Args: ImmutableMultiDict([])
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'If-None-Match': '"1756880467.8731875-9071-2590771857"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'If-Modified-Since': 'Wed, 03 Sep 2025 06:21:07 GMT', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'script', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'}
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'empty', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'}
+Form: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+JSON: None
+Form: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+Session before: <SecureCookieSession {}>
+JSON: None
+JSON: None
+Session before: <SecureCookieSession {}>
+Response status: 304 NOT MODIFIED
+Session before: <SecureCookieSession {}>
+Session after: <SecureCookieSession {}>
+Response status: 304 NOT MODIFIED
+Response status: 404 NOT FOUND
+Session after: <SecureCookieSession {}>
+Session after: <SecureCookieSession {}>
+Request: GET /api/guilds
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {}>
+Response status: 200 OK
+Session after: <SecureCookieSession {}>
+Request: GET /static/images/logo.png
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'image', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'If-None-Match': '"1756823141.2700312-0-3593866385"', 'If-Modified-Since': 'Tue, 02 Sep 2025 14:25:41 GMT'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {}>
+Response status: 304 NOT MODIFIED
+Session after: <SecureCookieSession {}>
+Request: POST /api/auth/login
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Content-Length': '60', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Content-Type': 'application/json', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Origin': 'http://127.0.0.1:3000', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: {'nickname': 'lympeen', 'guild': 'Grey Knights', 'code': 'GK123'}
+Session before: <SecureCookieSession {}>
+Response status: 200 OK
+Session after: <SecureCookieSession {'player_id': 1, 'guild_id': 1}>
+Request: GET /dashboard.html
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Sec-Ch-Ua-Platform': '"Windows"', 'Upgrade-Insecure-Requests': '1', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-User': '?1', 'Sec-Fetch-Dest': 'document', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Checking session for dashboard.html
+Session data: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Player authorized, serving dashboard.html
+Response status: 200 OK
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /.well-known/appspecific/com.chrome.devtools.json
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'empty', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 404 NOT FOUND
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /static/css/style.css
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'If-None-Match': '"1756908488.4277098-25197-3186232296"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'If-Modified-Since': 'Wed, 03 Sep 2025 14:08:08 GMT', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'text/css,*/*;q=0.1', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'style', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 304 NOT MODIFIED
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /static/js/dashboard.js
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'script', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 200 OK
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/system/status
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Accessing system status
+Error in system_status: no such column: m.player_id
+Response status: 500 INTERNAL SERVER ERROR
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/players/current
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 200 OK
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/recommendations/player/null
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 400 BAD REQUEST
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/players/current
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 200 OK
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/recommendations/player/null
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 400 BAD REQUEST
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/players/current
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 200 OK
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/statistics/player/null
+Request: GET /api/statistics/player-trend/null
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Request: GET /api/statistics/player-role-scores/null
+Request: GET /api/statistics/player-content-scores/null
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Request: GET /api/statistics/player-error-types/null
+Args: ImmutableMultiDict([])
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Request: GET /api/statistics/error-distribution/null
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Form: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+JSON: None
+Form: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Form: ImmutableMultiDict([])
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+JSON: None
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+JSON: None
+Response status: 400 BAD REQUEST
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 400 BAD REQUEST
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 400 BAD REQUEST
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 400 BAD REQUEST
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 400 BAD REQUEST
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 400 BAD REQUEST
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/statistics/error-score-correlation/null
+Request: GET /api/statistics/comparison/null
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 400 BAD REQUEST
+Response status: 400 BAD REQUEST
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/statistics/player/null
+Request: GET /api/statistics/player-trend/null
+Request: GET /api/statistics/player-role-scores/null
+Request: GET /api/statistics/player-content-scores/null
+Request: GET /api/statistics/player-error-types/null
+Request: GET /api/statistics/error-distribution/null
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+JSON: None
+JSON: None
+JSON: None
+JSON: None
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 400 BAD REQUEST
+Response status: 400 BAD REQUEST
+Response status: 400 BAD REQUEST
+Response status: 400 BAD REQUEST
+Response status: 400 BAD REQUEST
+Response status: 400 BAD REQUEST
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/statistics/error-score-correlation/null
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Request: GET /api/statistics/comparison/null
+Args: ImmutableMultiDict([])
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Form: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+JSON: None
+Form: ImmutableMultiDict([])
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+JSON: None
+Response status: 400 BAD REQUEST
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 400 BAD REQUEST
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /dashboard.html
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Cache-Control': 'max-age=0', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Sec-Ch-Ua-Platform': '"Windows"', 'Upgrade-Insecure-Requests': '1', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-User': '?1', 'Sec-Fetch-Dest': 'document', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Checking session for dashboard.html
+Session data: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Player authorized, serving dashboard.html
+Response status: 200 OK
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /.well-known/appspecific/com.chrome.devtools.json
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'empty', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /static/css/style.css
+Response status: 404 NOT FOUND
+Request: GET /static/js/dashboard.js
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'If-None-Match': '"1756908488.4277098-25197-3186232296"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'If-Modified-Since': 'Wed, 03 Sep 2025 14:08:08 GMT', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'text/css,*/*;q=0.1', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'style', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'If-None-Match': '"1756908510.1555521-51222-3580955783"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'If-Modified-Since': 'Wed, 03 Sep 2025 14:08:30 GMT', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'script', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 304 NOT MODIFIED
+Response status: 304 NOT MODIFIED
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/system/status
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Accessing system status
+Error in system_status: no such column: m.player_id
+Response status: 500 INTERNAL SERVER ERROR
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Sec-Ch-Ua-Platform': '"Windows"', 'Upgrade-Insecure-Requests': '1', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7', 'Sec-Fetch-Site': 'none', 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-User': '?1', 'Sec-Fetch-Dest': 'document', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Accessing root route
+Session data: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Player authorized, serving dashboard
+Response status: 200 OK
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /static/css/style.css
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'text/css,*/*;q=0.1', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'style', 'Referer': 'http://127.0.0.1:3000/', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04', 'If-None-Match': '"1756908488.4277098-25197-3186232296"', 'If-Modified-Since': 'Wed, 03 Sep 2025 14:08:08 GMT'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /static/js/dashboard.js
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'script', 'Referer': 'http://127.0.0.1:3000/', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04', 'If-None-Match': '"1756908510.1555521-51222-3580955783"', 'If-Modified-Since': 'Wed, 03 Sep 2025 14:08:30 GMT'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 304 NOT MODIFIED
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 304 NOT MODIFIED
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/system/status
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Accessing system status
+Error in system_status: no such column: m.player_id
+Response status: 500 INTERNAL SERVER ERROR
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/system/status
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Accessing system status
+Error in system_status: no such column: m.player_id
+Response status: 500 INTERNAL SERVER ERROR
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/players/current
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 200 OK
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/players/current
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 200 OK
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/players/current
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 200 OK
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /static/css/style.css
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'text/css,*/*;q=0.1', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'style', 'Referer': 'http://127.0.0.1:3000/', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04', 'If-None-Match': '"1756908488.4277098-25197-3186232296"', 'If-Modified-Since': 'Wed, 03 Sep 2025 14:08:08 GMT'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 304 NOT MODIFIED
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /.well-known/appspecific/com.chrome.devtools.json
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'empty', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 404 NOT FOUND
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/players/current
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 200 OK
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/recommendations/player/null
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 400 BAD REQUEST
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: POST /api/auth/logout
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Content-Length': '0', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Origin': 'http://127.0.0.1:3000', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhMSQ.jo7Y9tBmwHEqyWWllJkbl7WOQ04'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 200 OK
+Session after: <SecureCookieSession {}>
+Request: GET /login.html
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Sec-Ch-Ua-Platform': '"Windows"', 'Upgrade-Insecure-Requests': '1', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-User': '?1', 'Sec-Fetch-Dest': 'document', 'Referer': 'http://127.0.0.1:3000/', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {}>
+Serving login.html
+Response status: 200 OK
+Session after: <SecureCookieSession {}>
+Request: GET /.well-known/appspecific/com.chrome.devtools.json
+Request: GET /static/css/style.css
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'empty', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'}
+Request: GET /static/images/logo.png
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'text/css,*/*;q=0.1', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'style', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'If-None-Match': '"1756908488.4277098-25197-3186232296"', 'If-Modified-Since': 'Wed, 03 Sep 2025 14:08:08 GMT'}
+Args: ImmutableMultiDict([])
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'image', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'If-None-Match': '"1756823141.2700312-0-3593866385"', 'If-Modified-Since': 'Tue, 02 Sep 2025 14:25:41 GMT'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {}>
+JSON: None
+Session before: <SecureCookieSession {}>
+Response status: 404 NOT FOUND
+Session before: <SecureCookieSession {}>
+Session after: <SecureCookieSession {}>
+Response status: 304 NOT MODIFIED
+Response status: 304 NOT MODIFIED
+Session after: <SecureCookieSession {}>
+Session after: <SecureCookieSession {}>
+Request: GET /static/js/auth.js
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'script', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'If-None-Match': '"1756880467.8731875-9071-2590771857"', 'If-Modified-Since': 'Wed, 03 Sep 2025 06:21:07 GMT'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Request: GET /api/guilds
+Session before: <SecureCookieSession {}>
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'}
+Response status: 304 NOT MODIFIED
+Args: ImmutableMultiDict([])
+Session after: <SecureCookieSession {}>
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {}>
+Response status: 200 OK
+Session after: <SecureCookieSession {}>
+Request: GET /static/images/logo.png
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'image', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'If-None-Match': '"1756823141.2700312-0-3593866385"', 'If-Modified-Since': 'Tue, 02 Sep 2025 14:25:41 GMT'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {}>
+Response status: 304 NOT MODIFIED
+Session after: <SecureCookieSession {}>
+Request: POST /api/auth/login
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Content-Length': '60', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Content-Type': 'application/json', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Origin': 'http://127.0.0.1:3000', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: {'nickname': 'lympeen', 'guild': 'Grey Knights', 'code': 'GK123'}
+Session before: <SecureCookieSession {}>
+Response status: 200 OK
+Session after: <SecureCookieSession {'player_id': 1, 'guild_id': 1}>
+Request: GET /dashboard.html
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Sec-Ch-Ua-Platform': '"Windows"', 'Upgrade-Insecure-Requests': '1', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-User': '?1', 'Sec-Fetch-Dest': 'document', 'Referer': 'http://127.0.0.1:3000/login.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Checking session for dashboard.html
+Session data: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Player authorized, serving dashboard.html
+Response status: 200 OK
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /.well-known/appspecific/com.chrome.devtools.json
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'empty', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA'}
+Request: GET /static/css/style.css
+Args: ImmutableMultiDict([])
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'text/css,*/*;q=0.1', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'style', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA', 'If-None-Match': '"1756908488.4277098-25197-3186232296"', 'If-Modified-Since': 'Wed, 03 Sep 2025 14:08:08 GMT'}
+Form: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+JSON: None
+Form: ImmutableMultiDict([])
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+JSON: None
+Response status: 404 NOT FOUND
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 304 NOT MODIFIED
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /static/js/dashboard.js
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'script', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA', 'If-None-Match': '"1756908510.1555521-51222-3580955783"', 'If-Modified-Since': 'Wed, 03 Sep 2025 14:08:30 GMT'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 304 NOT MODIFIED
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/system/status
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Accessing system status
+Error in system_status: no such column: m.player_id
+Response status: 500 INTERNAL SERVER ERROR
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/players/current
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 200 OK
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/recommendations/player/null
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 400 BAD REQUEST
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/statistics/player/null
+Request: GET /api/statistics/player-trend/null
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA'}
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA'}
+Request: GET /api/statistics/player-role-scores/null
+Args: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+Request: GET /api/statistics/player-content-scores/null
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA'}
+Request: GET /api/statistics/player-error-types/null
+Form: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+Request: GET /api/statistics/error-distribution/null
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA'}
+Args: ImmutableMultiDict([])
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA'}
+JSON: None
+JSON: None
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA'}
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Form: ImmutableMultiDict([])
+Response status: 400 BAD REQUEST
+Response status: 400 BAD REQUEST
+Form: ImmutableMultiDict([])
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+JSON: None
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 400 BAD REQUEST
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 400 BAD REQUEST
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 400 BAD REQUEST
+Response status: 400 BAD REQUEST
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/statistics/error-score-correlation/null
+Request: GET /api/statistics/comparison/null
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA'}
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA'}
+Args: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 400 BAD REQUEST
+Response status: 400 BAD REQUEST
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/statistics/player/null
+Request: GET /api/statistics/player-error-types/null
+Request: GET /api/statistics/player-role-scores/null
+Request: GET /api/statistics/player-content-scores/null
+Request: GET /api/statistics/player-trend/null
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA'}
+Request: GET /api/statistics/error-distribution/null
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA'}
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA'}
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA'}
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA'}
+Args: ImmutableMultiDict([])
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA'}
+Args: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+Form: ImmutableMultiDict([])
+JSON: None
+JSON: None
+JSON: None
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 400 BAD REQUEST
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 400 BAD REQUEST
+Response status: 400 BAD REQUEST
+Response status: 400 BAD REQUEST
+Response status: 400 BAD REQUEST
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 400 BAD REQUEST
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Request: GET /api/statistics/error-score-correlation/null
+Request: GET /api/statistics/comparison/null
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA'}
+Headers: {'Host': '127.0.0.1:3000', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': '*/*', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty', 'Referer': 'http://127.0.0.1:3000/dashboard.html', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7', 'Cookie': 'session=eyJndWlsZF9pZCI6MSwicGxheWVyX2lkIjoxfQ.aLhOcQ.OGPqZcPCqV0BnyG24I9jgPTiThA'}
+Args: ImmutableMultiDict([])
+Args: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+Form: ImmutableMultiDict([])
+JSON: None
+JSON: None
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session before: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Response status: 400 BAD REQUEST
+Response status: 400 BAD REQUEST
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>
+Session after: <SecureCookieSession {'guild_id': 1, 'player_id': 1}>

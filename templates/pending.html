@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Albion Analytics - Ожидание</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+</head>
+<body class="login-page-bg">
+    <div class="login-container" style="opacity: 0;">
+        <div class="logo">
+            <img src="/static/images/logo.png" alt="Albion Analytics Logo">
+            <h1>Заявка отправлена</h1>
+        </div>
+        <div class="auth-form" style="text-align: center;">
+            <i class="material-icons" style="font-size: 48px; color: var(--primary); margin-bottom: 16px;">hourglass_top</i>
+            <h2 style="margin-bottom: 16px;">Ваша заявка на вступление в гильдию находится на рассмотрении.</h2>
+            <p style="color: var(--text-muted); margin-bottom: 24px;">
+                Как только основатель гильдии одобрит вашу заявку, вы получите полный доступ к дашборду.
+                Вы можете закрыть эту страницу.
+            </p>
+            <button id="logout-btn" class="btn btn-secondary btn-block">Выйти</button>
+        </div>
+        <p class="footer-note">© 2023 Albion Analytics. Все права защищены.</p>
+    </div>
+
+    <script>
+        // Применяем сохраненную тему (светлая/темная)
+        function applyTheme(theme) {
+            document.documentElement.removeAttribute('data-theme');
+            if (theme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else if (theme === 'system') {
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                }
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Применяем тему при загрузке
+            const savedTheme = localStorage.getItem('theme') || 'system';
+            applyTheme(savedTheme);
+
+            // ИСПРАВЛЕНИЕ: Плавно показываем контейнер, решая проблему белого экрана
+            setTimeout(() => {
+                const container = document.querySelector('.login-container');
+                if (container) {
+                    container.style.transition = 'opacity 0.5s ease';
+                    container.style.opacity = '1';
+                }
+            }, 100);
+
+            // Добавляем обработчик для кнопки выхода
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                fetch('/api/auth/logout', { method: 'POST' })
+                    .finally(() => {
+                        window.location.href = '/login.html';
+                    });
+            });
+
+            // Периодически проверяем статус заявки
+            setInterval(() => {
+                fetch('/api/system/status')
+                    .then(res => res.ok ? res.json() : Promise.reject(res))
+                    .then(data => {
+                        // Если статус изменился с 'pending', перенаправляем на дашборд
+                        if (data.user_status && data.user_status !== 'pending') {
+                            window.location.href = '/dashboard.html';
+                        }
+                    })
+                    .catch(err => console.error("Ошибка проверки статуса:", err));
+            }, 15000); // Проверка каждые 15 секунд
+        });
+    </script>
+</body>
+</html>
