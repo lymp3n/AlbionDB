@@ -163,7 +163,7 @@ def init_db():
                     ("CORPUS", grey_knights_id, "founder"),
                     ("lympeen", grey_knights_id, "mentor"),
                     ("VoldeDron", grey_knights_id, "active"),
-                    ("Solo111", mure_id, "active")
+                    ("misterhe111", mure_id, "founder")
                 ]
                 
                 # Добавляем игроков в базу данных
