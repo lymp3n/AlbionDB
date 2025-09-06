@@ -1,16 +1,39 @@
 // Профессиональная цветовая палитра для графиков
 const chartColors = {
-    primary: '#6C5CE7',
-    primaryLight: '#A29BFE',
-    secondary: '#00CEC9',
-    success: '#55EFC4',
-    danger: '#FF7675',
-    warning: '#FFEAA7',
-    info: '#74B9FF',
-    dark: '#2D3436',
-    light: '#F1F2F6',
-    transparentPrimary: 'rgba(108, 92, 231, 0.25)',
-    transparentSuccess: 'rgba(85, 239, 196, 0.15)',
+    // Основной цвет — глубокий, но спокойный синий, как цвет моря на глубине.
+    // Выглядит профессионально и надежно.
+    primary: '#4F7CAC',
+
+    // Более светлый оттенок синего для подсветки активных элементов.
+    primaryLight: '#87A4C4',
+
+    // Вторичный цвет.
+    // Мягкий бирюзовый, как цвет воды у берега. Создает приятный контраст.
+    secondary: '#82C0CC',
+
+    // Цвет успеха.
+    // Светлый, почти мятный оттенок морской пены.
+    success: '#97D8C4',
+
+    // Цвет опасности.
+    // Теплый коралловый оттенок. Он достаточно заметен, чтобы сигнализировать об ошибках, но не агрессивен.
+    danger: '#F47C7C',
+
+    // Цвет предупреждения.
+    // Теплый песочный, цвет пляжа.
+    warning: '#F7D6A0',
+
+    // Информационный цвет.
+    // Нейтральный серо-синий, цвет мокрой гальки.
+    info: '#A1B0BC',
+
+    // Цвета для текста и фона.
+    dark: '#333D47',
+    light: '#F6F8FA',
+
+    // Прозрачные версии.
+    transparentPrimary: 'rgba(79, 124, 172, 0.25)',
+    transparentSuccess: 'rgba(151, 216, 196, 0.2)',
 };
 
 // Глобальные переменные
@@ -430,7 +453,7 @@ function createErrorDistributionChart(distributionData) {
             datasets: [{
                 label: 'Количество ошибок',
                 data: distributionData.counts,
-                backgroundColor: chartColors.danger
+                backgroundColor: chartColors.secondary
             }]
         },
         options: {
@@ -780,7 +803,7 @@ function createGuildRoleDistributionChart(data) {
             labels: data.roles,
             datasets: [{
                 data: data.counts,
-                backgroundColor: [chartColors.primary, chartColors.secondary, chartColors.success, chartColors.warning, chartColors.info, chartColors.danger]
+                backgroundColor: [chartColors.primary, chartColors.secondary, chartColors.success, chartColors.warning, chartColors.info, chartColors.transparentPrimary]
             }]
         },
         options: {
@@ -806,8 +829,8 @@ function createGuildErrorTypesChart(data) {
             datasets: [{
                 data: data.counts,
                 backgroundColor: [
-                    'rgba(255, 118, 117, 0.7)', 'rgba(255, 234, 167, 0.7)', 'rgba(116, 185, 255, 0.7)', 
-                    'rgba(0, 206, 201, 0.7)', 'rgba(85, 239, 196, 0.7)'
+                    chartColors.primary, chartColors.warning, chartColors.info, 
+                    chartColors.success, chartColors.secondary
                 ]
             }]
         },
@@ -833,7 +856,7 @@ function createTopErrorsChart(data) {
         type: 'bar',
         data: {
             labels: data.errors.slice(0, 3),
-            datasets: [{ label: 'Частота', data: data.counts.slice(0, 3), backgroundColor: chartColors.danger }]
+            datasets: [{ label: 'Частота', data: data.counts.slice(0, 3), backgroundColor: chartColors.warning }]
         },
         options: { 
             responsive: true, 

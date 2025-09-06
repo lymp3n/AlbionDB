@@ -634,7 +634,7 @@ body.login-page-bg {
 }
 
 .help-btn, .refresh-btn {
-    background-color: var(--card-bg);
+    background-color: var(--primary);
     border: 1px solid var(--border);
     border-radius: 50%;
     width: 40px;
@@ -1272,7 +1272,7 @@ body.login-page-bg {
     padding: var(--spacing-sm) var(--spacing-md);
     border: 1px solid var(--border);
     border-radius: var(--border-radius);
-    background-color: var(--card-bg);
+    background-color: #a29bfe8f;
     color: var(--text);
     cursor: pointer;
     transition: var(--transition);
