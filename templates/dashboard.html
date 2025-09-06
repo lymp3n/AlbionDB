@@ -112,33 +112,38 @@
                         <div class="stat-label">Обновлено последняя сессия</div>
                     </div>
                 </div>
-                <div class="charts-grid-personal">
-                    <div class="chart-container chart-trend">
-                        <h3 class="chart-title"><i class="material-icons">trending_up</i> Тренд баллов за 4 недели</h3>
-                        <canvas id="score-trend-chart"></canvas>
+                
+                <div class="charts-rows-container">
+                    <div class="charts-row-squares">
+                        <div class="chart-container">
+                            <h3 class="chart-title"><i class="material-icons">bar_chart</i> Средний балл по ролям</h3>
+                            <canvas id="role-scores-chart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3 class="chart-title"><i class="material-icons">radar</i> Средний балл по контенту</h3>
+                            <canvas id="content-scores-chart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3 class="chart-title"><i class="material-icons">pie_chart</i> Типы ошибок</h3>
+                            <canvas id="error-types-chart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3 class="chart-title"><i class="material-icons">bar_chart</i> Распределение ошибок по контенту</h3>
+                            <canvas id="error-distribution-chart"></canvas>
+                        </div>
                     </div>
-                    <div class="chart-container chart-roles">
-                        <h3 class="chart-title"><i class="material-icons">bar_chart</i> Средний балл по ролям</h3>
-                        <canvas id="role-scores-chart"></canvas>
-                    </div>
-                    <div class="chart-container chart-content">
-                        <h3 class="chart-title"><i class="material-icons">radar</i> Средний балл по контенту</h3>
-                        <canvas id="content-scores-chart"></canvas>
-                    </div>
-                    <div class="chart-container chart-errors">
-                        <h3 class="chart-title"><i class="material-icons">pie_chart</i> Типы ошибок</h3>
-                        <canvas id="error-types-chart"></canvas>
-                    </div>
-                    <div class="chart-container chart-distribution">
-                        <h3 class="chart-title"><i class="material-icons">bar_chart</i> Распределение ошибок по контенту</h3>
-                        <canvas id="error-distribution-chart"></canvas>
-                    </div>
-                    <div class="chart-container chart-correlation">
-                        <h3 class="chart-title"><i class="material-icons">scatter_plot</i> Связь ошибок и баллов</h3>
-                        <canvas id="error-score-chart"></canvas>
+                    <div class="charts-row-wide">
+                        <div class="chart-container">
+                            <h3 class="chart-title"><i class="material-icons">trending_up</i> Тренд баллов за 4 недели</h3>
+                            <canvas id="score-trend-chart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3 class="chart-title"><i class="material-icons">scatter_plot</i> Связь ошибок и баллов</h3>
+                            <canvas id="error-score-chart"></canvas>
+                        </div>
                     </div>
                 </div>
-            </section>
+                 </section>
             <section id="general-dashboard" class="dashboard-section" style="display: none;">
                 <div class="stats-grid">
                     <div class="stat-card">

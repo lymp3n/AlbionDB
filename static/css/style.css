@@ -741,30 +741,36 @@ body.login-page-bg {
     color: var(--primary);
 }
 
-/* НОВОЕ: Сетка для персональных графиков */
-.charts-grid-personal {
-    display: grid;
+/* === ИЗМЕНЕНИЕ: Новая структура стилей для графиков === */
+.charts-rows-container {
+    display: flex;
+    flex-direction: column;
     gap: var(--spacing-lg);
-    grid-template-columns: repeat(4, 1fr);
-    grid-auto-rows: 350px; /* Задаем высоту строк */
-    grid-template-areas: 
-        "trend trend roles content"
-        "trend trend errors distribution"
-        "correlation correlation correlation correlation";
 }
-/* Предотвращаем растягивание по высоте */
-.charts-grid-personal .chart-container {
-    min-height: 0;
+
+/* Ряд с 4 квадратными графиками */
+.charts-row-squares {
+    display: grid;
+    /* ИСПРАВЛЕНИЕ: Заменяем жесткое количество колонок на гибкое */
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
 }
-.chart-trend { grid-area: trend; }
-.chart-roles { grid-area: roles; }
-.chart-content { grid-area: content; }
-.chart-errors { grid-area: errors; }
-.chart-distribution { grid-area: distribution; }
-.chart-correlation { grid-area: correlation; }
+.charts-row-squares .chart-container {
+    aspect-ratio: 1 / 1;
+}
 
+/* Ряд с 2 широкими графиками */
+.charts-row-wide {
+    display: grid;
+    /* ИСПРАВЛЕНИЕ: Заменяем жесткое количество колонок на гибкое */
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: var(--spacing-lg);
+}
+.charts-row-wide .chart-container {
+    aspect-ratio: 2.5 / 1;
+}
 
-/* НОВОЕ: Сетка для общих графиков */
+/* Сетка для общих графиков */
 .charts-grid-general {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -775,7 +781,7 @@ body.login-page-bg {
     aspect-ratio: 1 / 1;
 }
 
-/* Заставляем canvas занимать все место */
+/* Заставляем canvas занимать все место в общей статистике */
 .charts-grid-general .chart-container canvas {
     position: absolute;
     top: 0;
@@ -783,7 +789,7 @@ body.login-page-bg {
     width: 100% !important;
     height: 100% !important;
     padding: var(--spacing-lg);
-    padding-top: 48px;
+    padding-top: 48px; /* Отступ для заголовка */
 }
 
 /* Модальное окно */
@@ -1322,14 +1328,12 @@ body.login-page-bg {
 
 /* Адаптивность */
 @media (max-width: 1200px) {
-    .charts-grid-personal {
-        grid-template-columns: 1fr 1fr;
-        grid-auto-rows: 350px;
-        grid-template-areas: 
-            "trend trend"
-            "roles content"
-            "errors distribution"
-            "correlation correlation";
+    /* На планшетах квадратные и широкие графики идут по 2 в ряд */
+    .charts-row-squares {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .charts-row-wide {
+        grid-template-columns: repeat(1, 1fr);
     }
 }
 
@@ -1358,14 +1362,19 @@ body.login-page-bg {
         gap: var(--spacing-md);
     }
     
-    .charts-grid-personal, .charts-grid-general {
+    /* На телефонах все графики идут в одну колонку */
+    .charts-row-squares,
+    .charts-row-wide,
+    .charts-grid-general {
         grid-template-columns: 1fr;
-        grid-template-areas: initial !important; /* Сбрасываем области для мобильных */
-        grid-auto-rows: 350px;
     }
-    
-    .charts-grid-personal .chart-container {
-        grid-area: auto !important; /* Сбрасываем области */
+
+    /* Сбрасываем соотношение сторон, чтобы не были слишком высокими */
+    .charts-row-wide .chart-container {
+        aspect-ratio: 1.5 / 1;
+    }
+    .charts-row-squares .chart-container {
+        aspect-ratio: 1.2 / 1;
     }
 
     .players-table {
