@@ -52,6 +52,11 @@
                     <i class="material-icons">admin_panel_settings</i>
                     <span>Управление</span>
                 </div>
+                <div class="nav-item mentor-view-btn" style="display: none;">
+                    <i class="material-icons">playlist_add_check</i>
+                    <span>Запросы на разбор</span>
+                    <span class="notification-badge" style="display: none;"></span>
+                </div>
                 <div class="nav-item">
                     <i class="material-icons">lightbulb</i>
                     <span>Рекомендации</span>
@@ -77,8 +82,7 @@
                 <p id="total-players">Игроков: -</p>
                 <p id="total-mentors">Менторов: -</p>
             </div>
-        </aside>
-        <main class="main-content">
+        </aside> <main class="main-content">
             <header class="dashboard-header">
                 <div class="header-left">
                     <button class="menu-toggle">
@@ -92,6 +96,10 @@
                     </div>
                 </div>
                 <div class="header-right">
+                    <button class="btn btn-primary member-btn" style="display: none;">
+                        <i class="material-icons">support_agent</i>
+                        <span>Помощь от ментора</span>
+                    </button>
                     <button class="help-btn">
                         <i class="material-icons">help_outline</i>
                     </button>
@@ -100,6 +108,27 @@
                     </button>
                 </div>
             </header>
+
+            <div class="dashboard-content">
+                <div class="online-members-section collapsible collapsed">
+                    <div class="section-header">
+                        <div class="section-header-left">
+                           <i class="material-icons">groups</i>
+                           <h2>Текущий Онлайн</h2>
+                           <span class="online-indicator"></span>
+                        </div>
+                        <div class="section-header-right">
+                           <span class="total-online-count">Всего онлайн: 0</span>
+                           <button class="toggle-collapse-btn">
+                               <i class="material-icons">expand_more</i>
+                           </button>
+                        </div>
+                    </div>
+                    <div class="online-members-list">
+                        <p style="text-align: center; color: var(--text-muted); grid-column: 1 / -1;">Загрузка онлайн-игроков...</p>
+                    </div>
+                </div>
+            </div>
             <section id="player-dashboard" class="dashboard-section" style="display: block;">
                 <div class="date-filter-controls">
                     <button class="filter-pill active" data-period="7">7 дней</button>
@@ -179,7 +208,8 @@
                         </div>
                     </div>
                 </div>
-                 </section>
+            </section>
+            
             <section id="general-dashboard" class="dashboard-section" style="display: none;">
                 <div class="stats-grid general-stats-grid">
                      <div class="stat-card">
@@ -198,7 +228,7 @@
                         <div class="stat-label">Всего сессий (гильдия / общие)</div>
                     </div>
                     <div id="spotlight-player-card" class="spotlight-card">
-                        </div>
+                    </div>
                 </div>
                 <div class="charts-grid-general">
                     <div class="chart-container">
@@ -235,6 +265,7 @@
                     <div id="top-players-list"></div>
                 </div>
             </section>
+            
             <section id="profile-content" class="dashboard-section" style="display: none;">
                 <header class="profile-header">
                     <div class="profile-avatar-wrapper avatar-changer">
@@ -275,6 +306,7 @@
                     <button class="btn btn-primary export-btn"><i class="material-icons">download</i> Экспортировать данные</button>
                 </div>
             </section>
+            
             <section id="guild-content" class="dashboard-section" style="display: none;">
                 <div class="guild-header">
                     <h2><i class="material-icons">groups</i> Информация о гильдии</h2>
@@ -294,6 +326,7 @@
                     <div id="all-players-list"></div>
                 </div>
             </section>
+            
             <section id="founder-content" class="dashboard-section" style="display: none;">
                 <header class="dashboard-header">
                     <div class="header-left"><h1>Управление заявками</h1></div>
@@ -301,9 +334,10 @@
                 <div class="players-list-container">
                     <h2>Заявки на вступление в гильдию</h2>
                     <div id="pending-players-list">
-                        </div>
+                    </div>
                 </div>
             </section>
+            
             <section id="recommendations-content" class="dashboard-section" style="display: none;">
                 <header class="recommendations-header">
                     <h1>Персонализированные рекомендации</h1>
@@ -315,6 +349,18 @@
                 </header>
                 <div class="recommendations-grid"></div>
             </section>
+
+            <section id="review-requests-content" class="dashboard-section" style="display: none;">
+                <header class="dashboard-header">
+                    <div class="header-left"><h1>Запросы на разбор от игроков</h1></div>
+                </header>
+                <div class="players-list-container">
+                    <h2>Активные запросы</h2>
+                    <div id="review-requests-list">
+                    </div>
+                </div>
+            </section>
+            
             <section id="settings-content" class="dashboard-section" style="display: none;">
                 <h1><i class="material-icons">tune</i> Основные настройки</h1>
                 <div class="settings-group">
@@ -346,7 +392,6 @@
         </main>
     </div>
 
-    <!-- Modals -->
     <div id="help-modal" class="modal">
         <div class="modal-content">
             <header class="modal-header">

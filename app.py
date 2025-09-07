@@ -21,6 +21,7 @@ app.secret_key = 'your-super-secret-key-that-is-long-and-random'
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 DB_PATH = 'data/database.db'
+ACTIVE_USERS = {} # {player_id: last_seen_timestamp}
 AVATAR_UPLOAD_FOLDER = 'static/avatars'
 app.config['AVATAR_UPLOAD_FOLDER'] = AVATAR_UPLOAD_FOLDER
 
@@ -40,8 +41,8 @@ def close_connection(exception):
         db.close()
 
 # --- AUTH DECORATORS ---
-def founder_required(f):
-    """Decorator to ensure the user is a guild founder."""
+def management_required(f):
+    """Decorator to ensure the user is a guild founder or mentor."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'player_id' not in session:
@@ -56,12 +57,38 @@ def founder_required(f):
         if not player:
             return jsonify({'status': 'error', 'message': 'Player not found'}), 401
         
-        if player['status'] != 'founder':
-            return jsonify({'status': 'error', 'message': 'Access denied: Founder rights required'}), 403
+        # Разрешаем доступ и основателям, и менторам
+        if player['status'] not in ['founder', 'mentor']:
+            return jsonify({'status': 'error', 'message': 'Access denied: Founder or Mentor rights required'}), 403
 
-        g.founder_guild_id = player['guild_id']
+        g.management_guild_id = player['guild_id']
         return f(*args, **kwargs)
     return decorated_function
+
+
+def mentor_or_founder_required(f):
+    """Decorator to ensure the user is a mentor or founder."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'player_id' not in session:
+            return jsonify({'status': 'error', 'message': 'Authentication required'}), 401
+
+        player_id = session['player_id']
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("SELECT status, guild_id FROM players WHERE id = ?", (player_id,))
+        player = cursor.fetchone()
+
+        if not player:
+            return jsonify({'status': 'error', 'message': 'Player not found'}), 401
+        
+        if player['status'] not in ['mentor', 'founder']:
+            return jsonify({'status': 'error', 'message': 'Access denied: Mentor or Founder rights required'}), 403
+
+        g.current_player_guild_id = player['guild_id']
+        return f(*args, **kwargs)
+    return decorated_function
+
 
 # --- DATABASE INITIALIZATION ---
 def init_db():
@@ -95,7 +122,6 @@ def init_db():
         )
         ''')
 
-        # Add avatar_url column if it doesn't exist for backward compatibility
         try:
             cursor.execute("SELECT avatar_url FROM players LIMIT 1")
         except sqlite3.OperationalError:
@@ -136,6 +162,19 @@ def init_db():
         )
         ''')
 
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS help_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            player_id INTEGER NOT NULL,
+            guild_id INTEGER NOT NULL,
+            status TEXT DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE,
+            FOREIGN KEY (guild_id) REFERENCES guilds(id) ON DELETE CASCADE
+        )
+        ''')
+
+
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_sessions_player ON sessions(player_id)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_players_guild ON players(guild_id)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_sessions_date ON sessions(session_date)')
@@ -174,11 +213,12 @@ def init_db():
                 logger.error("Could not find required guilds 'Grey Knights' or 'Mure' to seed initial players.")
         db.commit()
 
-
 # --- LOGGING MIDDLEWARE ---
 @app.before_request
 def log_request_info():
     logger.debug(f"Request: {request.method} {request.path} | Session: {session}")
+    if 'player_id' in session:
+        ACTIVE_USERS[session['player_id']] = datetime.datetime.utcnow()
 
 @app.after_request
 def log_response_info(response):
@@ -252,30 +292,30 @@ def logout_endpoint():
 
 # --- FOUNDER-SPECIFIC ROUTES ---
 @app.route('/api/guilds/pending-players', methods=['GET'])
-@founder_required
+@management_required
 def get_pending_players():
     cursor = get_db().cursor()
-    cursor.execute("SELECT id, nickname, created_at FROM players WHERE guild_id = ? AND status = 'pending' ORDER BY created_at DESC", (g.founder_guild_id,))
+    cursor.execute("SELECT id, nickname, created_at FROM players WHERE guild_id = ? AND status = 'pending' ORDER BY created_at DESC", (g.management_guild_id,))
     players = cursor.fetchall()
     return jsonify({'status': 'success', 'players': [{'id': p['id'], 'nickname': p['nickname'], 'date': p['created_at']} for p in players]})
 
 @app.route('/api/players/<int:player_id>/approve', methods=['POST'])
-@founder_required
+@management_required
 def approve_player(player_id):
     db = get_db()
     cursor = db.cursor()
-    cursor.execute("UPDATE players SET status = 'active' WHERE id = ? AND guild_id = ? AND status = 'pending'", (player_id, g.founder_guild_id))
+    cursor.execute("UPDATE players SET status = 'active' WHERE id = ? AND guild_id = ? AND status = 'pending'", (player_id, g.management_guild_id))
     db.commit()
     if cursor.rowcount > 0:
         return jsonify({'status': 'success', 'message': 'Player approved'})
     return jsonify({'status': 'error', 'message': 'Player not found or not pending'}), 404
 
 @app.route('/api/players/<int:player_id>/deny', methods=['POST'])
-@founder_required
+@management_required
 def deny_player(player_id):
     db = get_db()
     cursor = db.cursor()
-    cursor.execute("DELETE FROM players WHERE id = ? AND guild_id = ? AND status = 'pending'", (player_id, g.founder_guild_id))
+    cursor.execute("DELETE FROM players WHERE id = ? AND guild_id = ? AND status = 'pending'", (player_id, g.management_guild_id))
     db.commit()
     if cursor.rowcount > 0:
         return jsonify({'status': 'success', 'message': 'Player denied and removed'})
@@ -388,6 +428,49 @@ def system_status():
         'version': '1.5.0', # Updated version
         'last_update': last_update, 'total_players': total_players, 'total_mentors': total_mentors
     })
+
+# --- ДОБАВЛЕНИЕ НОВОГО API-ЭНДПОИНТА ДЛЯ ПОЛУЧЕНИЯ ОНЛАЙН-УЧАСТНИКОВ ---
+@app.route('/api/system/online-members', methods=['GET'])
+def get_online_members():
+    online_members_list = []
+    current_time = datetime.datetime.now()
+    active_users = list(ACTIVE_USERS.keys())
+    
+    if not active_users:
+        return jsonify({'status': 'success', 'online_members': []})
+
+    # Получаем данные о всех онлайн-игроках одним запросом к БД
+    placeholders = ','.join('?' * len(active_users))
+    query = f"SELECT id, nickname, guild_id, status FROM players WHERE id IN ({placeholders})"
+    cursor = get_db().cursor()
+    cursor.execute(query, active_users)
+    players_data = {player['id']: player for player in cursor.fetchall()}
+
+    for player_id, last_seen in ACTIVE_USERS.items():
+        if player_id in players_data:
+            player = players_data[player_id]
+            
+            # Получаем название гильдии
+            guild_name = None
+            if player['guild_id']:
+                cursor.execute("SELECT name FROM guilds WHERE id = ?", (player['guild_id'],))
+                guild_name = cursor.fetchone()
+                if guild_name:
+                    guild_name = guild_name['name']
+            
+            duration = (current_time - last_seen).total_seconds()
+            online_members_list.append({
+                'player_id': player['id'],
+                'player_name': player['nickname'],
+                'guild_name': guild_name,
+                'status': player['status'],
+                'duration_seconds': int(duration)
+            })
+    
+    # Сортируем по убыванию времени в игре
+    online_members_list.sort(key=lambda x: x['duration_seconds'], reverse=True)
+    
+    return jsonify({'status': 'success', 'online_members': online_members_list})
 
 @app.route('/api/guilds', methods=['GET'])
 def get_guilds():
@@ -811,11 +894,13 @@ def get_best_player_week():
     if not guild_id: return jsonify({'status': 'error', 'message': 'guild_id required'}), 400
     
     cursor = get_db().cursor()
+    # ИЗМЕНЕНИЕ: Добавлен p.avatar_url в SELECT
     query = """
         WITH PlayerWeekStats AS (
             SELECT
                 p.id,
                 p.nickname,
+                p.avatar_url,
                 AVG(s.score) as avg_score,
                 (SELECT role FROM sessions WHERE player_id = p.id AND session_date >= DATETIME('now', '-7 days') GROUP BY role ORDER BY COUNT(*) DESC LIMIT 1) as main_role,
                 (SELECT c.name FROM sessions s_c JOIN content c ON s_c.content_id = c.id WHERE s_c.player_id = p.id AND s_c.session_date >= DATETIME('now', '-7 days') GROUP BY c.id ORDER BY AVG(s_c.score) DESC LIMIT 1) as best_content
@@ -834,6 +919,14 @@ def get_best_player_week():
         return jsonify({'status': 'success', 'player': dict(player)})
     return jsonify({'status': 'success', 'player': None})
 
+@app.route('/api/mentoring/requests/count', methods=['GET'])
+@mentor_or_founder_required
+def get_help_requests_count():
+    guild_id = g.current_player_guild_id
+    cursor = get_db().cursor()
+    cursor.execute("SELECT COUNT(*) FROM help_requests WHERE guild_id = ? AND status = 'pending'", (guild_id,))
+    count = cursor.fetchone()[0]
+    return jsonify({'status': 'success', 'count': count})
 
 @app.route('/api/statistics/total-sessions', methods=['GET'])
 def get_total_sessions():
@@ -860,6 +953,68 @@ def not_found_error(error):
 def internal_error(error):
     logger.error(f"Internal server error: {error}\n{traceback.format_exc()}")
     return jsonify({'status': 'error', 'message': 'Internal server error'}), 500
+
+@app.route('/api/mentoring/request-help', methods=['POST'])
+def request_mentor_help():
+    if 'player_id' not in session:
+        return jsonify({'status': 'error', 'message': 'Authentication required'}), 401
+    
+    player_id = session['player_id']
+    db = get_db()
+    cursor = db.cursor()
+    
+    # Получаем guild_id игрока
+    cursor.execute("SELECT guild_id FROM players WHERE id = ?", (player_id,))
+    player = cursor.fetchone()
+    if not player:
+        return jsonify({'status': 'error', 'message': 'Player not found'}), 404
+    guild_id = player['guild_id']
+
+    # Проверяем, нет ли уже активного запроса от этого игрока
+    cursor.execute("SELECT id FROM help_requests WHERE player_id = ? AND status = 'pending'", (player_id,))
+    existing_request = cursor.fetchone()
+    if existing_request:
+        return jsonify({'status': 'error', 'message': 'У вас уже есть активный запрос о помощи.'}), 409
+        
+    # Создаем новый запрос
+    cursor.execute("INSERT INTO help_requests (player_id, guild_id) VALUES (?, ?)", (player_id, guild_id))
+    db.commit()
+    
+    return jsonify({'status': 'success', 'message': 'Запрос о помощи отправлен менторам.'})
+
+@app.route('/api/mentoring/requests', methods=['GET'])
+@mentor_or_founder_required
+def get_help_requests():
+    guild_id = g.current_player_guild_id
+    cursor = get_db().cursor()
+    
+    query = """
+        SELECT hr.id, p.nickname, hr.created_at
+        FROM help_requests hr
+        JOIN players p ON hr.player_id = p.id
+        WHERE hr.guild_id = ? AND hr.status = 'pending'
+        ORDER BY hr.created_at ASC
+    """
+    cursor.execute(query, (guild_id,))
+    requests = cursor.fetchall()
+    
+    return jsonify({'status': 'success', 'requests': [dict(req) for req in requests]})
+
+@app.route('/api/mentoring/requests/<int:request_id>/review', methods=['POST'])
+@mentor_or_founder_required
+def mark_request_as_reviewed(request_id):
+    guild_id = g.current_player_guild_id
+    db = get_db()
+    cursor = db.cursor()
+
+    # Убедимся, что ментор может изменить статус запроса только в своей гильдии
+    cursor.execute("UPDATE help_requests SET status = 'reviewed' WHERE id = ? AND guild_id = ?", (request_id, guild_id))
+    db.commit()
+    
+    if cursor.rowcount > 0:
+        return jsonify({'status': 'success', 'message': 'Запрос отмечен как рассмотренный'})
+    return jsonify({'status': 'error', 'message': 'Запрос не найден или у вас нет прав на его изменение'}), 404
+
 
 if __name__ == '__main__':
     with app.app_context():

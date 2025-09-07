@@ -45,6 +45,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initNavigation();
     initMobileMenu();
     checkAuthStatus();
+    initCollapsibleSections(); // Инициализация сворачиваемой секции
     
     window.addEventListener('resize', () => {
         Object.values(charts).forEach(chart => {
@@ -91,7 +92,6 @@ function loadCurrentPlayerData() {
             showError('player-dashboard', 'Ошибка загрузки данных игрока');
         });
 }
-
 function initNavigation() {
     document.querySelectorAll('.close-modal, .close-modal-btn').forEach(button => {
         button.addEventListener('click', function() {
@@ -105,6 +105,17 @@ function initNavigation() {
     });
 
     document.querySelector('.refresh-btn')?.addEventListener('click', refreshActiveSection);
+
+    // Клик по кнопке "Помощь от ментора" (для мемберов)
+    document.querySelector('.member-btn')?.addEventListener('click', () => {
+        if (confirm('Вы уверены, что хотите отправить запрос на разбор ваших сессий ментору?')) {
+            requestMentorHelp();
+        }
+    });
+    
+    // ИЗМЕНЕНИЕ: Клик по кнопке "Запросы на разбор" (для менторов)
+    document.querySelector('.mentor-requests-btn')?.addEventListener('click', loadAndShowReviewRequestsModal);
+
 
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
@@ -146,6 +157,7 @@ function initNavigation() {
                     document.getElementById('founder-content').style.display = 'block';
                     loadFounderPanel();
                     break;
+                // ИЗМЕНЕНИЕ: Удален кейс "Запросы на разбор"
                 case 'Рекомендации':
                     document.getElementById('recommendations-content').style.display = 'block';
                     loadRecommendations();
@@ -173,21 +185,61 @@ function initDashboard() {
     initAvatarCropper();
 
     updateSidebarInfo();
-    
+
     document.querySelector('.nav-item').classList.add('active');
     document.querySelector('.view-toggle').style.display = 'flex';
 
+    // ОБНОВЛЕННАЯ ЛОГИКА ОТОБРАЖЕНИЯ КНОПОК
     const mentorBtn = document.querySelector('.mentor-btn');
     if (mentorBtn) {
         mentorBtn.style.display = ['mentor', 'founder'].includes(currentPlayerData?.status) ? 'flex' : 'none';
+    }
+    const managementBtn = document.querySelector('.management-btn');
+    if (managementBtn) {
+        managementBtn.style.display = ['mentor', 'founder'].includes(currentPlayerData?.status) ? 'flex' : 'none';
     }
     const founderBtn = document.querySelector('.founder-btn');
     if (founderBtn) {
         founderBtn.style.display = (currentPlayerData?.status === 'founder') ? 'flex' : 'none';
     }
-    
-    loadPlayerDataAndCharts();
+    const memberBtn = document.querySelector('.member-btn');
+    if(memberBtn){
+        memberBtn.style.display = (currentPlayerData?.status === 'active') ? 'flex' : 'none';
+    }
+
+    // ИСПРАВЛЕНИЕ: Используем правильный класс и добавляем логику уведомлений
+    const mentorViewBtn = document.querySelector('.mentor-view-btn');
+    if (mentorViewBtn) {
+        mentorViewBtn.style.display = ['mentor', 'founder'].includes(currentPlayerData?.status) ? 'flex' : 'none';
+    }
+
+    refreshActiveSection();
     loadSystemStatus();
+    loadOnlineMembers();
+    loadMentorRequestCount(); // Загружаем количество запросов при инициализации
+    setInterval(loadOnlineMembers, 15000);
+    setInterval(loadMentorRequestCount, 30000); // Обновляем каждые 30 секунд
+}
+
+// НОВАЯ ФУНКЦИЯ: Загрузка количества запросов на разбор
+function loadMentorRequestCount() {
+    const badge = document.querySelector('.mentor-view-btn .notification-badge');
+    if (!badge) return;
+
+    fetch('/api/mentoring/requests/count')
+        .then(response => response.ok ? response.json() : Promise.reject(response))
+        .then(data => {
+            if (data.status === 'success' && data.count > 0) {
+                badge.textContent = data.count;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки количества запросов:', error);
+            badge.style.display = 'none';
+        });
 }
 
 function initMobileMenu() {
@@ -215,6 +267,26 @@ const closeMobileMenu = () => {
 };
 
 
+// НОВАЯ ФУНКЦИЯ: Управление сворачиваемыми секциями
+function initCollapsibleSections() {
+    document.querySelectorAll('.collapsible .section-header').forEach(header => {
+        header.addEventListener('click', (e) => {
+            // Убедимся, что клик не был по кнопке внутри заголовка (на всякий случай)
+            if (e.target.closest('button')) return;
+
+            const section = header.closest('.collapsible');
+            if (section) {
+                section.classList.toggle('collapsed');
+                const icon = section.querySelector('.toggle-collapse-btn i');
+                if (icon) {
+                    icon.textContent = section.classList.contains('collapsed') ? 'expand_more' : 'expand_less';
+                }
+            }
+        });
+    });
+}
+
+
 function refreshActiveSection() {
     const activeSectionId = document.querySelector('.dashboard-section[style*="block"]')?.id;
     if (!activeSectionId) {
@@ -230,10 +302,13 @@ function refreshActiveSection() {
         case 'profile-content': loadProfile(); break;
         case 'guild-content': loadGuildData(); break;
         case 'founder-content': loadFounderPanel(); break;
+        case 'review-requests-content': loadReviewRequests(); break; // Добавляем обновление
         case 'recommendations-content': loadRecommendations(); break;
     }
     loadSystemStatus();
+    loadOnlineMembers();
 }
+
 
 
 function updateAvatarDisplay(player) {
@@ -263,7 +338,69 @@ function updateSidebarInfo() {
     }
 }
 
+function loadOnlineMembers() {
+    fetch('/api/system/online-members')
+        .then(response => response.json())
+        .then(data => {
+            const onlineMembersList = document.querySelector('.online-members-list');
+            onlineMembersList.innerHTML = ''; // Очищаем список перед добавлением новых элементов
+            const totalOnlineCountSpan = document.querySelector('.total-online-count');
+            const onlineIndicator = document.querySelector('.online-members-section .online-indicator');
 
+            if (data.status === 'success' && data.online_members.length > 0) {
+                totalOnlineCountSpan.textContent = `Всего онлайн: ${data.online_members.length}`;
+                onlineIndicator.classList.add('active'); // Активируем индикатор, если есть онлайн
+                data.online_members.forEach(member => {
+                    const memberCard = document.createElement('div');
+                    memberCard.classList.add('online-member-card');
+                    memberCard.setAttribute('data-player-id', member.player_id);
+
+                    const durationFormatted = formatDuration(member.duration_seconds);
+
+                    // ОБНОВЛЕННАЯ HTML-СТРУКТУРА КАРТОЧКИ
+                    memberCard.innerHTML = `
+                        <img src="/static/avatars/player_${member.player_id}.png" alt="${member.player_name}" onerror="this.style.display='none'">
+                        <div class="online-member-info">
+                            <h3>${member.player_name}</h3>
+                            <p>Гильдия: ${member.guild_name}</p>
+                            <p>Роль: ${formatPlayerStatus(member.status)}</p>
+                        </div>
+                        <div class="online-member-duration">
+                           <i class="material-icons">schedule</i>
+                           <span>${durationFormatted}</span>
+                        </div>
+                    `;
+                    onlineMembersList.appendChild(memberCard);
+                });
+            } else {
+                totalOnlineCountSpan.textContent = 'Всего онлайн: 0';
+                onlineIndicator.classList.remove('active'); // Деактивируем индикатор, если нет онлайн
+                onlineMembersList.innerHTML = '<p style="text-align: center; color: var(--text-muted); grid-column: 1 / -1;">В данный момент никто не в игре.</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки онлайн-участников:', error);
+            const onlineMembersList = document.querySelector('.online-members-list');
+            onlineMembersList.innerHTML = '<p style="text-align: center; color: var(--danger); grid-column: 1 / -1;">Ошибка при загрузке данных.</p>';
+        });
+}
+
+
+function formatDuration(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
+function formatPlayerStatus(status) {
+    switch (status) {
+        case 'founder': return 'Основатель';
+        case 'mentor': return 'Ментор';
+        case 'active': return 'Активный';
+        case 'inactive': return 'Неактивный';
+        default: return status;
+    }
+}
 async function loadPlayerDataAndCharts() {
     skeletonHandler.show(['avg-score', 'session-count', 'comparison', 'last-update-player']);
     try {
@@ -513,6 +650,80 @@ function loadProfile() {
     });
 }
 
+function requestMentorHelp() {
+    fetch('/api/mentoring/request-help', { method: 'POST' })
+        .then(res => res.ok ? res.json() : Promise.reject(res.json()))
+        .then(data => {
+            if (data.status === 'success') {
+                showSuccess('player-dashboard', data.message || 'Запрос успешно отправлен!');
+            } 
+        })
+        .catch(errPromise => {
+             errPromise.then(err => {
+                showError('player-dashboard', err.message || 'Не удалось отправить запрос.');
+            });
+        });
+}
+
+function loadAndShowReviewRequestsModal() {
+    const modal = document.getElementById('review-requests-modal');
+    modal.style.display = 'flex';
+    
+    const container = document.getElementById('review-requests-list-modal');
+    container.innerHTML = '<p>Загрузка запросов...</p>';
+
+    fetch('/api/mentoring/requests')
+        .then(response => response.ok ? response.json() : Promise.reject(response))
+        .then(data => {
+            if (data.status === 'success') {
+                renderReviewRequests(data.requests);
+            } else {
+                throw new Error(data.message || 'Не удалось загрузить запросы');
+            }
+        })
+        .catch(() => container.innerHTML = '<p class="error-message">Ошибка загрузки запросов о помощи.</p>');
+}
+
+function renderReviewRequests(requests) {
+    const container = document.getElementById('review-requests-list-modal'); // Целимся в контейнер модального окна
+    if (requests.length === 0) {
+        container.innerHTML = '<p class="placeholder" style="position: static; height: auto; padding: 2rem 0;">Нет активных запросов от игроков.</p>';
+        return;
+    }
+    container.innerHTML = `
+        <table class="players-table">
+            <thead><tr><th>Игрок</th><th>Дата запроса</th><th>Действия</th></tr></thead>
+            <tbody>
+                ${requests.map(req => `
+                    <tr>
+                        <td data-label="Игрок">${req.nickname}</td>
+                        <td data-label="Дата запроса">${new Date(req.created_at).toLocaleString()}</td>
+                        <td data-label="Действия">
+                            <button class="btn btn-primary review-btn" data-id="${req.id}">Отметить как разобранный</button>
+                        </td>
+                    </tr>`).join('')}
+            </tbody>
+        </table>`;
+
+    container.querySelectorAll('.review-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => markRequestAsReviewed(e.target.dataset.id));
+    });
+}
+
+function markRequestAsReviewed(requestId) {
+    fetch(`/api/mentoring/requests/${requestId}/review`, { method: 'POST' })
+        .then(response => response.ok ? response.json() : Promise.reject(response))
+        .then(data => {
+            if (data.status === 'success') {
+                showSuccess('review-requests-modal', 'Запрос отмечен.');
+                loadAndShowReviewRequestsModal(); // Обновляем список в модальном окне
+            } else { throw new Error(data.message); }
+        })
+        .catch(() => showError('review-requests-modal', 'Не удалось обновить статус запроса.'));
+}
+
+
+
 // --- Avatar Cropper Logic ---
 function initAvatarCropper() {
     const modal = document.getElementById('avatar-cropper-modal');
@@ -647,6 +858,7 @@ function renderRoleRatings(ratings) {
 
 function loadFounderPanel() {
     const container = document.getElementById('pending-players-list');
+    if (!container) return;
     container.innerHTML = '<p>Загрузка заявок...</p>';
 
     fetch('/api/guilds/pending-players')
@@ -658,18 +870,34 @@ function loadFounderPanel() {
                 throw new Error(data.message || 'Не удалось загрузить заявки');
             }
         })
-        .catch(() => container.innerHTML = '<p class="error-message">Ошибка загрузки заявок на вступление.</p>');
+        .catch(() => {
+            container.innerHTML = '<p class="error-message">Ошибка загрузки заявок на вступление.</p>';
+        });
 }
 
+
+/**
+ * Отрисовывает список игроков, ожидающих одобрения.
+ * @param {Array} players - Массив объектов игроков.
+ */
 function renderPendingPlayers(players) {
     const container = document.getElementById('pending-players-list');
+    if (!container) return;
+
     if (players.length === 0) {
-        container.innerHTML = '<p class="placeholder" style="position: static; height: auto; padding: 2rem 0;">Нет новых заявок на вступление.</p>';
+        container.innerHTML = '<p class="placeholder" style="position: static; height: auto;">Нет новых заявок на вступление.</p>';
         return;
     }
+
     container.innerHTML = `
         <table class="players-table">
-            <thead><tr><th>Игрок</th><th>Дата заявки</th><th>Действия</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>Игрок</th>
+                    <th>Дата заявки</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
             <tbody>
                 ${players.map(player => `
                     <tr>
@@ -679,34 +907,53 @@ function renderPendingPlayers(players) {
                             <button class="btn btn-primary approve-btn" data-id="${player.id}">Одобрить</button>
                             <button class="btn btn-secondary deny-btn" data-id="${player.id}">Отклонить</button>
                         </td>
-                    </tr>`).join('')}
+                    </tr>
+                `).join('')}
             </tbody>
-        </table>`;
+        </table>
+    `;
 
-    container.querySelectorAll('.approve-btn').forEach(btn => btn.addEventListener('click', (e) => approvePlayer(e.target.dataset.id)));
-    container.querySelectorAll('.deny-btn').forEach(btn => btn.addEventListener('click', (e) => denyPlayer(e.target.dataset.id)));
+    // Добавляем обработчики событий для новых кнопок
+    container.querySelectorAll('.approve-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => approvePlayer(e.target.dataset.id));
+    });
+    container.querySelectorAll('.deny-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => denyPlayer(e.target.dataset.id));
+    });
 }
 
+/**
+ * Отправляет запрос на одобрение игрока.
+ * @param {number} playerId - ID игрока.
+ */
 function approvePlayer(playerId) {
     fetch(`/api/players/${playerId}/approve`, { method: 'POST' })
         .then(response => response.ok ? response.json() : Promise.reject(response))
         .then(data => {
             if (data.status === 'success') {
                 showSuccess('founder-content', 'Игрок успешно одобрен.');
-                loadFounderPanel();
-            } else { throw new Error(data.message); }
+                loadFounderPanel(); // Обновляем список
+            } else {
+                throw new Error(data.message);
+            }
         })
         .catch(() => showError('founder-content', 'Не удалось одобрить игрока.'));
 }
 
+/**
+ * Отправляет запрос на отклонение заявки игрока.
+ * @param {number} playerId - ID игрока.
+ */
 function denyPlayer(playerId) {
     fetch(`/api/players/${playerId}/deny`, { method: 'POST' })
         .then(response => response.ok ? response.json() : Promise.reject(response))
         .then(data => {
             if (data.status === 'success') {
                 showSuccess('founder-content', 'Заявка игрока отклонена.');
-                loadFounderPanel();
-            } else { throw new Error(data.message); }
+                loadFounderPanel(); // Обновляем список
+            } else {
+                throw new Error(data.message);
+            }
         })
         .catch(() => showError('founder-content', 'Не удалось отклонить заявку.'));
 }
@@ -831,13 +1078,23 @@ function renderSpotlightPlayer(player) {
         `;
         return;
     }
+
+    const nickname = player.nickname || 'P';
+    const avatarUrl = player.avatar_url;
+
+    // ИЗМЕНЕНИЕ: Добавлена логика отображения аватара или fallback
     container.innerHTML = `
         <div class="spotlight-header">
             <i class="material-icons">emoji_events</i>
             <h4>Игрок недели</h4>
         </div>
         <div class="spotlight-body">
-            <div class="spotlight-avatar">${player.nickname.charAt(0).toUpperCase()}</div>
+            <div class="spotlight-avatar-wrapper">
+                <img src="${avatarUrl}" class="spotlight-avatar-img" style="display: ${avatarUrl ? 'block' : 'none'};">
+                <div class="spotlight-avatar-fallback" style="display: ${avatarUrl ? 'none' : 'flex'};">
+                    ${nickname.charAt(0).toUpperCase()}
+                </div>
+            </div>
             <div class="spotlight-info">
                 <p class="spotlight-name">${player.nickname}</p>
                 <div class="spotlight-stats">
@@ -849,6 +1106,7 @@ function renderSpotlightPlayer(player) {
         </div>
     `;
 }
+
 
 function createGuildRoleDistributionChart(data) {
     const canvasId = 'guild-role-distribution';
