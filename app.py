@@ -65,6 +65,30 @@ def management_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# НОВЫЙ ДЕКОРАТОР ТОЛЬКО ДЛЯ ОСНОВАТЕЛЕЙ
+def founder_required(f):
+    """Decorator to ensure the user is a guild founder."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'player_id' not in session:
+            return jsonify({'status': 'error', 'message': 'Authentication required'}), 401
+
+        player_id = session['player_id']
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("SELECT status, guild_id FROM players WHERE id = ?", (player_id,))
+        player = cursor.fetchone()
+
+        if not player:
+            return jsonify({'status': 'error', 'message': 'Player not found'}), 401
+        
+        if player['status'] != 'founder':
+            return jsonify({'status': 'error', 'message': 'Access denied: Founder rights required'}), 403
+
+        g.founder_guild_id = player['guild_id']
+        return f(*args, **kwargs)
+    return decorated_function
+
 
 def mentor_or_founder_required(f):
     """Decorator to ensure the user is a mentor or founder."""
@@ -321,6 +345,52 @@ def deny_player(player_id):
         return jsonify({'status': 'success', 'message': 'Player denied and removed'})
     return jsonify({'status': 'error', 'message': 'Player not found or not pending'}), 404
 
+# --- НОВЫЕ МАРШРУТЫ ДЛЯ УПРАВЛЕНИЯ ИГРОКАМИ ---
+@app.route('/api/guilds/manageable-players', methods=['GET'])
+@founder_required
+def get_manageable_players():
+    """Возвращает всех игроков гильдии (кроме основателя) для управления."""
+    cursor = get_db().cursor()
+    # Выбираем всех, кроме самого основателя и ожидающих
+    cursor.execute("""
+        SELECT id, nickname, status, created_at 
+        FROM players 
+        WHERE guild_id = ? AND status != 'pending' AND id != ?
+        ORDER BY nickname ASC
+    """, (g.founder_guild_id, session['player_id']))
+    players = cursor.fetchall()
+    return jsonify({'status': 'success', 'players': [dict(p) for p in players]})
+
+
+@app.route('/api/players/<int:player_id>', methods=['DELETE'])
+@founder_required
+def delete_player(player_id):
+    """Удаляет игрока из системы. Только для основателя."""
+    db = get_db()
+    cursor = db.cursor()
+    
+    # Дополнительная проверка, что удаляемый игрок принадлежит той же гильдии
+    cursor.execute("SELECT guild_id, status FROM players WHERE id = ?", (player_id,))
+    player_to_delete = cursor.fetchone()
+
+    if not player_to_delete:
+        return jsonify({'status': 'error', 'message': 'Player not found'}), 404
+    
+    if player_to_delete['guild_id'] != g.founder_guild_id:
+        return jsonify({'status': 'error', 'message': 'You can only delete players from your own guild'}), 403
+
+    if player_to_delete['status'] == 'founder':
+        return jsonify({'status': 'error', 'message': 'Founder cannot be deleted'}), 403
+
+    cursor.execute("DELETE FROM players WHERE id = ?", (player_id,))
+    db.commit()
+    
+    if cursor.rowcount > 0:
+        return jsonify({'status': 'success', 'message': 'Player successfully deleted'})
+    
+    return jsonify({'status': 'error', 'message': 'Failed to delete player'}), 500
+
+
 # --- HTML & STATIC FILE SERVING ---
 @app.route('/')
 def index():
@@ -433,44 +503,49 @@ def system_status():
 @app.route('/api/system/online-members', methods=['GET'])
 def get_online_members():
     online_members_list = []
-    current_time = datetime.datetime.now()
-    active_users = list(ACTIVE_USERS.keys())
+    current_time = datetime.datetime.utcnow()
+    # Use .items() to safely iterate while potentially modifying the dict elsewhere
+    active_users_copy = list(ACTIVE_USERS.items())
+
+    # Remove users inactive for more than 15 minutes
+    timeout = datetime.timedelta(minutes=15)
+    for player_id, last_seen in active_users_copy:
+        if datetime.datetime.utcnow() - last_seen > timeout:
+            ACTIVE_USERS.pop(player_id, None)
+
+    active_player_ids = list(ACTIVE_USERS.keys())
     
-    if not active_users:
+    if not active_player_ids:
         return jsonify({'status': 'success', 'online_members': []})
 
-    # Получаем данные о всех онлайн-игроках одним запросом к БД
-    placeholders = ','.join('?' * len(active_users))
-    query = f"SELECT id, nickname, guild_id, status FROM players WHERE id IN ({placeholders})"
+    placeholders = ','.join('?' * len(active_player_ids))
+    query = f"""
+        SELECT p.id, p.nickname, p.status, p.avatar_url, g.name as guild_name 
+        FROM players p 
+        LEFT JOIN guilds g ON p.guild_id = g.id 
+        WHERE p.id IN ({placeholders})
+    """
     cursor = get_db().cursor()
-    cursor.execute(query, active_users)
+    cursor.execute(query, active_player_ids)
     players_data = {player['id']: player for player in cursor.fetchall()}
 
     for player_id, last_seen in ACTIVE_USERS.items():
         if player_id in players_data:
             player = players_data[player_id]
-            
-            # Получаем название гильдии
-            guild_name = None
-            if player['guild_id']:
-                cursor.execute("SELECT name FROM guilds WHERE id = ?", (player['guild_id'],))
-                guild_name = cursor.fetchone()
-                if guild_name:
-                    guild_name = guild_name['name']
-            
-            duration = (current_time - last_seen).total_seconds()
+            duration = (datetime.datetime.utcnow() - last_seen).total_seconds()
             online_members_list.append({
                 'player_id': player['id'],
                 'player_name': player['nickname'],
-                'guild_name': guild_name,
+                'guild_name': player['guild_name'] or 'N/A',
                 'status': player['status'],
+                'avatar_url': player['avatar_url'],
                 'duration_seconds': int(duration)
             })
     
-    # Сортируем по убыванию времени в игре
     online_members_list.sort(key=lambda x: x['duration_seconds'], reverse=True)
     
     return jsonify({'status': 'success', 'online_members': online_members_list})
+
 
 @app.route('/api/guilds', methods=['GET'])
 def get_guilds():

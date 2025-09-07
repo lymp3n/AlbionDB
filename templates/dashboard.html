@@ -329,12 +329,18 @@
             
             <section id="founder-content" class="dashboard-section" style="display: none;">
                 <header class="dashboard-header">
-                    <div class="header-left"><h1>Управление заявками</h1></div>
+                    <div class="header-left"><h1>Панель управления гильдией</h1></div>
                 </header>
                 <div class="players-list-container">
-                    <h2>Заявки на вступление в гильдию</h2>
+                    <h2><i class="material-icons">person_add</i> Заявки на вступление</h2>
                     <div id="pending-players-list">
-                    </div>
+                        </div>
+                </div>
+                <div class="players-list-container" style="margin-top: var(--spacing-xl);">
+                    <h2><i class="material-icons">manage_accounts</i> Управление составом гильдии</h2>
+                    <p>Здесь вы можете просмотреть всех участников гильдии и удалить тех, кто покинул состав.</p>
+                    <div id="manage-players-list" style="margin-top: var(--spacing-md);">
+                        </div>
                 </div>
             </section>
             
@@ -520,6 +526,16 @@
                 <button id="cancel-crop-btn" class="btn btn-secondary">Отмена</button>
                 <button id="save-crop-btn" class="btn btn-primary">Сохранить</button>
             </footer>
+        </div>
+    </div>
+     <div id="review-requests-modal" class="modal">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2>Запросы на разбор</h2>
+                <button class="close-modal">&times;</button>
+            </header>
+            <div class="modal-body" id="review-requests-list-modal">
+                </div>
         </div>
     </div>
     <button id="compare-btn" class="btn btn-primary compare-btn">Сравнить игроков</button>
