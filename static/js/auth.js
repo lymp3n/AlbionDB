@@ -102,7 +102,7 @@ function attemptLogin(event) {
     })
     .then(data => {
         if (data.success) {
-            // ИСПРАВЛЕНИЕ: Проверяем статус и решаем, куда перенаправить
+            // Проверяем статус и решаем, куда перенаправить
             if (data.status === 'pending') {
                 window.location.href = '/pending.html';
             } else {

@@ -1,38 +1,16 @@
 // Профессиональная цветовая палитра для графиков
 const chartColors = {
-    // Основной цвет — глубокий, но спокойный синий, как цвет моря на глубине.
-    // Выглядит профессионально и надежно.
     primary: '#4F7CAC',
-
-    // Более светлый оттенок синего для подсветки активных элементов.
     primaryLight: '#87A4C4',
-
-    // Вторичный цвет.
-    // Мягкий бирюзовый, как цвет воды у берега. Создает приятный контраст.
     secondary: '#82C0CC',
-
-    // Цвет успеха.
-    // Светлый, почти мятный оттенок морской пены.
     success: '#97D8C4',
-
-    // Цвет опасности.
-    // Теплый коралловый оттенок. Он достаточно заметен, чтобы сигнализировать об ошибках, но не агрессивен.
     danger: '#F47C7C',
-
-    // Цвет предупреждения.
-    // Теплый песочный, цвет пляжа.
     warning: '#F7D6A0',
-
-    // Информационный цвет.
-    // Нейтральный серо-синий, цвет мокрой гальки.
     info: '#A1B0BC',
-
-    // Цвета для текста и фона.
     dark: '#333D47',
     light: '#F6F8FA',
-
-    // Прозрачные версии.
     transparentPrimary: 'rgba(79, 124, 172, 0.25)',
+    transparentSecondary: 'rgba(130, 192, 204, 0.25)',
     transparentSuccess: 'rgba(151, 216, 196, 0.2)',
 };
 
@@ -43,6 +21,8 @@ let currentGuildId = null;
 let charts = {};
 let isGeneralView = false;
 let animationEnabled = true;
+let currentDatePeriod = '7';
+let cropper = null;
 
 // Утилита для управления скелетной загрузкой
 const skeletonHandler = {
@@ -58,11 +38,12 @@ const skeletonHandler = {
     }
 };
 
-// === ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКE DOM ===
+// === ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ DOM ===
 document.addEventListener('DOMContentLoaded', function () {
     const savedTheme = localStorage.getItem('theme') || 'system';
     applyTheme(savedTheme);
     initNavigation();
+    initMobileMenu();
     checkAuthStatus();
     
     window.addEventListener('resize', () => {
@@ -74,12 +55,11 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-// Проверка статуса авторизации
 function checkAuthStatus() {
     fetch('/api/system/status')
         .then(response => response.ok ? response.json() : Promise.reject(response))
         .then(data => {
-            if (data.status === 'online') {
+            if (data.status === 'online' && data.user_status !== 'offline') {
                 loadCurrentPlayerData();
             } else {
                 window.location.href = '/login.html';
@@ -90,7 +70,6 @@ function checkAuthStatus() {
         });
 }
 
-// Загрузка данных текущего игрока
 function loadCurrentPlayerData() {
     fetch('/api/players/current')
         .then(response => response.ok ? response.json() : Promise.reject(response))
@@ -113,18 +92,16 @@ function loadCurrentPlayerData() {
         });
 }
 
-// Инициализация навигации
 function initNavigation() {
     document.querySelectorAll('.close-modal, .close-modal-btn').forEach(button => {
         button.addEventListener('click', function() {
-            document.querySelectorAll('.modal').forEach(modal => modal.style.display = 'none');
-            document.body.classList.remove('modal-open');
+            const modal = this.closest('.modal');
+            if(modal) modal.style.display = 'none';
         });
     });
 
-    document.querySelector('.help-btn')?.addEventListener('click', function() {
+    document.querySelector('.help-btn')?.addEventListener('click', () => {
         document.getElementById('help-modal').style.display = 'flex';
-        document.body.classList.add('modal-open');
     });
 
     document.querySelector('.refresh-btn')?.addEventListener('click', refreshActiveSection);
@@ -139,7 +116,6 @@ function initNavigation() {
             if (text === 'Оценить игрока') {
                 if (currentPlayerData && ['mentor', 'founder'].includes(currentPlayerData.status)) {
                     document.getElementById('mentor-modal').style.display = 'flex';
-                    document.body.classList.add('modal-open');
                     loadMentorForm();
                 }
                 return;
@@ -182,18 +158,19 @@ function initNavigation() {
                     logout();
                     break;
             }
+            closeMobileMenu();
         });
     });
 }
 
-
-// Инициализация дашборда
 function initDashboard() {
     initViewToggle();
+    initDateFilter();
     initThemeSwitcher();
     initMentorForm();
     initCompareModal();
     initRecommendationsFilter();
+    initAvatarCropper();
 
     updateSidebarInfo();
     
@@ -209,18 +186,47 @@ function initDashboard() {
         founderBtn.style.display = (currentPlayerData?.status === 'founder') ? 'flex' : 'none';
     }
     
-    loadPlayerData().then(loadCharts);
+    loadPlayerDataAndCharts();
     loadSystemStatus();
 }
 
-// Обновление данных в активной секции
-function refreshActiveSection() {
-    const activeSection = document.querySelector('.dashboard-section[style*="block"]');
-    if (!activeSection) return;
+function initMobileMenu() {
+    const menuToggle = document.querySelector('.menu-toggle');
+    const menuToggleClose = document.querySelector('.menu-toggle-close');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
 
-    switch (activeSection.id) {
-        case 'player-dashboard': loadPlayerData().then(loadCharts); break;
-        case 'general-dashboard': loadGeneralStats().then(loadGeneralCharts).then(loadTopPlayersGeneral); break;
+    menuToggle?.addEventListener('click', () => {
+        sidebar.classList.add('active');
+        overlay.classList.add('active');
+    });
+    
+    const closeMenu = () => {
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+    };
+
+    menuToggleClose?.addEventListener('click', closeMenu);
+    overlay?.addEventListener('click', closeMenu);
+}
+const closeMobileMenu = () => {
+    document.querySelector('.sidebar')?.classList.remove('active');
+    document.getElementById('sidebar-overlay')?.classList.remove('active');
+};
+
+
+function refreshActiveSection() {
+    const activeSectionId = document.querySelector('.dashboard-section[style*="block"]')?.id;
+    if (!activeSectionId) {
+        // Default to player dashboard if no section is active
+        document.getElementById('player-dashboard').style.display = 'block';
+        loadPlayerDataAndCharts();
+        return;
+    }
+
+    switch (activeSectionId) {
+        case 'player-dashboard': loadPlayerDataAndCharts(); break;
+        case 'general-dashboard': loadGeneralData(); break;
         case 'profile-content': loadProfile(); break;
         case 'guild-content': loadGuildData(); break;
         case 'founder-content': loadFounderPanel(); break;
@@ -230,34 +236,51 @@ function refreshActiveSection() {
 }
 
 
-// Обновление информации в сайдбаре
-function updateSidebarInfo() {
-    const sidebarGuild = document.querySelector('.sidebar-guild');
-    const sidebarPlayer = document.querySelector('.sidebar-player');
-    const sidebarAvatar = document.querySelector('.sidebar-avatar');
+function updateAvatarDisplay(player) {
+    const nickname = player.nickname || 'P';
+    const avatarUrl = player.avatar_url;
 
-    if (currentPlayerData) {
-        if(sidebarGuild) sidebarGuild.textContent = `Гильдия: ${currentPlayerData.guild}`;
-        if(sidebarPlayer) sidebarPlayer.textContent = currentPlayerData.nickname;
-        if(sidebarAvatar && currentPlayerData.nickname) {
-            sidebarAvatar.textContent = currentPlayerData.nickname.charAt(0).toUpperCase();
+    document.querySelectorAll('.sidebar-avatar-img, .profile-avatar-img').forEach(img => {
+        const fallback = img.nextElementSibling;
+        if (avatarUrl) {
+            img.src = avatarUrl + `?t=${new Date().getTime()}`; // Cache bust
+            img.style.display = 'block';
+            fallback.style.display = 'none';
+        } else {
+            img.style.display = 'none';
+            fallback.style.display = 'flex';
+            fallback.textContent = nickname.charAt(0).toUpperCase();
         }
+    });
+}
+
+
+function updateSidebarInfo() {
+    if (currentPlayerData) {
+        document.querySelector('.sidebar-guild').textContent = `Гильдия: ${currentPlayerData.guild}`;
+        document.querySelector('.sidebar-player').textContent = currentPlayerData.nickname;
+        updateAvatarDisplay(currentPlayerData);
     }
 }
 
-// Загрузка данных игрока
-async function loadPlayerData() {
+
+async function loadPlayerDataAndCharts() {
     skeletonHandler.show(['avg-score', 'session-count', 'comparison', 'last-update-player']);
     try {
-        const [statsRes, comparisonRes] = await Promise.all([
-            fetch(`/api/statistics/player/${currentPlayerId}`),
-            fetch(`/api/statistics/comparison/${currentPlayerId}`)
+        const [statsRes, comparisonRes, trendRes, roleScoresRes, contentScoresRes, errorTypesRes, errorDistributionRes, errorScoreRes] = await Promise.all([
+            fetch(`/api/statistics/player/${currentPlayerId}?period=${currentDatePeriod}`),
+            fetch(`/api/statistics/comparison/${currentPlayerId}?period=${currentDatePeriod}`),
+            fetch(`/api/statistics/player-trend/${currentPlayerId}?period=${currentDatePeriod}`),
+            fetch(`/api/statistics/player-role-scores/${currentPlayerId}?period=${currentDatePeriod}`),
+            fetch(`/api/statistics/player-content-scores/${currentPlayerId}?period=${currentDatePeriod}`),
+            fetch(`/api/statistics/player-error-types/${currentPlayerId}?period=${currentDatePeriod}`),
+            fetch(`/api/statistics/error-distribution/${currentPlayerId}?period=${currentDatePeriod}`),
+            fetch(`/api/statistics/error-score-correlation/${currentPlayerId}?period=${currentDatePeriod}`)
         ]);
         
-        if (!statsRes.ok) throw new Error(`Ошибка статистики игрока: ${statsRes.statusText}`);
-        if (!comparisonRes.ok) throw new Error(`Ошибка сравнения: ${comparisonRes.statusText}`);
-        
-        const [stats, comparison] = await Promise.all([statsRes.json(), comparisonRes.json()]);
+        const [stats, comparison, trend, roleScores, contentScores, errorTypes, errorDistribution, errorScore] = await Promise.all([
+            statsRes.json(), comparisonRes.json(), trendRes.json(), roleScoresRes.json(), contentScoresRes.json(), errorTypesRes.json(), errorDistributionRes.json(), errorScoreRes.json()
+        ]);
 
         skeletonHandler.hide('avg-score', (stats.avgScore || 0).toFixed(2));
         skeletonHandler.hide('session-count', stats.sessionCount || 0);
@@ -265,27 +288,7 @@ async function loadPlayerData() {
         
         const comparisonValue = ((comparison.playerScore / (comparison.topAvgScore || 1)) * 100);
         skeletonHandler.hide('comparison', `${comparisonValue > 0 ? comparisonValue.toFixed(1) : '0'}%`);
-
-    } catch (error) {
-        console.error('Ошибка в loadPlayerData:', error);
-        showError('player-dashboard', 'Ошибка загрузки статистики игрока');
-    }
-}
-
-async function loadCharts() {
-    try {
-         const [trendRes, roleScoresRes, contentScoresRes, errorTypesRes, errorDistributionRes, errorScoreRes] = await Promise.all([
-            fetch(`/api/statistics/player-trend/${currentPlayerId}`),
-            fetch(`/api/statistics/player-role-scores/${currentPlayerId}`),
-            fetch(`/api/statistics/player-content-scores/${currentPlayerId}`),
-            fetch(`/api/statistics/player-error-types/${currentPlayerId}`),
-            fetch(`/api/statistics/error-distribution/${currentPlayerId}`),
-            fetch(`/api/statistics/error-score-correlation/${currentPlayerId}`)
-        ]);
-        const [trend, roleScores, contentScores, errorTypes, errorDistribution, errorScore] = await Promise.all([
-            trendRes.json(), roleScoresRes.json(), contentScoresRes.json(), errorTypesRes.json(), errorDistributionRes.json(), errorScoreRes.json()
-        ]);
-
+        
         createTrendChart(trend);
         createRoleScoresChart(roleScores);
         createContentScoresChart(contentScores);
@@ -294,26 +297,56 @@ async function loadCharts() {
         createErrorScoreChart(errorScore);
 
     } catch (error) {
-        showError('player-dashboard', 'Ошибка загрузки графиков');
+        console.error('Ошибка в loadPlayerDataAndCharts:', error);
+        showError('player-dashboard', 'Ошибка загрузки статистики игрока');
     }
 }
 
+// --- Chart Creation ---
 function prepareChartContainer(canvasId) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return null;
     const container = canvas.parentElement;
-    container.innerHTML = `<h3 class="chart-title">${container.querySelector('.chart-title').innerHTML}</h3><canvas id="${canvasId}"></canvas>`;
-    return document.getElementById(canvasId);
+
+    // Clear previous content but keep header
+    const placeholder = container.querySelector('.placeholder');
+    if(placeholder) placeholder.remove();
+    if(canvas) canvas.remove();
+
+    const newCanvas = document.createElement('canvas');
+    newCanvas.id = canvasId;
+    container.appendChild(newCanvas);
+
+    return newCanvas;
+}
+
+
+function showEmptyState(canvasId, message, icon) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const container = canvas.parentElement;
+    
+    const placeholder = container.querySelector('.placeholder');
+    if(placeholder) placeholder.remove();
+    if(canvas) canvas.remove();
+
+    const emptyStateHTML = `
+        <div class="placeholder">
+            <i class="material-icons">${icon || 'analytics'}</i>
+            <p>${message || 'Нет данных для отображения.'}</p>
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', emptyStateHTML);
 }
 
 function createTrendChart(trendData) {
-    const ctx = prepareChartContainer('score-trend-chart');
-    if (!ctx) return;
-    if (charts.scoreTrend) charts.scoreTrend.destroy();
+    const canvasId = 'score-trend-chart';
     if (!trendData || trendData.weeks.length === 0) {
-        ctx.parentElement.innerHTML += '<p class="placeholder">Нет данных для графика</p>';
+        showEmptyState(canvasId, 'Недостаточно данных для построения тренда.', 'trending_up');
         return;
     }
+    const ctx = prepareChartContainer(canvasId);
+    if (charts.scoreTrend) charts.scoreTrend.destroy();
     charts.scoreTrend = new Chart(ctx, {
         type: 'line',
         data: {
@@ -327,50 +360,34 @@ function createTrendChart(trendData) {
                 fill: true
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { beginAtZero: false, min: 0, max: 10 } },
-            animation: animationEnabled ? { duration: 1000 } : { duration: 0 }
-        }
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false, min: 0, max: 10 } }, animation: { duration: animationEnabled ? 1000 : 0 } }
     });
 }
+
 function createRoleScoresChart(roleData) {
-    const ctx = prepareChartContainer('role-scores-chart');
-    if (!ctx) return;
-    if (charts.roleScores) charts.roleScores.destroy();
+    const canvasId = 'role-scores-chart';
     if (!roleData || roleData.roles.length === 0) {
-        ctx.parentElement.innerHTML += '<p class="placeholder">Нет данных для графика</p>';
+        showEmptyState(canvasId, 'Нет оценок по ролям за этот период.', 'bar_chart');
         return;
     }
+    const ctx = prepareChartContainer(canvasId);
+    if (charts.roleScores) charts.roleScores.destroy();
     charts.roleScores = new Chart(ctx, {
         type: 'bar',
-        data: {
-            labels: roleData.roles,
-            datasets: [{
-                label: 'Средний балл',
-                data: roleData.scores,
-                backgroundColor: chartColors.primary
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { beginAtZero: false, min: 0, max: 10 } },
-            animation: animationEnabled ? { duration: 1000 } : { duration: 0 }
-        }
+        data: { labels: roleData.roles, datasets: [{ label: 'Средний балл', data: roleData.scores, backgroundColor: chartColors.primary }] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false, min: 0, max: 10 } }, animation: { duration: animationEnabled ? 1000 : 0 } }
     });
 }
 
 function createContentScoresChart(contentData) {
-    const ctx = prepareChartContainer('content-scores-chart');
-    if (!ctx) return;
-    if (charts.contentScores) charts.contentScores.destroy();
+    const canvasId = 'content-scores-chart';
     if (!contentData || contentData.contents.length === 0) {
-        ctx.parentElement.innerHTML += '<p class="placeholder">Нет данных для графика</p>';
+        showEmptyState(canvasId, 'Нет оценок по типам контента.', 'radar');
         return;
     }
+    const ctx = prepareChartContainer(canvasId);
     const isDarkMode = document.documentElement.hasAttribute('data-theme');
+    if (charts.contentScores) charts.contentScores.destroy();
     charts.contentScores = new Chart(ctx, {
         type: 'radar',
         data: {
@@ -380,11 +397,7 @@ function createContentScoresChart(contentData) {
                 data: contentData.scores,
                 backgroundColor: chartColors.transparentPrimary,
                 borderColor: chartColors.primary,
-                borderWidth: 2,
-                pointBackgroundColor: chartColors.primary,
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: chartColors.primary
+                pointBackgroundColor: chartColors.primary
             }]
         },
         options: {
@@ -394,85 +407,65 @@ function createContentScoresChart(contentData) {
             scales: {
                 r: {
                     min: 0, max: 10,
-                    pointLabels: {
-                        font: { size: 12, weight: 'bold' },
-                        color: isDarkMode ? '#E2E8F0' : '#1A202C', 
-                        backdropColor: 'transparent', backdropPadding: 0
-                    },
+                    pointLabels: { color: isDarkMode ? '#E2E8F0' : '#1A202C' },
                     grid: { color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)' },
                     angleLines: { color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)' },
                     ticks: { display: false }
                 }
             },
-            animation: animationEnabled ? { duration: 1000 } : { duration: 0 }
+            animation: { duration: animationEnabled ? 1000 : 0 }
         }
     });
 }
+
 function createErrorTypesChart(errorData) {
-    const ctx = prepareChartContainer('error-types-chart');
-    if (!ctx) return;
-    if (charts.errorTypes) charts.errorTypes.destroy();
+    const canvasId = 'error-types-chart';
     if (!errorData || errorData.errors.length === 0) {
-        ctx.parentElement.innerHTML += '<p class="placeholder">Нет данных для графика</p>';
+        showEmptyState(canvasId, 'Поздравляем, ошибок не найдено!', 'thumb_up');
         return;
     }
+    const ctx = prepareChartContainer(canvasId);
+    if (charts.errorTypes) charts.errorTypes.destroy();
     charts.errorTypes = new Chart(ctx, {
         type: 'polarArea',
         data: {
             labels: errorData.errors,
             datasets: [{
                 data: errorData.counts,
-                backgroundColor: [
-                    'rgba(255, 118, 117, 0.7)', 'rgba(255, 234, 167, 0.7)', 'rgba(116, 185, 255, 0.7)', 
-                    'rgba(0, 206, 201, 0.7)', 'rgba(85, 239, 196, 0.7)'
-                ]
+                backgroundColor: Object.values(chartColors).slice(0, 5).map(c => c + 'B3') // Add alpha
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'right' } },
-            scales: { r: { ticks: { display: false }, grid: { circular: true } } },
-            animation: { duration: animationEnabled ? 1000 : 0 }
-        }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } }, scales: { r: { ticks: { display: false } } }, animation: { duration: animationEnabled ? 1000 : 0 } }
     });
 }
 
 function createErrorDistributionChart(distributionData) {
-    const ctx = prepareChartContainer('error-distribution-chart');
-    if (!ctx) return;
-    if (charts.errorDistribution) charts.errorDistribution.destroy();
+    const canvasId = 'error-distribution-chart';
     if (!distributionData || distributionData.contents.length === 0) {
-        ctx.parentElement.innerHTML += '<p class="placeholder">Нет данных для графика</p>';
+        showEmptyState(canvasId, 'Нет данных о распределении ошибок.', 'pie_chart');
         return;
     }
+    const ctx = prepareChartContainer(canvasId);
+    if (charts.errorDistribution) charts.errorDistribution.destroy();
     charts.errorDistribution = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: distributionData.contents,
-            datasets: [{
-                label: 'Количество ошибок',
-                data: distributionData.counts,
-                backgroundColor: chartColors.secondary
-            }]
+            datasets: [{ label: 'Количество ошибок', data: distributionData.counts, backgroundColor: chartColors.secondary }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true } },
-            animation: animationEnabled ? { duration: 1000 } : { duration: 0 }
-        }
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, animation: { duration: animationEnabled ? 1000 : 0 } }
     });
 }
+
 function createErrorScoreChart(correlationData) {
-    const ctx = prepareChartContainer('error-score-chart');
-    if (!ctx) return;
-    if (charts.errorScore) charts.errorScore.destroy();
+    const canvasId = 'error-score-chart';
     if (!correlationData || correlationData.points.length < 2) {
-        ctx.parentElement.innerHTML += '<p class="placeholder">Недостаточно данных для графика</p>';
+        showEmptyState(canvasId, 'Недостаточно данных для корреляции.', 'scatter_plot');
         return;
     }
+    const ctx = prepareChartContainer(canvasId);
     const sortedPoints = correlationData.points.sort((a, b) => a.errors - b.errors);
+    if (charts.errorScore) charts.errorScore.destroy();
     charts.errorScore = new Chart(ctx, {
         type: 'line',
         data: {
@@ -487,18 +480,15 @@ function createErrorScoreChart(correlationData) {
             }]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: { title: { display: true, text: 'Балл' }, min: 0, max: 10 },
-                x: { title: { display: true, text: 'Количество ошибок за сессию' } }
-            },
-            animation: animationEnabled ? { duration: 1000 } : { duration: 0 }
+            responsive: true, maintainAspectRatio: false,
+            scales: { y: { title: { display: true, text: 'Балл' }, min: 0, max: 10 }, x: { title: { display: true, text: 'Количество ошибок за сессию' } } },
+            animation: { duration: animationEnabled ? 1000 : 0 }
         }
     });
 }
 
 
+// --- Content Loading for other sections ---
 function loadProfile() {
     skeletonHandler.show(['profile-nickname', 'profile-guild', 'profile-status', 'profile-balance', 'reg-date', 'mentor-name', 'description']);
     fetch(`/api/players/current`)
@@ -513,62 +503,150 @@ function loadProfile() {
                 document.querySelector('#reg-date').textContent = player.created_at ? new Date(player.created_at).toLocaleDateString() : '-';
                 document.querySelector('#mentor-name').textContent = player.mentor || 'Не назначен';
                 document.querySelector('#description').textContent = player.description || 'Нет описания';
+                updateAvatarDisplay(player);
             }
         })
-        .catch(error => {
-            showError('profile-content', 'Ошибка загрузки профиля');
+        .catch(error => showError('profile-content', 'Ошибка загрузки профиля'));
+    
+    document.querySelector('.export-btn')?.addEventListener('click', () => {
+        window.location.href = `/api/players/${currentPlayerId}/export`;
+    });
+}
+
+// --- Avatar Cropper Logic ---
+function initAvatarCropper() {
+    const modal = document.getElementById('avatar-cropper-modal');
+    const image = document.getElementById('avatar-cropper-image');
+    const fileInput = document.getElementById('avatar-upload-input');
+    
+    document.querySelectorAll('.avatar-changer').forEach(el => {
+        el.addEventListener('click', () => fileInput.click());
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                image.src = reader.result;
+                modal.style.display = 'flex';
+                if (cropper) {
+                    cropper.destroy();
+                }
+                cropper = new Cropper(image, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    dragMode: 'move',
+                    background: false,
+                    autoCropArea: 0.8,
+                });
+            };
+            reader.readAsDataURL(files[0]);
+        }
+        fileInput.value = ''; // Reset input
+    });
+
+    document.getElementById('save-crop-btn').addEventListener('click', () => {
+        if (!cropper) return;
+        cropper.getCroppedCanvas({
+            width: 256,
+            height: 256,
+            imageSmoothingQuality: 'high',
+        }).toBlob((blob) => {
+            const formData = new FormData();
+            formData.append('avatar', blob, 'avatar.png');
+
+            fetch('/api/players/current/avatar', { method: 'POST', body: formData })
+            .then(res => res.ok ? res.json() : Promise.reject(res))
+            .then(data => {
+                if(data.status === 'success') {
+                    currentPlayerData.avatar_url = data.avatar_url;
+                    updateAvatarDisplay(currentPlayerData);
+                    modal.style.display = 'none';
+                    showSuccess('profile-content', 'Аватар обновлен!');
+                } else { throw new Error(data.message); }
+            })
+            .catch(() => showError('avatar-cropper-modal', 'Ошибка загрузки аватара.'));
         });
-    const exportBtn = document.querySelector('.export-btn');
-    if (exportBtn) {
-        exportBtn.addEventListener('click', () => {
-            window.location.href = `/api/players/${currentPlayerId}/export`;
-        });
+    });
+    
+    document.getElementById('cancel-crop-btn').addEventListener('click', () => {
+        modal.style.display = 'none';
+        if (cropper) cropper.destroy();
+    });
+}
+
+
+async function loadGuildData() {
+    if (!currentGuildId) return;
+
+    try {
+        const [guildInfoRes, allPlayersRes, roleRatingsRes] = await Promise.all([
+            fetch(`/api/guilds/${currentGuildId}`),
+            fetch(`/api/guilds/${currentGuildId}/top-players?limit=0`),
+            fetch(`/api/guilds/${currentGuildId}/role-ratings`)
+        ]);
+
+        const guildInfo = await guildInfoRes.json();
+        const allPlayers = await allPlayersRes.json();
+        const roleRatings = await roleRatingsRes.json();
+        
+        if (guildInfo.status === 'success') {
+            const guild = guildInfo.guild;
+            document.querySelector('.guild-members').textContent = `Участников: ${guild.members || 0}`;
+            document.querySelector('.guild-kill-fame').textContent = `Kill Fame: ${guild.kill_fame || 0}`;
+            document.querySelector('.guild-death-fame').textContent = `Death Fame: ${guild.death_fame || 0}`;
+        }
+        
+        if (allPlayers.status === 'success') {
+            renderPlayerTable(document.getElementById('all-players-list'), allPlayers.players, currentPlayerId);
+            const rankMessageEl = document.getElementById('guild-player-rank');
+            const playerIndex = allPlayers.players.findIndex(p => p.id === currentPlayerId);
+            if (playerIndex !== -1) {
+                rankMessageEl.textContent = `Ваш ранг в гильдии: #${playerIndex + 1} из ${allPlayers.players.length}`;
+                rankMessageEl.style.display = 'block';
+            } else {
+                rankMessageEl.style.display = 'none';
+            }
+        }
+        
+        if(roleRatings.status === 'success') {
+            renderRoleRatings(roleRatings.ratings);
+        }
+
+    } catch(error) {
+        showError('guild-content', 'Ошибка загрузки данных гильдии');
     }
 }
 
-function loadGuildData() {
-    if (!currentGuildId) return;
-
-    fetch(`/api/guilds/${currentGuildId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                const guild = data.guild;
-                document.querySelector('.guild-members').textContent = `Участников: ${guild.members || 0}`;
-                document.querySelector('.guild-kill-fame').textContent = `Kill Fame: ${guild.kill_fame || 0}`;
-                document.querySelector('.guild-death-fame').textContent = `Death Fame: ${guild.death_fame || 0}`;
-            }
-        });
+function renderRoleRatings(ratings) {
+    const container = document.getElementById('role-ratings-content');
+    container.innerHTML = '';
     
-    fetch(`/api/guilds/${currentGuildId}/top-players?limit=0`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                const container = document.getElementById('all-players-list');
-                renderPlayerTable(container, data.players, currentPlayerId);
+    let content = '';
+    for (const [role, players] of Object.entries(ratings)) {
+        if(players.length > 0) {
+            content += `
+                <div class="role-rating-list">
+                    <h4>${role}</h4>
+                    <ul>
+                        ${players.map(p => `<li><span>${p.nickname}</span><span class="rating-score">${p.avg_score.toFixed(2)}</span></li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+    }
 
-                const rankMessageEl = document.getElementById('guild-player-rank');
-                if (rankMessageEl) {
-                    const playerIndex = data.players.findIndex(p => p.id === currentPlayerId);
-                    if (playerIndex !== -1) {
-                        rankMessageEl.textContent = `Ваш ранг в гильдии: #${playerIndex + 1}`;
-                        rankMessageEl.style.display = 'block';
-                    } else {
-                        rankMessageEl.style.display = 'none';
-                    }
-                }
-            }
-        });
+    if(content === '') {
+        container.innerHTML = '<p class="placeholder" style="position: static; height: auto;">Нет данных для построения рейтингов. Нужно больше сессий с оценками.</p>';
+    } else {
+        container.innerHTML = content;
+    }
 }
 
-// +++ НАЧАЛО: ИСПРАВЛЕНИЕ ОШИБКИ - ДОБАВЛЕНИЕ НОВЫХ ФУНКЦИЙ +++
 
-/**
- * Загружает панель основателя гильдии, включая список заявок.
- */
 function loadFounderPanel() {
     const container = document.getElementById('pending-players-list');
-    if (!container) return;
     container.innerHTML = '<p>Загрузка заявок...</p>';
 
     fetch('/api/guilds/pending-players')
@@ -580,33 +658,18 @@ function loadFounderPanel() {
                 throw new Error(data.message || 'Не удалось загрузить заявки');
             }
         })
-        .catch(() => {
-            container.innerHTML = '<p class="error-message">Ошибка загрузки заявок на вступление.</p>';
-        });
+        .catch(() => container.innerHTML = '<p class="error-message">Ошибка загрузки заявок на вступление.</p>');
 }
 
-/**
- * Отрисовывает список игроков, ожидающих одобрения.
- * @param {Array} players - Массив объектов игроков.
- */
 function renderPendingPlayers(players) {
     const container = document.getElementById('pending-players-list');
-    if (!container) return;
-
     if (players.length === 0) {
-        container.innerHTML = '<p class="placeholder" style="position: static; height: auto;">Нет новых заявок на вступление.</p>';
+        container.innerHTML = '<p class="placeholder" style="position: static; height: auto; padding: 2rem 0;">Нет новых заявок на вступление.</p>';
         return;
     }
-
     container.innerHTML = `
         <table class="players-table">
-            <thead>
-                <tr>
-                    <th>Игрок</th>
-                    <th>Дата заявки</th>
-                    <th>Действия</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Игрок</th><th>Дата заявки</th><th>Действия</th></tr></thead>
             <tbody>
                 ${players.map(player => `
                     <tr>
@@ -616,75 +679,46 @@ function renderPendingPlayers(players) {
                             <button class="btn btn-primary approve-btn" data-id="${player.id}">Одобрить</button>
                             <button class="btn btn-secondary deny-btn" data-id="${player.id}">Отклонить</button>
                         </td>
-                    </tr>
-                `).join('')}
+                    </tr>`).join('')}
             </tbody>
-        </table>
-    `;
+        </table>`;
 
-    // Добавляем обработчики событий для новых кнопок
-    container.querySelectorAll('.approve-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => approvePlayer(e.target.dataset.id));
-    });
-    container.querySelectorAll('.deny-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => denyPlayer(e.target.dataset.id));
-    });
+    container.querySelectorAll('.approve-btn').forEach(btn => btn.addEventListener('click', (e) => approvePlayer(e.target.dataset.id)));
+    container.querySelectorAll('.deny-btn').forEach(btn => btn.addEventListener('click', (e) => denyPlayer(e.target.dataset.id)));
 }
 
-/**
- * Отправляет запрос на одобрение игрока.
- * @param {number} playerId - ID игрока.
- */
 function approvePlayer(playerId) {
     fetch(`/api/players/${playerId}/approve`, { method: 'POST' })
         .then(response => response.ok ? response.json() : Promise.reject(response))
         .then(data => {
             if (data.status === 'success') {
                 showSuccess('founder-content', 'Игрок успешно одобрен.');
-                loadFounderPanel(); // Обновляем список
-            } else {
-                throw new Error(data.message);
-            }
+                loadFounderPanel();
+            } else { throw new Error(data.message); }
         })
         .catch(() => showError('founder-content', 'Не удалось одобрить игрока.'));
 }
 
-/**
- * Отправляет запрос на отклонение заявки игрока.
- * @param {number} playerId - ID игрока.
- */
 function denyPlayer(playerId) {
     fetch(`/api/players/${playerId}/deny`, { method: 'POST' })
         .then(response => response.ok ? response.json() : Promise.reject(response))
         .then(data => {
             if (data.status === 'success') {
                 showSuccess('founder-content', 'Заявка игрока отклонена.');
-                loadFounderPanel(); // Обновляем список
-            } else {
-                throw new Error(data.message);
-            }
+                loadFounderPanel();
+            } else { throw new Error(data.message); }
         })
         .catch(() => showError('founder-content', 'Не удалось отклонить заявку.'));
 }
-
-// +++ КОНЕЦ: ИСПРАВЛЕНИЕ ОШИБКИ +++
-
 
 function loadRecommendations() {
     fetch(`/api/recommendations/player/${currentPlayerId}`)
         .then(response => response.json())
         .then(data => {
-            if (data.status === 'success') {
-                const grid = document.querySelector('.recommendations-grid');
-                grid.innerHTML = '';
-                if (data.recommendations.length === 0) {
-                    grid.innerHTML = '<p class="placeholder" style="position: static; height: auto;">Нет рекомендаций</p>';
-                    return;
-                }
-                data.recommendations.forEach(rec => {
-                    const card = document.createElement('div');
-                    card.className = `recommendation-card ${rec.status}`;
-                    card.innerHTML = `
+            const grid = document.querySelector('.recommendations-grid');
+            if (data.status === 'success' && data.recommendations.length > 0) {
+                grid.innerHTML = data.recommendations.map(rec => `
+                    <div class="recommendation-card ${rec.status}">
                         <div class="recommendation-header">
                             <h3 class="recommendation-title">${rec.title}</h3>
                             <span class="recommendation-status">${rec.status}</span>
@@ -694,16 +728,16 @@ function loadRecommendations() {
                             <span>Приоритет: ${rec.priority}</span>
                             <span>${new Date(rec.created_at).toLocaleDateString()}</span>
                         </div>
-                    `;
-                    grid.appendChild(card);
-                });
+                    </div>`).join('');
+            } else {
+                 grid.innerHTML = '<div class="placeholder" style="position: static; height: auto; grid-column: 1 / -1;"><i class="material-icons">lightbulb</i><p>Для вас пока нет рекомендаций.</p></div>';
             }
         });
 }
 
 function initRecommendationsFilter() {
     const filterContainer = document.querySelector('.filter-controls');
-    filterContainer.addEventListener('click', (e) => {
+    filterContainer?.addEventListener('click', (e) => {
         if (e.target.classList.contains('filter-pill')) {
             filterContainer.querySelectorAll('.filter-pill').forEach(f => f.classList.remove('active'));
             e.target.classList.add('active');
@@ -711,239 +745,209 @@ function initRecommendationsFilter() {
     });
 }
 
-
 function initViewToggle() {
     const toggleContainer = document.querySelector('.view-toggle');
-    const options = toggleContainer.querySelectorAll('.toggle-option');
-    const indicator = toggleContainer.querySelector('.toggle-indicator');
-
-    options.forEach((option, index) => {
+    toggleContainer?.querySelectorAll('.toggle-option').forEach((option, index) => {
         option.addEventListener('click', () => {
-            options.forEach(o => o.classList.remove('active'));
+            toggleContainer.querySelector('.toggle-option.active').classList.remove('active');
             option.classList.add('active');
-            
-            indicator.style.transform = `translateX(${index * 100}%)`;
+            toggleContainer.querySelector('.toggle-indicator').style.transform = `translateX(${index * 100}%)`;
             
             isGeneralView = option.textContent.trim() === 'Общая статистика';
             document.getElementById('player-dashboard').style.display = isGeneralView ? 'none' : 'block';
             document.getElementById('general-dashboard').style.display = isGeneralView ? 'block' : 'none';
             
             if (isGeneralView) {
-                loadGeneralStats().then(loadGeneralCharts).then(loadTopPlayersGeneral);
+                loadGeneralData();
             } else {
-                loadPlayerData().then(loadCharts);
+                loadPlayerDataAndCharts();
             }
         });
     });
 }
 
-async function loadGeneralStats() {
+function initDateFilter() {
+    const filterContainer = document.querySelector('.date-filter-controls');
+    filterContainer?.addEventListener('click', e => {
+        if(e.target.tagName === 'BUTTON') {
+            filterContainer.querySelector('.active').classList.remove('active');
+            e.target.classList.add('active');
+            currentDatePeriod = e.target.dataset.period;
+            refreshActiveSection();
+        }
+    });
+}
+
+async function loadGeneralData() {
     if (!currentGuildId) {
         showError('general-dashboard', 'ID гильдии не определен');
         return;
     }
-    skeletonHandler.show(['guild-avg-score', 'active-players', 'total-sessions', 'best-player-week']);
+    skeletonHandler.show(['guild-avg-score', 'active-players', 'total-sessions']);
     try {
-        const [guildStatsRes, totalSessionsRes, bestPlayerRes] = await Promise.all([
+        const [guildStatsRes, totalSessionsRes, bestPlayerRes, roleDistRes, errorTypesRes, topErrorsRes, guildRankingRes, topPlayersRes] = await Promise.all([
             fetch(`/api/statistics/guild/${currentGuildId}`),
             fetch(`/api/statistics/total-sessions?guild_id=${currentGuildId}`),
             fetch(`/api/statistics/best-player-week?guild_id=${currentGuildId}`),
+            fetch('/api/statistics/guild-role-distribution'),
+            fetch('/api/statistics/guild-error-types'),
+            fetch('/api/statistics/top-errors'),
+            fetch('/api/statistics/guild-ranking'),
+            fetch(`/api/guilds/${currentGuildId}/top-players?min_sessions=5`)
         ]);
-        if (![guildStatsRes, totalSessionsRes, bestPlayerRes].every(res => res.ok)) {
-            throw new Error('Ошибка загрузки одной из статистик');
-        }
-        const [guildStats, totalSessions, bestPlayer] = await Promise.all([
-            guildStatsRes.json(),
-            totalSessionsRes.json(),
-            bestPlayerRes.json(),
+
+        const [guildStats, totalSessions, bestPlayer, roleDist, errorTypes, topErrors, guildRanking, topPlayers] = await Promise.all([
+            guildStatsRes.json(), totalSessionsRes.json(), bestPlayerRes.json(), roleDistRes.json(), errorTypesRes.json(), topErrorsRes.json(), guildRankingRes.json(), topPlayersRes.json()
         ]);
         
         skeletonHandler.hide('guild-avg-score', (guildStats.avgScore || 0).toFixed(2));
         skeletonHandler.hide('active-players', guildStats.activePlayers || 0);
         skeletonHandler.hide('total-sessions', `${totalSessions.guild_sessions || 0} / ${totalSessions.total || 0}`);
-        skeletonHandler.hide('best-player-week', (bestPlayer.player && bestPlayer.player.nickname) ? bestPlayer.player.nickname : '-');
+        renderSpotlightPlayer(bestPlayer.player);
+
+        createGuildRoleDistributionChart(roleDist);
+        createGuildErrorTypesChart(errorTypes);
+        createTopErrorsChart(topErrors);
+        createGuildRankingChart(guildRanking);
+
+        renderPlayerTable(document.getElementById('top-players-list'), topPlayers.players.slice(0, 10), currentPlayerId);
 
     } catch (error) {
         showError('general-dashboard', 'Ошибка загрузки общей статистики');
     }
 }
 
-async function loadGeneralCharts() {
-    try {
-        const [roleDistRes, errorTypesRes, topErrorsRes, guildRankingRes] = await Promise.all([
-            fetch('/api/statistics/guild-role-distribution'),
-            fetch('/api/statistics/guild-error-types'),
-            fetch('/api/statistics/top-errors'),
-            fetch('/api/statistics/guild-ranking')
-        ]);
-        const [roleDist, errorTypes, topErrors, guildRanking] = await Promise.all([
-            roleDistRes.json(), errorTypesRes.json(), topErrorsRes.json(), guildRankingRes.json()
-        ]);
-
-        createGuildRoleDistributionChart(roleDist);
-        createGuildErrorTypesChart(errorTypes);
-        createTopErrorsChart(topErrors);
-        createGuildRankingChart(guildRanking);
-    } catch (error) {
-        showError('general-dashboard', 'Ошибка загрузки графиков');
+function renderSpotlightPlayer(player) {
+    const container = document.getElementById('spotlight-player-card');
+    if (!player) {
+        container.innerHTML = `
+            <div class="spotlight-header">
+                <i class="material-icons">emoji_events</i>
+                <h4>Игрок недели</h4>
+            </div>
+            <div class="placeholder" style="position: static; padding: 1rem 0;">
+                <p>Нет игрока, соответствующего критериям (мин. 3 сессии за неделю).</p>
+            </div>
+        `;
+        return;
     }
+    container.innerHTML = `
+        <div class="spotlight-header">
+            <i class="material-icons">emoji_events</i>
+            <h4>Игрок недели</h4>
+        </div>
+        <div class="spotlight-body">
+            <div class="spotlight-avatar">${player.nickname.charAt(0).toUpperCase()}</div>
+            <div class="spotlight-info">
+                <p class="spotlight-name">${player.nickname}</p>
+                <div class="spotlight-stats">
+                    <span><i class="material-icons">star</i> ${(player.avg_score || 0).toFixed(2)}</span>
+                    <span><i class="material-icons">shield</i> ${player.main_role || '-'}</span>
+                    <span><i class="material-icons">map</i> ${player.best_content || '-'}</span>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 function createGuildRoleDistributionChart(data) {
-    const ctx = prepareChartContainer('guild-role-distribution');
-    if (!ctx) return;
-    if (charts.guildRoleDist) charts.guildRoleDist.destroy();
+    const canvasId = 'guild-role-distribution';
     if (!data || data.roles.length === 0) {
-        ctx.parentElement.innerHTML += '<p class="placeholder">Нет данных для графика</p>';
+        showEmptyState(canvasId, 'Нет данных о ролях в гильдии.');
         return;
     }
+    const ctx = prepareChartContainer(canvasId);
+    if (charts.guildRoleDist) charts.guildRoleDist.destroy();
     charts.guildRoleDist = new Chart(ctx, {
         type: 'doughnut',
         data: {
             labels: data.roles,
-            datasets: [{
-                data: data.counts,
-                backgroundColor: [chartColors.primary, chartColors.secondary, chartColors.success, chartColors.warning, chartColors.info, chartColors.transparentPrimary]
-            }]
+            datasets: [{ data: data.counts, backgroundColor: Object.values(chartColors).slice(0, 6) }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'right' } },
-            animation: { duration: animationEnabled ? 1000 : 0 }
-        }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } }, animation: { duration: animationEnabled ? 1000 : 0 } }
     });
 }
+
 function createGuildErrorTypesChart(data) {
-    const ctx = prepareChartContainer('guild-error-types');
-    if (!ctx) return;
-    if (charts.guildErrorTypes) charts.guildErrorTypes.destroy();
+    const canvasId = 'guild-error-types';
     if (!data || data.errors.length === 0) {
-        ctx.parentElement.innerHTML += '<p class="placeholder">Нет данных для графика</p>';
+        showEmptyState(canvasId, 'В гильдии не зафиксировано ошибок.');
         return;
     }
+    const ctx = prepareChartContainer(canvasId);
+    if (charts.guildErrorTypes) charts.guildErrorTypes.destroy();
     charts.guildErrorTypes = new Chart(ctx, {
         type: 'polarArea',
         data: {
             labels: data.errors,
-            datasets: [{
-                data: data.counts,
-                backgroundColor: [
-                    chartColors.primary, chartColors.warning, chartColors.info, 
-                    chartColors.success, chartColors.secondary
-                ]
-            }]
+            datasets: [{ data: data.counts, backgroundColor: Object.values(chartColors).slice(0, 5).map(c => c + 'B3') }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'right' } },
-            scales: { r: { ticks: { display: false }, grid: { circular: true } } },
-            animation: { duration: animationEnabled ? 1000 : 0 }
-        }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } }, scales: { r: { ticks: { display: false } } }, animation: { duration: animationEnabled ? 1000 : 0 } }
     });
 }
 
 function createTopErrorsChart(data) {
-    const ctx = prepareChartContainer('top-errors-chart');
-    if (!ctx) return;
-    if (charts.topErrors) charts.topErrors.destroy();
+    const canvasId = 'top-errors-chart';
     if (!data || data.errors.length === 0) {
-        ctx.parentElement.innerHTML += '<p class="placeholder">Нет данных для графика</p>';
+        showEmptyState(canvasId, 'Ошибок не найдено.', 'thumb_up');
         return;
     }
+    const ctx = prepareChartContainer(canvasId);
+    if (charts.topErrors) charts.topErrors.destroy();
     charts.topErrors = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: data.errors.slice(0, 3),
             datasets: [{ label: 'Частота', data: data.counts.slice(0, 3), backgroundColor: chartColors.warning }]
         },
-        options: { 
-            responsive: true, 
-            maintainAspectRatio: false,
-            animation: { duration: animationEnabled ? 1000 : 0 } 
-        }
+        options: { responsive: true, maintainAspectRatio: false, animation: { duration: animationEnabled ? 1000 : 0 } }
     });
 }
 
 function createGuildRankingChart(data) {
-    const ctx = prepareChartContainer('guild-ranking-chart');
-    if (!ctx) return;
-    if (charts.guildRanking) charts.guildRanking.destroy();
+    const canvasId = 'guild-ranking-chart';
     if (!data || data.guilds.length === 0) {
-        ctx.parentElement.innerHTML += '<p class="placeholder">Нет данных для графика</p>';
+        showEmptyState(canvasId, 'Нет данных для рейтинга гильдий.');
         return;
     }
+    const ctx = prepareChartContainer(canvasId);
+    if (charts.guildRanking) charts.guildRanking.destroy();
     charts.guildRanking = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: data.guilds,
             datasets: [{ label: 'Ранг', data: data.scores, backgroundColor: chartColors.primary }]
         },
-        options: { 
-            responsive: true, 
-            maintainAspectRatio: false,
-            animation: { duration: animationEnabled ? 1000 : 0 } 
-        }
+        options: { responsive: true, maintainAspectRatio: false, animation: { duration: animationEnabled ? 1000 : 0 } }
     });
 }
 
-function loadTopPlayersGeneral() {
-    if (!currentGuildId) return;
-    fetch(`/api/guilds/${currentGuildId}/top-players?min_sessions=8`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                const container = document.getElementById('top-players-list');
-                const top10 = data.players.slice(0, 10);
-                renderPlayerTable(container, top10, currentPlayerId);
-            }
-        });
-}
-
 function renderPlayerTable(container, players, highlightPlayerId) {
-    container.innerHTML = '';
     if (players.length === 0) {
         container.innerHTML = '<p class="placeholder" style="position: static; height: auto;">Нет игроков для отображения</p>';
         return;
     }
-    const table = document.createElement('table');
-    table.className = 'players-table';
-    table.innerHTML = `
-        <thead>
-            <tr>
-                <th>Ранг</th>
-                <th>Игрок</th>
-                <th>Ср. балл</th>
-                <th>Сессии</th>
-                <th>Роль</th>
-            </tr>
-        </thead>
-        <tbody>
-            ${players.map((player, index) => `
-                <tr class="${player.id === highlightPlayerId ? 'current-player' : ''}">
-                    <td data-label="Ранг"><span class="player-rank">#${index + 1}</span></td>
-                    <td data-label="Игрок">${player.nickname || '-'}</td>
-                    <td data-label="Ср. балл">${(player.avg_score || 0).toFixed(2)}</td>
-                    <td data-label="Сессии">${player.session_count || 0}</td>
-                    <td data-label="Роль">${player.main_role || '-'}</td>
-                </tr>
-            `).join('')}
-        </tbody>
-    `;
-    container.appendChild(table);
+    container.innerHTML = `
+        <table class="players-table">
+            <thead><tr><th>Ранг</th><th>Игрок</th><th>Ср. балл</th><th>Сессии</th><th>Роль</th></tr></thead>
+            <tbody>
+                ${players.map((player, index) => `
+                    <tr class="${player.id === highlightPlayerId ? 'current-player' : ''}">
+                        <td data-label="Ранг"><span class="player-rank">#${index + 1}</span></td>
+                        <td data-label="Игрок">${player.nickname || '-'}</td>
+                        <td data-label="Ср. балл">${(player.avg_score || 0).toFixed(2)}</td>
+                        <td data-label="Сессии">${player.session_count || 0}</td>
+                        <td data-label="Роль">${player.main_role || '-'}</td>
+                    </tr>`).join('')}
+            </tbody>
+        </table>`;
 }
 
-
 function loadSettings() {
-    const savedTheme = localStorage.getItem('theme') || 'system';
-    document.getElementById('theme-selector').value = savedTheme;
-    const savedAnimations = localStorage.getItem('animations') !== 'false';
-    document.getElementById('animations-toggle').checked = savedAnimations;
-    const savedNotifications = localStorage.getItem('notifications') === 'true';
-    document.getElementById('notifications-toggle').checked = savedNotifications;
-    const savedPublish = localStorage.getItem('publish') === 'true';
-    document.getElementById('publish-toggle').checked = savedPublish;
+    document.getElementById('theme-selector').value = localStorage.getItem('theme') || 'system';
+    document.getElementById('animations-toggle').checked = localStorage.getItem('animations') !== 'false';
+    document.getElementById('notifications-toggle').checked = localStorage.getItem('notifications') === 'true';
+    document.getElementById('publish-toggle').checked = localStorage.getItem('publish') === 'true';
     
     document.querySelector('.save-settings')?.addEventListener('click', saveSettings);
 }
@@ -954,10 +958,8 @@ function saveSettings() {
     const animations = document.getElementById('animations-toggle').checked;
     localStorage.setItem('animations', animations);
     animationEnabled = animations;
-    const notifications = document.getElementById('notifications-toggle').checked;
-    localStorage.setItem('notifications', notifications);
-    const publish = document.getElementById('publish-toggle').checked;
-    localStorage.setItem('publish', publish);
+    localStorage.setItem('notifications', document.getElementById('notifications-toggle').checked);
+    localStorage.setItem('publish', document.getElementById('publish-toggle').checked);
     
     applyTheme(theme);
     
@@ -969,256 +971,247 @@ function saveSettings() {
     });
     showSuccess('settings-content', 'Настройки сохранены');
 }
+
 function applyTheme(theme) {
     document.documentElement.removeAttribute('data-theme');
-    if (theme === 'dark') {
+    if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         document.documentElement.setAttribute('data-theme', 'dark');
-    } else if (theme === 'system') {
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        }
     }
 }
+
 function loadSystemStatus() {
-    fetch('/api/system/status')
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'online') {
-                document.getElementById('db-status').textContent = 'DB: Online';
-                document.getElementById('api-status').textContent = 'API: Online';
-            } else {
-                document.getElementById('db-status').textContent = 'DB: Offline';
-                document.getElementById('api-status').textContent = 'API: Offline';
-            }
-            document.getElementById('last-update').textContent = `Обновлено: ${data.last_update ? new Date(data.last_update).toLocaleDateString() : '-'}`;
-            document.getElementById('total-players').textContent = `Игроков: ${data.total_players || 0}`;
-            document.getElementById('total-mentors').textContent = `Менторов: ${data.total_mentors || 0}`;
-        })
-        .catch(error => console.error('Ошибка проверки статуса системы'));
+    fetch('/api/system/status').then(res => res.json()).then(data => {
+        document.getElementById('db-status').textContent = `DB: ${data.status === 'online' ? 'Online' : 'Offline'}`;
+        document.getElementById('api-status').textContent = `API: ${data.status === 'online' ? 'Online' : 'Offline'}`;
+        document.getElementById('last-update').textContent = `Обновлено: ${data.last_update ? new Date(data.last_update).toLocaleDateString() : '-'}`;
+        document.getElementById('total-players').textContent = `Игроков: ${data.total_players || 0}`;
+        document.getElementById('total-mentors').textContent = `Менторов: ${data.total_mentors || 0}`;
+    }).catch(error => console.error('Ошибка проверки статуса системы'));
 }
+
 function initThemeSwitcher() {
     const themeSelector = document.getElementById('theme-selector');
-    if (themeSelector) {
-        themeSelector.addEventListener('change', function() {
-            applyTheme(this.value);
-            localStorage.setItem('theme', this.value);
-        });
-    }
+    themeSelector?.addEventListener('change', function() {
+        applyTheme(this.value);
+        localStorage.setItem('theme', this.value);
+    });
 }
+
 function initMentorForm() {
-    const mentorForm = document.getElementById('mentor-form');
-    if (mentorForm) {
-        mentorForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            saveMentorSession();
-        });
-    }
-    const starRating = document.querySelector('.star-rating');
-    if (starRating) {
-        const stars = starRating.querySelectorAll('i');
-        const scoreInput = document.getElementById('score');
-        stars.forEach(star => {
-            star.addEventListener('click', () => {
-                const rating = star.dataset.value;
-                scoreInput.value = rating;
-                stars.forEach((s, i) => {
-                    s.classList.toggle('active', i < rating);
-                    s.textContent = i < rating ? 'star' : 'star_border';
-                });
+    document.getElementById('mentor-form')?.addEventListener('submit', e => {
+        e.preventDefault();
+        saveMentorSession();
+    });
+    document.querySelector('.star-rating')?.querySelectorAll('i').forEach(star => {
+        star.addEventListener('click', () => {
+            const rating = star.dataset.value;
+            document.getElementById('score').value = rating;
+            star.parentElement.querySelectorAll('i').forEach((s, i) => {
+                s.classList.toggle('active', i < rating);
+                s.textContent = i < rating ? 'star' : 'star_border';
             });
         });
-    }
+    });
 }
-function loadMentorForm() {
+
+async function loadMentorForm() {
     const playerSelect = document.getElementById('player-select');
-    if (playerSelect) {
-        playerSelect.innerHTML = '<option value="" disabled selected>Загрузка игроков...</option>';
-        fetch('/api/players')
-            .then(response => response.ok ? response.json() : Promise.reject(response))
-            .then(data => {
-                if (data.status === 'success') {
-                    playerSelect.innerHTML = '<option value="" disabled selected>Выберите игрока</option>';
-                    data.players.forEach(player => {
-                        if (player.id !== currentPlayerId) {
-                            const option = document.createElement('option');
-                            option.value = player.id;
-                            option.textContent = player.nickname;
-                            playerSelect.appendChild(option);
-                        }
-                    });
-                }
-            })
-            .catch(() => playerSelect.innerHTML = '<option value="" disabled>Ошибка загрузки игроков</option>');
-    }
     const contentSelect = document.getElementById('content-select');
-    if (contentSelect) {
-        contentSelect.innerHTML = '<option value="" disabled selected>Загрузка контента...</option>';
-        fetch('/api/content')
-            .then(response => response.ok ? response.json() : Promise.reject(response))
-            .then(data => {
-                if (data.status === 'success') {
-                    contentSelect.innerHTML = '<option value="" disabled selected>Выберите контент</option>';
-                    data.content.forEach(content => {
-                        const option = document.createElement('option');
-                        option.value = content.id;
-                        option.textContent = content.name;
-                        contentSelect.appendChild(option);
-                    });
-                }
-            })
-            .catch(() => contentSelect.innerHTML = '<option value="" disabled>Ошибка загрузки контента</option>');
+    try {
+        const [playersRes, contentRes] = await Promise.all([ fetch('/api/players'), fetch('/api/content') ]);
+        const playersData = await playersRes.json();
+        const contentData = await contentRes.json();
+        
+        playerSelect.innerHTML = '<option value="" disabled selected>Выберите игрока</option>';
+        playersData.players.forEach(p => {
+            if (p.id !== currentPlayerId) playerSelect.innerHTML += `<option value="${p.id}">${p.nickname}</option>`;
+        });
+        
+        contentSelect.innerHTML = '<option value="" disabled selected>Выберите контент</option>';
+        contentData.content.forEach(c => contentSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+
+    } catch(err) {
+        showError('mentor-modal', 'Ошибка загрузки данных для формы');
     }
 }
 
 function saveMentorSession() {
     const form = document.getElementById('mentor-form');
-    const playerSelect = document.getElementById('player-select');
-    const contentSelect = document.getElementById('content-select');
-    const roleSelect = document.getElementById('role-select');
-    const scoreInput = document.getElementById('score');
-    const errorTypesInput = document.getElementById('error-types');
-    const workOnInput = document.getElementById('work-on');
-    const commentsInput = document.getElementById('comments');
-    
-    if (!playerSelect.value || !contentSelect.value || !roleSelect.value) {
-        showError('mentor-modal', 'Пожалуйста, заполните все обязательные поля (Игрок, Контент, Роль).');
-        return;
-    }
-    if (parseInt(scoreInput.value, 10) < 1) {
-         showError('mentor-modal', 'Пожалуйста, поставьте оценку (от 1 до 10).');
-        return;
-    }
-
     const sessionData = {
-        playerId: playerSelect.value,
-        contentId: contentSelect.value,
-        score: scoreInput.value,
-        role: roleSelect.value,
-        errorTypes: errorTypesInput.value,
-        workOn: workOnInput.value,
-        comments: commentsInput.value,
+        playerId: form.querySelector('#player-select').value,
+        contentId: form.querySelector('#content-select').value,
+        score: form.querySelector('#score').value,
+        role: form.querySelector('#role-select').value,
+        errorTypes: form.querySelector('#error-types').value,
+        workOn: form.querySelector('#work-on').value,
+        comments: form.querySelector('#comments').value,
         mentorId: currentPlayerId,
         sessionDate: new Date().toISOString()
     };
+    if (!sessionData.playerId || !sessionData.contentId || !sessionData.role || parseInt(sessionData.score) < 1) {
+        showError('mentor-modal', 'Пожалуйста, заполните все обязательные поля (Игрок, Контент, Роль, Оценка).');
+        return;
+    }
 
-    fetch('/api/sessions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sessionData)
-    })
-    .then(response => {
-        if (!response.ok) return response.json().then(err => { throw new Error(err.message || 'Ошибка сервера'); });
-        return response.json();
-    })
-    .then(data => {
+    fetch('/api/sessions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sessionData) })
+    .then(response => response.ok ? response.json() : Promise.reject(response))
+    .then(() => {
         document.getElementById('mentor-modal').style.display = 'none';
         document.body.classList.remove('modal-open');
         showSuccess('player-dashboard', 'Сессия успешно добавлена');
         form.reset();
-        document.querySelectorAll('.star-rating i').forEach(s => {
-            s.classList.remove('active');
-            s.textContent = 'star_border';
-        });
-        loadPlayerData().then(loadCharts);
+        form.querySelectorAll('.star-rating i').forEach(s => { s.classList.remove('active'); s.textContent = 'star_border'; });
+        refreshActiveSection();
     })
-    .catch(error => {
-        showError('mentor-modal', 'Ошибка сохранения сессии: ' + error.message);
+    .catch(() => showError('mentor-modal', 'Ошибка сохранения сессии.'));
+}
+
+function initCompareModal() {
+    document.getElementById('compare-btn')?.addEventListener('click', () => {
+        document.getElementById('compare-modal').style.display = 'flex';
+        loadComparePlayers();
+    });
+
+    const selects = ['compare-player1-select', 'compare-player2-select'];
+    selects.forEach(id => document.getElementById(id)?.addEventListener('change', runComparison));
+}
+
+async function loadComparePlayers() {
+    const select1 = document.getElementById('compare-player1-select');
+    const select2 = document.getElementById('compare-player2-select');
+    try {
+        const response = await fetch('/api/players');
+        const data = await response.json();
+        let options = '<option value="" disabled selected>Выберите игрока</option>';
+        data.players.forEach(p => options += `<option value="${p.id}">${p.nickname}</option>`);
+        select1.innerHTML = options;
+        select2.innerHTML = options;
+        select1.value = currentPlayerId;
+    } catch {
+        showError('compare-modal', 'Ошибка загрузки игроков для сравнения');
+    }
+}
+
+async function runComparison() {
+    const p1_id = document.getElementById('compare-player1-select').value;
+    const p2_id = document.getElementById('compare-player2-select').value;
+    const resultsContainer = document.getElementById('compare-results');
+    
+    if (!p1_id || !p2_id || p1_id === p2_id) {
+        resultsContainer.innerHTML = '';
+        return;
+    }
+
+    resultsContainer.innerHTML = '<p>Загрузка данных для сравнения...</p>';
+    try {
+        const res = await fetch(`/api/statistics/full-comparison?p1=${p1_id}&p2=${p2_id}`);
+        if (!res.ok) throw new Error('Ошибка сети или сервера');
+        const data = await res.json();
+        
+        resultsContainer.innerHTML = `
+            <div class="chart-container"><canvas id="compare-trend-chart"></canvas></div>
+            <div class="chart-container"><canvas id="compare-roles-chart"></canvas></div>
+            <div class="chart-container"><canvas id="compare-errors-chart"></canvas></div>
+        `;
+        
+        createCompareTrendChart(data, p1_id, p2_id);
+        createCompareRolesChart(data, p1_id, p2_id);
+        createCompareErrorsChart(data, p1_id, p2_id);
+    } catch {
+        showError('compare-modal', 'Не удалось сравнить игроков.');
+    }
+}
+
+function createCompareTrendChart(data, p1_id, p2_id) {
+    const p1_data = data[p1_id].trend, p2_data = data[p2_id].trend;
+    const p1_name = document.querySelector(`#compare-player1-select option[value='${p1_id}']`).textContent;
+    const p2_name = document.querySelector(`#compare-player2-select option[value='${p2_id}']`).textContent;
+    
+    const allWeeks = [...new Set([...p1_data.weeks, ...p2_data.weeks])].sort();
+    const p1_scores = allWeeks.map(week => p1_data.scores[p1_data.weeks.indexOf(week)] || null);
+    const p2_scores = allWeeks.map(week => p2_data.scores[p2_data.weeks.indexOf(week)] || null);
+
+    const ctx = prepareChartContainer('compare-trend-chart');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: allWeeks,
+            datasets: [
+                { label: p1_name, data: p1_scores, borderColor: chartColors.primary, backgroundColor: chartColors.transparentPrimary, tension: 0.3 },
+                { label: p2_name, data: p2_scores, borderColor: chartColors.secondary, backgroundColor: chartColors.transparentSecondary, tension: 0.3 }
+            ]
+        },
+        options: { responsive: true, scales: {y: {min: 0, max: 10}}, plugins: { title: { display: true, text: 'Сравнение тренда оценок' }}}
     });
 }
-function initCompareModal() {
-    const compareBtn = document.getElementById('compare-btn');
-    if (compareBtn) {
-        compareBtn.addEventListener('click', () => {
-            document.getElementById('compare-modal').style.display = 'flex';
-            document.body.classList.add('modal-open');
-            loadComparePlayers();
-        });
-    }
-    const select = document.getElementById('compare-player-select');
-    if (select) {
-        select.addEventListener('change', () => {
-            const otherId = select.value;
-            if (otherId) {
-                fetch(`/api/statistics/compare/${currentPlayerId}/${otherId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        const results = document.getElementById('compare-results');
-                        results.innerHTML = `
-                            <p>Баллы: Вы лучше на ${(data.percent_scores || 0).toFixed(1)}%</p>
-                            <p>Ошибки: Вы лучше на ${(data.percent_errors || 0).toFixed(1)}%</p>
-                            <p>Сессии: Вы лучше на ${(data.percent_sessions || 0).toFixed(1)}%</p>
-                        `;
-                    })
-                    .catch(() => showError('compare-modal', 'Ошибка сравнения'));
-            }
-        });
-    }
+
+function createCompareRolesChart(data, p1_id, p2_id) {
+    const p1_data = data[p1_id].roles, p2_data = data[p2_id].roles;
+    const p1_name = document.querySelector(`#compare-player1-select option[value='${p1_id}']`).textContent;
+    const p2_name = document.querySelector(`#compare-player2-select option[value='${p2_id}']`).textContent;
+
+    const allRoles = [...new Set([...p1_data.roles, ...p2_data.roles])];
+    const p1_scores = allRoles.map(role => p1_data.scores[p1_data.roles.indexOf(role)] || 0);
+    const p2_scores = allRoles.map(role => p2_data.scores[p2_data.roles.indexOf(role)] || 0);
+
+    const ctx = prepareChartContainer('compare-roles-chart');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: allRoles,
+            datasets: [
+                { label: p1_name, data: p1_scores, backgroundColor: chartColors.primary },
+                { label: p2_name, data: p2_scores, backgroundColor: chartColors.secondary }
+            ]
+        },
+        options: { responsive: true, scales: {y: {min: 0, max: 10}}, plugins: { title: { display: true, text: 'Сравнение по ролям' }}}
+    });
 }
-function loadComparePlayers() {
-    const select = document.getElementById('compare-player-select');
-    fetch('/api/players')
-        .then(response => response.json())
-        .then(data => {
-            select.innerHTML = '<option value="" disabled selected>Выберите игрока</option>';
-            data.players.forEach(player => {
-                if (player.id !== currentPlayerId) {
-                    const option = document.createElement('option');
-                    option.value = player.id;
-                    option.textContent = player.nickname;
-                    select.appendChild(option);
-                }
-            });
-        })
-        .catch(() => showError('compare-modal', 'Ошибка загрузки игроков'));
+
+function createCompareErrorsChart(data, p1_id, p2_id) {
+    const p1_data = data[p1_id].errors, p2_data = data[p2_id].errors;
+    const p1_name = document.querySelector(`#compare-player1-select option[value='${p1_id}']`).textContent;
+    const p2_name = document.querySelector(`#compare-player2-select option[value='${p2_id}']`).textContent;
+
+    const allErrors = [...new Set([...Object.keys(p1_data), ...Object.keys(p2_data)])];
+    const p1_counts = allErrors.map(err => p1_data[err] || 0);
+    const p2_counts = allErrors.map(err => p2_data[err] || 0);
+
+    const ctx = prepareChartContainer('compare-errors-chart');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: allErrors,
+            datasets: [
+                { label: p1_name, data: p1_counts, backgroundColor: chartColors.primary },
+                { label: p2_name, data: p2_counts, backgroundColor: chartColors.secondary }
+            ]
+        },
+        options: { responsive: true, plugins: { title: { display: true, text: 'Сравнение по категориям ошибок' }}}
+    });
 }
+
 function logout() {
-    sessionStorage.clear();
-    fetch('/api/auth/logout', { method: 'POST' })
-        .finally(() => {
-            window.location.href = '/login.html';
-        });
+    fetch('/api/auth/logout', { method: 'POST' }).finally(() => window.location.href = '/login.html');
 }
+
 function showError(containerId, message) {
     const container = document.getElementById(containerId) || document.body;
+    // Prevent multiple error messages
+    if (container.querySelector('.error-message')) return;
     const errorElement = document.createElement('div');
     errorElement.className = 'error-message';
     errorElement.textContent = message;
-
-    const existingError = container.querySelector('.error-message');
-    if (existingError) {
-        existingError.remove();
-    }
-    
     container.insertBefore(errorElement, container.firstChild);
-    
-    setTimeout(() => {
-        if (errorElement) {
-            errorElement.style.opacity = '0';
-            setTimeout(() => {
-                errorElement.remove();
-            }, 500);
-        }
-    }, 5000);
+    setTimeout(() => { errorElement.remove(); }, 5000);
 }
+
 function showSuccess(containerId, message) {
     const container = document.getElementById(containerId) || document.body;
+    if (container.querySelector('.success-message')) return;
     const successElement = document.createElement('div');
     successElement.className = 'success-message';
     successElement.textContent = message;
-
-    const existingSuccess = container.querySelector('.success-message');
-    if (existingSuccess) {
-        existingSuccess.remove();
-    }
-
     container.insertBefore(successElement, container.firstChild);
-
-    setTimeout(() => {
-        if (successElement) {
-            successElement.style.opacity = '0';
-            setTimeout(() => {
-                successElement.remove();
-            }, 500);
-        }
-    }, 3000);
+    setTimeout(() => { successElement.remove(); }, 3000);
 }

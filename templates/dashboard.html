@@ -1,17 +1,21 @@
-<!DOCTYPE html><html lang="ru">
+<!DOCTYPE html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Albion Analytics Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     <script src="/static/js/dashboard.js" defer></script>
 </head>
 <body>
+    <div id="sidebar-overlay"></div>
     <div class="dashboard-container">
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -19,9 +23,13 @@
                     <img src="/static/images/logo.png" alt="Logo">
                     <span>Albion Analytics</span>
                 </a>
+                <button class="menu-toggle-close">&times;</button>
             </div>
             <div class="sidebar-info">
-                <div class="sidebar-avatar">З</div>
+                <div class="sidebar-avatar-container avatar-changer">
+                    <img src="" alt="Avatar" class="sidebar-avatar-img" style="display: none;">
+                    <div class="sidebar-avatar-fallback"></div>
+                </div>
                 <div class="sidebar-player-details">
                     <p class="sidebar-player">Загрузка...</p>
                     <p class="sidebar-guild">Гильдия: -</p>
@@ -73,6 +81,9 @@
         <main class="main-content">
             <header class="dashboard-header">
                 <div class="header-left">
+                    <button class="menu-toggle">
+                        <i class="material-icons">menu</i>
+                    </button>
                     <h1>Дашборд</h1>
                     <div class="view-toggle">
                         <div class="toggle-option active">Моя статистика</div>
@@ -90,63 +101,88 @@
                 </div>
             </header>
             <section id="player-dashboard" class="dashboard-section" style="display: block;">
+                <div class="date-filter-controls">
+                    <button class="filter-pill active" data-period="7">7 дней</button>
+                    <button class="filter-pill" data-period="30">30 дней</button>
+                    <button class="filter-pill" data-period="all">Всё время</button>
+                </div>
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-icon"><i class="material-icons">assessment</i></div>
                         <div class="stat-value" id="avg-score"><span class="skeleton">&nbsp;</span></div>
-                        <div class="stat-label">Средний балл за последнюю неделю</div>
+                        <div class="stat-label">Средний балл</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon"><i class="material-icons">event</i></div>
                         <div class="stat-value" id="session-count"><span class="skeleton">&nbsp;</span></div>
-                        <div class="stat-label">Сессий за последний месяц</div>
+                        <div class="stat-label">Количество сессий</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon"><i class="material-icons">compare_arrows</i></div>
                         <div class="stat-value" id="comparison"><span class="skeleton">&nbsp;</span></div>
-                        <div class="stat-label">Сравнение с топ-игроками</div>
+                        <div class="stat-label">Сравнение с топ-10
+                            <i class="material-icons tooltip-trigger" data-tooltip="Ваш средний балл сравнивается со средним баллом топ-10 игроков гильдии за выбранный период.">help_outline</i>
+                        </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon"><i class="material-icons">update</i></div>
                         <div class="stat-value" id="last-update-player"><span class="skeleton">&nbsp;</span></div>
-                        <div class="stat-label">Обновлено последняя сессия</div>
+                        <div class="stat-label">Последняя сессия</div>
                     </div>
                 </div>
                 
                 <div class="charts-rows-container">
                     <div class="charts-row-squares">
                         <div class="chart-container">
-                            <h3 class="chart-title"><i class="material-icons">bar_chart</i> Средний балл по ролям</h3>
+                            <div class="chart-header">
+                                <h3 class="chart-title"><i class="material-icons">bar_chart</i> Средний балл по ролям</h3>
+                                <i class="material-icons tooltip-trigger" data-tooltip="Показывает ваш средний балл в разных ролях. Помогает понять, в какой роли вы наиболее эффективны.">help_outline</i>
+                            </div>
                             <canvas id="role-scores-chart"></canvas>
                         </div>
                         <div class="chart-container">
-                            <h3 class="chart-title"><i class="material-icons">radar</i> Средний балл по контенту</h3>
+                             <div class="chart-header">
+                                <h3 class="chart-title"><i class="material-icons">radar</i> Средний балл по контенту</h3>
+                                <i class="material-icons tooltip-trigger" data-tooltip="Сравнивает вашу успеваемость в разных типах контента (Замки, Клаймы и т.д.), выявляя сильные и слабые стороны.">help_outline</i>
+                            </div>
                             <canvas id="content-scores-chart"></canvas>
                         </div>
                         <div class="chart-container">
-                            <h3 class="chart-title"><i class="material-icons">pie_chart</i> Типы ошибок</h3>
+                            <div class="chart-header">
+                                <h3 class="chart-title"><i class="material-icons">pie_chart</i> Категории ошибок</h3>
+                                <i class="material-icons tooltip-trigger" data-tooltip="Визуализирует, какие категории ошибок (Позиционка, Тайминг и т.д.) вы допускаете чаще всего.">help_outline</i>
+                            </div>
                             <canvas id="error-types-chart"></canvas>
                         </div>
                         <div class="chart-container">
-                            <h3 class="chart-title"><i class="material-icons">bar_chart</i> Распределение ошибок по контенту</h3>
+                            <div class="chart-header">
+                                <h3 class="chart-title"><i class="material-icons">bar_chart</i> Распределение ошибок</h3>
+                                <i class="material-icons tooltip-trigger" data-tooltip="Показывает, в каких типах контента вы совершаете больше всего ошибок.">help_outline</i>
+                            </div>
                             <canvas id="error-distribution-chart"></canvas>
                         </div>
                     </div>
                     <div class="charts-row-wide">
                         <div class="chart-container">
-                            <h3 class="chart-title"><i class="material-icons">trending_up</i> Тренд баллов за 4 недели</h3>
+                            <div class="chart-header">
+                                <h3 class="chart-title"><i class="material-icons">trending_up</i> Тренд баллов (по неделям)</h3>
+                                <i class="material-icons tooltip-trigger" data-tooltip="Отображает динамику вашего среднего балла по неделям, позволяя отслеживать прогресс во времени.">help_outline</i>
+                            </div>
                             <canvas id="score-trend-chart"></canvas>
                         </div>
                         <div class="chart-container">
-                            <h3 class="chart-title"><i class="material-icons">scatter_plot</i> Связь ошибок и баллов</h3>
+                             <div class="chart-header">
+                                <h3 class="chart-title"><i class="material-icons">scatter_plot</i> Связь ошибок и баллов</h3>
+                                <i class="material-icons tooltip-trigger" data-tooltip="Сопоставляет количество ошибок за сессию с итоговым баллом. Помогает понять, как ошибки влияют на оценку.">help_outline</i>
+                            </div>
                             <canvas id="error-score-chart"></canvas>
                         </div>
                     </div>
                 </div>
                  </section>
             <section id="general-dashboard" class="dashboard-section" style="display: none;">
-                <div class="stats-grid">
-                    <div class="stat-card">
+                <div class="stats-grid general-stats-grid">
+                     <div class="stat-card">
                         <div class="stat-icon"><i class="material-icons">assessment</i></div>
                         <div class="stat-value" id="guild-avg-score"><span class="skeleton">&nbsp;</span></div>
                         <div class="stat-label">Средний балл по гильдии</div>
@@ -154,45 +190,61 @@
                     <div class="stat-card">
                         <div class="stat-icon"><i class="material-icons">people</i></div>
                         <div class="stat-value" id="active-players"><span class="skeleton">&nbsp;</span></div>
-                        <div class="stat-label">Активные участники</div>
+                        <div class="stat-label">Активные участники (30 д.)</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon"><i class="material-icons">event</i></div>
                         <div class="stat-value" id="total-sessions"><span class="skeleton">&nbsp;</span></div>
                         <div class="stat-label">Всего сессий (гильдия / общие)</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="material-icons">star</i></div>
-                        <div class="stat-value" id="best-player-week"><span class="skeleton">&nbsp;</span></div>
-                        <div class="stat-label">Лучший игрок недели</div>
-                    </div>
+                    <div id="spotlight-player-card" class="spotlight-card">
+                        </div>
                 </div>
                 <div class="charts-grid-general">
                     <div class="chart-container">
-                        <h3 class="chart-title"><i class="material-icons">bar_chart</i> Рейтинг гильдий</h3>
+                        <div class="chart-header">
+                            <h3 class="chart-title"><i class="material-icons">bar_chart</i> Рейтинг гильдий</h3>
+                            <i class="material-icons tooltip-trigger" data-tooltip="Сравнительный рейтинг гильдий на платформе по среднему баллу всех их игроков.">help_outline</i>
+                        </div>
                         <canvas id="guild-ranking-chart"></canvas>
                     </div>
                     <div class="chart-container">
-                        <h3 class="chart-title"><i class="material-icons">pie_chart</i> Распределение по ролям</h3>
+                        <div class="chart-header">
+                            <h3 class="chart-title"><i class="material-icons">pie_chart</i> Распределение по ролям</h3>
+                             <i class="material-icons tooltip-trigger" data-tooltip="Показывает, как распределены игровые сессии по ролям внутри вашей гильдии.">help_outline</i>
+                        </div>
                         <canvas id="guild-role-distribution"></canvas>
                     </div>
                     <div class="chart-container">
-                        <h3 class="chart-title"><i class="material-icons">bar_chart</i> Распределение ошибок</h3>
+                         <div class="chart-header">
+                            <h3 class="chart-title"><i class="material-icons">bar_chart</i> Категории ошибок в гильдии</h3>
+                             <i class="material-icons tooltip-trigger" data-tooltip="Анализирует самые частые категории ошибок, допускаемые всеми игроками гильдии.">help_outline</i>
+                        </div>
                         <canvas id="guild-error-types"></canvas>
                     </div>
                     <div class="chart-container">
-                        <h3 class="chart-title"><i class="material-icons">error</i> Топ-З частых ошибок</h3>
+                        <div class="chart-header">
+                            <h3 class="chart-title"><i class="material-icons">error</i> Топ-3 частых ошибок</h3>
+                            <i class="material-icons tooltip-trigger" data-tooltip="Выделяет три самые распространенные ошибки в гильдии для целенаправленной работы.">help_outline</i>
+                        </div>
                         <canvas id="top-errors-chart"></canvas>
                     </div>
                 </div>
                 <div class="players-list-container">
-                    <h2>Топ-10 игроков</h2>
+                    <h2>Топ-10 игроков гильдии</h2>
                     <div id="top-players-list"></div>
                 </div>
             </section>
             <section id="profile-content" class="dashboard-section" style="display: none;">
                 <header class="profile-header">
-                    <div class="profile-avatar">A</div>
+                    <div class="profile-avatar-wrapper avatar-changer">
+                        <img src="" alt="Аватар профиля" class="profile-avatar-img" style="display: none;">
+                        <div class="profile-avatar-fallback"></div>
+                        <div class="avatar-upload-overlay">
+                            <i class="material-icons">photo_camera</i>
+                        </div>
+                        <input type="file" id="avatar-upload-input" accept="image/png, image/jpeg, image/gif" style="display: none;">
+                    </div>
                     <div class="profile-info">
                         <h1 class="profile-nickname"><span class="skeleton">Игрок</span></h1>
                         <p class="profile-guild"><span class="skeleton">Гильдия: -</span></p>
@@ -231,6 +283,10 @@
                         <span class="stat-badge guild-kill-fame">Kill Fame: -</span>
                         <span class="stat-badge guild-death-fame">Death Fame: -</span>
                     </div>
+                </div>
+                <div id="role-ratings-container" class="players-list-container">
+                     <h2><i class="material-icons">military_tech</i> Рейтинги по ролям (Топ-5)</h2>
+                     <div id="role-ratings-content"></div>
                 </div>
                 <div class="players-list-container">
                     <h2>Все игроки гильдии</h2>
@@ -289,6 +345,8 @@
             </section>
         </main>
     </div>
+
+    <!-- Modals -->
     <div id="help-modal" class="modal">
         <div class="modal-content">
             <header class="modal-header">
@@ -304,7 +362,7 @@
                 <div class="modal-section">
                     <h3><i class="material-icons">contact_support</i> Контакты поддержки</h3>
                     <p>Если у вас возникли проблемы, свяжитесь со мной:</p>
-                    <a href="Telegram"><i class="material-icons">email</i>https://t.me/lympn</a>
+                    <a href="https://t.me/lympn"><i class="material-icons">send</i> Telegram: @lympn</a>
                     <a href="#"><i class="material-icons">forum</i> Discord: lympen</a>
                 </div>
             </div>
@@ -358,16 +416,16 @@
                     <input type="hidden" id="score" value="0" required min="1">
                 </div>
                 <div class="form-group">
-                    <label>Типы ошибок</label>
+                    <label>Типы ошибок (например, "далеко от танка, поздно нажал деф")</label>
                     <input type="text" id="error-types" placeholder="Введите через запятую" maxlength="200">
                 </div>
                 <div class="form-group">
-                    <label>Над чем работать</label>
+                    <label>Над чем работать (например, "следи за позицией хила, быстрее реагируй")</label>
                     <textarea id="work-on" placeholder="Введите через запятую" rows="3" maxlength="300"></textarea>
                 </div>
                 <div class="form-group">
                     <label>Комментарии</label>
-                    <textarea id="comments" placeholder="Введите через запятую" rows="5" maxlength="500"></textarea>
+                    <textarea id="comments" placeholder="Общие комментарии" rows="5" maxlength="500"></textarea>
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary close-modal-btn">Отмена</button>
@@ -376,23 +434,49 @@
             </form>
         </div>
     </div>
-    <div id="compare-modal" class="modal">
+    <div id="compare-modal" class="modal wide-modal">
         <div class="modal-content">
             <header class="modal-header">
-                <h2>Сравнение с игроком</h2>
+                <h2>Сравнение игроков</h2>
                 <button class="close-modal">&times;</button>
             </header>
             <div class="modal-body">
-                <div class="form-group">
-                    <label>Выберите игрока</label>
-                    <select id="compare-player-select">
-                        <option value="" disabled selected>Выберите игрока</option>
-                    </select>
+                <div class="compare-controls">
+                    <div class="form-group">
+                        <label>Игрок 1</label>
+                        <select id="compare-player1-select">
+                            <option value="" disabled selected>Выберите игрока</option>
+                        </select>
+                    </div>
+                     <div class="form-group">
+                        <label>Игрок 2</label>
+                        <select id="compare-player2-select">
+                            <option value="" disabled selected>Выберите игрока</option>
+                        </select>
+                    </div>
                 </div>
-                <div id="compare-results"></div>
+                <div id="compare-results">
+                    </div>
             </div>
         </div>
     </div>
-    <button id="compare-btn" class="btn btn-primary compare-btn">Сравнить с другим игроком</button>
+    <div id="avatar-cropper-modal" class="modal">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2>Обрезать изображение</h2>
+                <button class="close-modal">&times;</button>
+            </header>
+            <div class="modal-body">
+                <div class="avatar-cropper-container">
+                    <img id="avatar-cropper-image" src="">
+                </div>
+            </div>
+            <footer class="modal-footer">
+                <button id="cancel-crop-btn" class="btn btn-secondary">Отмена</button>
+                <button id="save-crop-btn" class="btn btn-primary">Сохранить</button>
+            </footer>
+        </div>
+    </div>
+    <button id="compare-btn" class="btn btn-primary compare-btn">Сравнить игроков</button>
 </body>
 </html>

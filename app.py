@@ -10,9 +10,10 @@ import traceback
 import logging
 import hashlib
 from functools import wraps
+from collections import defaultdict
 
 # --- CONFIGURATION ---
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
@@ -20,6 +21,9 @@ app.secret_key = 'your-super-secret-key-that-is-long-and-random'
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 DB_PATH = 'data/database.db'
+AVATAR_UPLOAD_FOLDER = 'static/avatars'
+app.config['AVATAR_UPLOAD_FOLDER'] = AVATAR_UPLOAD_FOLDER
+
 
 # --- DATABASE MANAGEMENT ---
 def get_db():
@@ -61,6 +65,7 @@ def founder_required(f):
 
 # --- DATABASE INITIALIZATION ---
 def init_db():
+    os.makedirs(app.config['AVATAR_UPLOAD_FOLDER'], exist_ok=True)
     with app.app_context():
         db = get_db()
         cursor = db.cursor()
@@ -85,9 +90,18 @@ def init_db():
             status TEXT DEFAULT 'active',
             balance INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            avatar_url TEXT,
             FOREIGN KEY (guild_id) REFERENCES guilds(id) ON DELETE CASCADE
         )
         ''')
+
+        # Add avatar_url column if it doesn't exist for backward compatibility
+        try:
+            cursor.execute("SELECT avatar_url FROM players LIMIT 1")
+        except sqlite3.OperationalError:
+            cursor.execute("ALTER TABLE players ADD COLUMN avatar_url TEXT")
+            logger.info("Column 'avatar_url' added to 'players' table.")
+
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS content (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL)
         ''')
@@ -126,7 +140,6 @@ def init_db():
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_players_guild ON players(guild_id)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_sessions_date ON sessions(session_date)')
 
-        # Создание гильдий, если их нет
         if cursor.execute("SELECT COUNT(*) FROM guilds").fetchone()[0] == 0:
             guilds_data = [
                 ("Grey Knights", "GK123", "SECRET_GK_123"),
@@ -137,42 +150,28 @@ def init_db():
                 hashed_founder_code = hashlib.sha256(founder_code.encode()).hexdigest()
                 cursor.execute("INSERT INTO guilds (name, code, founder_code) VALUES (?, ?, ?)", (name, hashed_code, hashed_founder_code))
 
-        # Создание типов контента, если их нет
         if cursor.execute("SELECT COUNT(*) FROM content").fetchone()[0] == 0:
             contents = ['Замки', 'Клаймы', 'Открытый мир', 'HG 5v5', 'Авалон', 'Скримы']
             cursor.executemany("INSERT INTO content (name) VALUES (?)", [(c,) for c in contents])
 
-        # +++ НАЧАЛО: ИЗМЕНЕННЫЙ БЛОК СОЗДАНИЯ ИГРОКОВ +++
-        # Создание только указанных игроков, если таблица пуста
         if cursor.execute("SELECT COUNT(*) FROM players").fetchone()[0] == 0:
-            # Получаем ID гильдий
             cursor.execute("SELECT id FROM guilds WHERE name = 'Grey Knights'")
             grey_knights_id_row = cursor.fetchone()
-            
             cursor.execute("SELECT id FROM guilds WHERE name = 'Mure'")
             mure_id_row = cursor.fetchone()
-
-            # Проверяем, что гильдии существуют
             if grey_knights_id_row and mure_id_row:
                 grey_knights_id = grey_knights_id_row[0]
                 mure_id = mure_id_row[0]
-
-                # Список игроков для добавления
-                # Статус 'member' соответствует статусу 'active' в вашей системе
                 players_to_insert = [
                     ("CORPUS", grey_knights_id, "founder"),
                     ("lympeen", grey_knights_id, "mentor"),
                     ("VoldeDron", grey_knights_id, "active"),
                     ("misterhe111", mure_id, "founder")
                 ]
-                
-                # Добавляем игроков в базу данных
                 cursor.executemany("INSERT INTO players (nickname, guild_id, status) VALUES (?, ?, ?)", players_to_insert)
                 logger.info("Successfully inserted initial players.")
             else:
                 logger.error("Could not find required guilds 'Grey Knights' or 'Mure' to seed initial players.")
-        # +++ КОНЕЦ: ИЗМЕНЕННЫЙ БЛОК +++
-
         db.commit()
 
 
@@ -326,10 +325,44 @@ def serve_page(filename):
         
     return send_from_directory(app.static_folder, filename)
 
-
 @app.route('/static/<path:path>')
 def send_static(path):
     return send_from_directory('static', path)
+
+# --- UTILITY FUNCTIONS ---
+def get_date_filter(period_str):
+    """Returns an SQL condition for date filtering."""
+    if period_str == '7':
+        return " AND session_date >= DATETIME('now', '-7 days')"
+    elif period_str == '30':
+        return " AND session_date >= DATETIME('now', '-30 days')"
+    else: # 'all' or any other value
+        return ""
+
+ERROR_CATEGORIES = {
+    'Позиционка': ['позиционк', 'позиция', 'далеко', 'положение', 'стоит не там', 'дистанция', 'кайт'],
+    'Тайминг': ['тайминг', 'долго', 'не успеваешь', 'вовремя', 'поздно', 'реакция', 'быстрее', 'медленно'],
+    'Механики': ['механик', 'кнопки', 'прожимаешь', 'ротация', 'умения', 'скиллы', 'кд', 'кулдаун', 'способност'],
+    'Коммуникация': ['информаци', 'инфа', 'говоришь', 'колл', 'связь', 'микрофон', 'молчишь', 'координ']
+}
+
+def categorize_error_text(text):
+    """Categorizes a string of errors."""
+    if not text:
+        return []
+    
+    text_lower = text.lower()
+    found_categories = set()
+    
+    for category, keywords in ERROR_CATEGORIES.items():
+        for keyword in keywords:
+            if keyword in text_lower:
+                found_categories.add(category)
+    
+    if not found_categories:
+        return ['Другое']
+        
+    return list(found_categories)
 
 # --- GENERAL API ROUTES ---
 @app.route('/api/system/status', methods=['GET'])
@@ -352,10 +385,9 @@ def system_status():
     return jsonify({
         'status': 'online', 
         'user_status': user_status,
-        'version': '1.2.0',
+        'version': '1.5.0', # Updated version
         'last_update': last_update, 'total_players': total_players, 'total_mentors': total_mentors
     })
-
 
 @app.route('/api/guilds', methods=['GET'])
 def get_guilds():
@@ -378,7 +410,7 @@ def get_top_players(guild_id):
     limit = request.args.get('limit', 10, type=int)
     cursor = get_db().cursor()
     query = '''
-        SELECT p.id, p.nickname, AVG(s.score) as avg_score, COUNT(s.id) as session_count,
+        SELECT p.id, p.nickname, p.avatar_url, AVG(s.score) as avg_score, COUNT(s.id) as session_count,
                (SELECT role FROM sessions WHERE player_id = p.id GROUP BY role ORDER BY COUNT(*) DESC LIMIT 1) as main_role
         FROM players p LEFT JOIN sessions s ON p.id = s.player_id
         WHERE p.guild_id = ?
@@ -390,14 +422,41 @@ def get_top_players(guild_id):
     if players:
         valid_scores = [p['avg_score'] for p in players if p['avg_score'] is not None]
         valid_counts = [p['session_count'] for p in players]
-        max_score = max(valid_scores) if valid_scores else 1
-        max_count = max(valid_counts) if valid_counts else 1
+        if not valid_scores: valid_scores = [1]
+        if not valid_counts: valid_counts = [1]
+        max_score = max(valid_scores)
+        max_count = max(valid_counts)
         for p in players:
             p['rank'] = (0.7 * (p.get('avg_score') or 0) / max_score) + (0.3 * p['session_count'] / max_count)
         players.sort(key=lambda p: p['rank'], reverse=True)
 
     players_to_return = players if limit == 0 else players[:limit]
     return jsonify({'status': 'success', 'players': players_to_return})
+    
+@app.route('/api/guilds/<int:guild_id>/role-ratings', methods=['GET'])
+def get_role_ratings(guild_id):
+    db = get_db()
+    cursor = db.cursor()
+    roles = ['D-Tank', 'E-Tank', 'Healer', 'Support', 'DPS', 'Battlemount']
+    ratings = {}
+    
+    for role in roles:
+        query = """
+            SELECT p.nickname, AVG(s.score) as avg_score, COUNT(s.id) as session_count
+            FROM sessions s
+            JOIN players p ON s.player_id = p.id
+            WHERE p.guild_id = ? AND s.role = ?
+            GROUP BY s.player_id
+            HAVING session_count >= 3
+            ORDER BY avg_score DESC
+            LIMIT 5
+        """
+        cursor.execute(query, (guild_id, role))
+        players = cursor.fetchall()
+        ratings[role] = [{'nickname': p['nickname'], 'avg_score': round(p['avg_score'], 2)} for p in players]
+        
+    return jsonify({'status': 'success', 'ratings': ratings})
+
 
 @app.route('/api/players', methods=['GET'])
 def get_players():
@@ -414,11 +473,52 @@ def get_current_player():
     player = cursor.fetchone()
     if not player:
         return jsonify({'status': 'error', 'message': 'Player not found'}), 404
+    
+    player_dict = dict(player)
+    # Ensure avatar_url is included, even if null
+    if 'avatar_url' not in player_dict:
+        player_dict['avatar_url'] = None
+        
     return jsonify({'status': 'success', 'player': {
-        'id': player['id'], 'nickname': player['nickname'], 'status': player['status'],
-        'balance': player['balance'], 'guild': player['guild_name'], 'guild_id': player['guild_id'],
-        'created_at': player['created_at']
+        'id': player_dict['id'], 'nickname': player_dict['nickname'], 'status': player_dict['status'],
+        'balance': player_dict['balance'], 'guild': player_dict['guild_name'], 'guild_id': player_dict['guild_id'],
+        'created_at': player_dict['created_at'], 'avatar_url': player_dict['avatar_url']
     }})
+
+@app.route('/api/players/current/avatar', methods=['POST'])
+def upload_avatar():
+    if 'player_id' not in session:
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
+    
+    if 'avatar' not in request.files:
+        return jsonify({'status': 'error', 'message': 'No file part'}), 400
+        
+    file = request.files['avatar']
+    if file.filename == '':
+        return jsonify({'status': 'error', 'message': 'No selected file'}), 400
+        
+    if file:
+        filename = f"player_{session['player_id']}.png" # Always save as png
+        filepath = os.path.join(app.config['AVATAR_UPLOAD_FOLDER'], filename)
+        
+        # Remove old avatar if it exists with different extensions (optional, for cleanup)
+        for ext in ['.png', '.jpg', '.jpeg', '.gif']:
+            old_path = os.path.join(app.config['AVATAR_UPLOAD_FOLDER'], f"player_{session['player_id']}{ext}")
+            if os.path.exists(old_path) and old_path != filepath:
+                os.remove(old_path)
+        
+        file.save(filepath)
+        
+        avatar_url = f"/{filepath.replace(os.path.sep, '/')}" # Use forward slashes for URL
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("UPDATE players SET avatar_url = ? WHERE id = ?", (avatar_url, session['player_id']))
+        db.commit()
+        
+        return jsonify({'status': 'success', 'avatar_url': avatar_url})
+
+    return jsonify({'status': 'error', 'message': 'File upload failed'}), 500
+
 
 @app.route('/api/players/<int:player_id>/export', methods=['GET'])
 def export_player_data(player_id):
@@ -462,8 +562,13 @@ def save_session():
 
 @app.route('/api/statistics/player/<int:player_id>', methods=['GET'])
 def get_player_stats(player_id):
+    period = request.args.get('period', '7')
+    date_filter = get_date_filter(period)
+    
+    query = f"SELECT AVG(score) as avg_score, COUNT(*) as session_count, MAX(session_date) as last_update FROM sessions WHERE player_id = ? {date_filter}"
+    
     cursor = get_db().cursor()
-    cursor.execute("SELECT AVG(score) as avg_score, COUNT(*) as session_count, MAX(session_date) as last_update FROM sessions WHERE player_id = ? AND session_date >= DATETIME('now', '-7 days')", (player_id,))
+    cursor.execute(query, (player_id,))
     stats = cursor.fetchone()
     return jsonify({'status': 'success', 'avgScore': stats['avg_score'] or 0, 'sessionCount': stats['session_count'], 'lastUpdate': stats['last_update']})
 
@@ -471,16 +576,20 @@ def get_player_stats(player_id):
 def get_comparison_with_average(player_id):
     try:
         cursor = get_db().cursor()
-        cursor.execute("SELECT AVG(score) as avg_score FROM sessions WHERE player_id = ?", (player_id,))
+        period = request.args.get('period', 'all')
+        date_filter = get_date_filter(period)
+
+        cursor.execute(f"SELECT AVG(score) as avg_score FROM sessions WHERE player_id = ? {date_filter}", (player_id,))
         player_score_row = cursor.fetchone()
         player_score = (player_score_row['avg_score'] or 0) if player_score_row else 0
         
-        cursor.execute("""
+        query = f"""
             SELECT AVG(avg_score) as top_avg_score FROM (
                 SELECT AVG(s.score) as avg_score FROM players p JOIN sessions s ON p.id = s.player_id 
-                WHERE p.guild_id = (SELECT guild_id FROM players WHERE id = ?) GROUP BY p.id ORDER BY avg_score DESC LIMIT 10
-            )""", (player_id,))
-        
+                WHERE p.guild_id = (SELECT guild_id FROM players WHERE id = ?) {date_filter.replace("AND", "AND s.")}
+                GROUP BY p.id ORDER BY avg_score DESC LIMIT 10
+            )"""
+        cursor.execute(query, (player_id,))
         top_row = cursor.fetchone()
         top_avg_score = (top_row['top_avg_score'] or 0) if top_row else 0
 
@@ -488,102 +597,156 @@ def get_comparison_with_average(player_id):
     except Exception as e:
         logger.error(f"Error in get_comparison_with_average: {e}\n{traceback.format_exc()}")
         return jsonify({'status': 'error', 'message': "Internal server error"}), 500
-        
+
 def _get_player_comparison_stats(player_id):
-    """Вспомогательная функция для получения статистики для сравнения."""
     cursor = get_db().cursor()
-    
     cursor.execute("SELECT AVG(score) as avg_score, COUNT(id) as session_count FROM sessions WHERE player_id = ?", (player_id,))
     stats = cursor.fetchone()
     
-    cursor.execute("SELECT error_types FROM sessions WHERE player_id = ? AND error_types IS NOT NULL AND error_types != ''", (player_id,))
-    total_errors = 0
+    cursor.execute("SELECT error_types, work_on FROM sessions WHERE player_id = ?", (player_id,))
+    error_counts = defaultdict(int)
     for row in cursor.fetchall():
-        total_errors += len([e for e in row['error_types'].split(',') if e.strip()])
-        
+        full_text = f"{row['error_types'] or ''} {row['work_on'] or ''}"
+        categories = categorize_error_text(full_text)
+        for category in categories:
+            error_counts[category] += 1
+            
     return {
         'score': stats['avg_score'] or 0,
         'sessions': stats['session_count'] or 0,
-        'errors': total_errors
+        'errors': dict(error_counts)
     }
 
-@app.route('/api/statistics/compare/<int:player1_id>/<int:player2_id>', methods=['GET'])
-def compare_two_players(player1_id, player2_id):
-    try:
-        stats1 = _get_player_comparison_stats(player1_id)
-        stats2 = _get_player_comparison_stats(player2_id)
+@app.route('/api/statistics/full-comparison', methods=['GET'])
+def full_compare_two_players():
+    player1_id = request.args.get('p1', type=int)
+    player2_id = request.args.get('p2', type=int)
 
-        def safe_percent_diff(v1, v2, lower_is_better=False):
-            if v2 == 0:
-                return 100 if v1 > 0 else 0
-            
-            if lower_is_better:
-                return ((v2 - v1) / v2) * 100
-            else:
-                return ((v1 - v2) / v2) * 100
+    if not player1_id or not player2_id:
+        return jsonify({'status': 'error', 'message': 'Two player IDs are required'}), 400
 
-        return jsonify({
-            'status': 'success',
-            'percent_scores': safe_percent_diff(stats1['score'], stats2['score']),
-            'percent_errors': safe_percent_diff(stats1['errors'], stats2['errors'], lower_is_better=True),
-            'percent_sessions': safe_percent_diff(stats1['sessions'], stats2['sessions'])
-        })
-    except Exception as e:
-        logger.error(f"Error in compare_two_players: {e}\n{traceback.format_exc()}")
-        return jsonify({'status': 'error', 'message': "Internal server error"}), 500
+    p1_trend = get_player_trend(player1_id, as_json=False)
+    p2_trend = get_player_trend(player2_id, as_json=False)
+    
+    p1_roles = get_player_role_scores(player1_id, as_json=False)
+    p2_roles = get_player_role_scores(player2_id, as_json=False)
+    
+    p1_errors = _get_player_comparison_stats(player1_id)['errors']
+    p2_errors = _get_player_comparison_stats(player2_id)['errors']
+
+    return jsonify({
+        'status': 'success',
+        str(player1_id): {
+            'trend': p1_trend,
+            'roles': p1_roles,
+            'errors': p1_errors
+        },
+        str(player2_id): {
+            'trend': p2_trend,
+            'roles': p2_roles,
+            'errors': p2_errors
+        }
+    })
 
 @app.route('/api/statistics/player-trend/<int:player_id>', methods=['GET'])
-def get_player_trend(player_id):
+def get_player_trend(player_id, as_json=True):
+    period = request.args.get('period', '30' if as_json else 'all')
+    date_filter = get_date_filter(period)
+    
+    query = f"SELECT strftime('%Y-%W', session_date) as week, AVG(score) as avg_score FROM sessions WHERE player_id = ? {date_filter} GROUP BY week ORDER BY week"
+    
     cursor = get_db().cursor()
-    cursor.execute("SELECT strftime('%Y-%W', session_date) as week, AVG(score) as avg_score FROM sessions WHERE player_id = ? AND session_date >= DATETIME('now', '-28 days') GROUP BY week ORDER BY week", (player_id,))
+    cursor.execute(query, (player_id,))
     rows = cursor.fetchall()
-    return jsonify({'status': 'success', 'weeks': [r['week'] for r in rows], 'scores': [round(r['avg_score'] or 0, 2) for r in rows]})
+    
+    data = {'weeks': [r['week'] for r in rows], 'scores': [round(r['avg_score'] or 0, 2) for r in rows]}
+    return jsonify({'status': 'success', **data}) if as_json else data
 
 @app.route('/api/statistics/player-role-scores/<int:player_id>', methods=['GET'])
-def get_player_role_scores(player_id):
+def get_player_role_scores(player_id, as_json=True):
+    period = request.args.get('period', 'all')
+    date_filter = get_date_filter(period)
+    
+    query = f"SELECT role, AVG(score) as avg_score FROM sessions WHERE player_id = ? {date_filter} GROUP BY role ORDER BY avg_score DESC"
+    
     cursor = get_db().cursor()
-    cursor.execute("SELECT role, AVG(score) as avg_score FROM sessions WHERE player_id = ? GROUP BY role ORDER BY avg_score DESC", (player_id,))
+    cursor.execute(query, (player_id,))
     rows = cursor.fetchall()
-    return jsonify({'status': 'success', 'roles': [r['role'] for r in rows], 'scores': [round(r['avg_score'] or 0, 2) for r in rows]})
+    
+    data = {'roles': [r['role'] for r in rows], 'scores': [round(r['avg_score'] or 0, 2) for r in rows]}
+    return jsonify({'status': 'success', **data}) if as_json else data
+
 
 @app.route('/api/statistics/player-content-scores/<int:player_id>', methods=['GET'])
 def get_player_content_scores(player_id):
+    period = request.args.get('period', 'all')
+    date_filter = get_date_filter(period)
+    
+    query = f"""
+        SELECT c.name as content, AVG(s.score) as avg_score 
+        FROM sessions s JOIN content c ON s.content_id = c.id 
+        WHERE s.player_id = ? {date_filter.replace("AND", "AND s.")} 
+        GROUP BY c.id ORDER BY avg_score DESC
+    """
+    
     cursor = get_db().cursor()
-    cursor.execute("SELECT c.name as content, AVG(s.score) as avg_score FROM sessions s JOIN content c ON s.content_id = c.id WHERE s.player_id = ? GROUP BY c.id ORDER BY avg_score DESC", (player_id,))
+    cursor.execute(query, (player_id,))
     rows = cursor.fetchall()
     return jsonify({'status': 'success', 'contents': [r['content'] for r in rows], 'scores': [round(r['avg_score'] or 0, 2) for r in rows]})
 
 @app.route('/api/statistics/player-error-types/<int:player_id>', methods=['GET'])
 def get_player_error_types(player_id):
+    period = request.args.get('period', 'all')
+    date_filter = get_date_filter(period)
+    
+    query = f"SELECT error_types, work_on FROM sessions WHERE player_id = ? AND (error_types IS NOT NULL AND error_types != '' OR work_on IS NOT NULL AND work_on != '') {date_filter}"
+    
     cursor = get_db().cursor()
-    cursor.execute("SELECT error_types FROM sessions WHERE player_id = ? AND error_types IS NOT NULL AND error_types != ''", (player_id,))
-    error_counts = {}
+    cursor.execute(query, (player_id,))
+    
+    error_counts = defaultdict(int)
     for row in cursor.fetchall():
-        for error in row['error_types'].split(','):
-            error = error.strip()
-            if error: error_counts[error] = error_counts.get(error, 0) + 1
+        full_text = f"{row['error_types'] or ''}, {row['work_on'] or ''}"
+        categories = categorize_error_text(full_text)
+        for category in categories:
+            error_counts[category] += 1
+            
     return jsonify({'status': 'success', 'errors': list(error_counts.keys()), 'counts': list(error_counts.values())})
+
 
 @app.route('/api/statistics/error-distribution/<int:player_id>', methods=['GET'])
 def get_error_distribution(player_id):
-    cursor = get_db().cursor()
-    cursor.execute("""
+    period = request.args.get('period', 'all')
+    date_filter = get_date_filter(period)
+    
+    query = f"""
         SELECT c.name as content, COUNT(s.id) as count
         FROM sessions s
         JOIN content c ON s.content_id = c.id
-        WHERE s.player_id = ? AND s.error_types IS NOT NULL AND s.error_types != ''
+        WHERE s.player_id = ? AND (s.error_types IS NOT NULL AND s.error_types != '' OR s.work_on IS NOT NULL AND s.work_on != '') {date_filter.replace("AND", "AND s.")}
         GROUP BY c.name
-    """, (player_id,))
+    """
+    cursor = get_db().cursor()
+    cursor.execute(query, (player_id,))
     rows = cursor.fetchall()
     return jsonify({'status': 'success', 'contents': [r['content'] for r in rows], 'counts': [r['count'] for r in rows]})
 
 @app.route('/api/statistics/error-score-correlation/<int:player_id>', methods=['GET'])
 def get_error_score_correlation(player_id):
+    period = request.args.get('period', 'all')
+    date_filter = get_date_filter(period)
+    
+    query = f"SELECT score, error_types, work_on FROM sessions WHERE player_id = ? {date_filter}"
+    
     cursor = get_db().cursor()
-    cursor.execute("SELECT score, error_types FROM sessions WHERE player_id = ? AND error_types IS NOT NULL", (player_id,))
+    cursor.execute(query, (player_id,))
     points = []
     for row in cursor.fetchall():
-        error_count = len(row['error_types'].split(',')) if row['error_types'].strip() else 0
+        error_count = 0
+        if row['error_types']:
+            error_count += len([e for e in row['error_types'].split(',') if e.strip()])
+        if row['work_on']:
+            error_count += len([e for e in row['work_on'].split(',') if e.strip()])
         points.append({'errors': error_count, 'score': row['score']})
     return jsonify({'status': 'success', 'points': points})
 
@@ -604,23 +767,27 @@ def get_guild_role_distribution():
 @app.route('/api/statistics/guild-error-types', methods=['GET'])
 def get_guild_error_types():
     cursor = get_db().cursor()
-    cursor.execute("SELECT error_types FROM sessions WHERE error_types IS NOT NULL AND error_types != ''")
-    error_counts = {}
+    cursor.execute("SELECT error_types, work_on FROM sessions WHERE (error_types IS NOT NULL AND error_types != '') OR (work_on IS NOT NULL AND work_on != '')")
+    error_counts = defaultdict(int)
     for row in cursor.fetchall():
-        for error in row['error_types'].split(','):
-            error = error.strip()
-            if error: error_counts[error] = error_counts.get(error, 0) + 1
+        full_text = f"{row['error_types'] or ''}, {row['work_on'] or ''}"
+        categories = categorize_error_text(full_text)
+        for category in categories:
+            error_counts[category] += 1
+            
     return jsonify({'status': 'success', 'errors': list(error_counts.keys()), 'counts': list(error_counts.values())})
 
 @app.route('/api/statistics/top-errors', methods=['GET'])
 def get_top_errors():
     cursor = get_db().cursor()
-    cursor.execute("SELECT error_types FROM sessions WHERE error_types IS NOT NULL AND error_types != ''")
-    error_counts = {}
+    cursor.execute("SELECT error_types, work_on FROM sessions WHERE (error_types IS NOT NULL AND error_types != '') OR (work_on IS NOT NULL AND work_on != '')")
+    error_counts = defaultdict(int)
     for row in cursor.fetchall():
-        for error in row['error_types'].split(','):
-            error = error.strip()
-            if error: error_counts[error] = error_counts.get(error, 0) + 1
+        full_text = f"{row['error_types'] or ''}, {row['work_on'] or ''}"
+        categories = categorize_error_text(full_text)
+        for category in categories:
+            error_counts[category] += 1
+
     sorted_errors = sorted(error_counts.items(), key=lambda item: item[1], reverse=True)
     return jsonify({'status': 'success', 'errors': [e[0] for e in sorted_errors], 'counts': [e[1] for e in sorted_errors]})
 
@@ -634,18 +801,39 @@ def get_guild_stats(guild_id):
 @app.route('/api/statistics/guild-ranking', methods=['GET'])
 def get_guild_ranking():
     cursor = get_db().cursor()
-    cursor.execute("SELECT g.name as guild, AVG(s.score) as avg_score FROM guilds g LEFT JOIN players p ON g.id = p.guild_id LEFT JOIN sessions s ON p.id = s.player_id GROUP BY g.id ORDER BY avg_score DESC")
+    cursor.execute("SELECT g.name as guild, AVG(s.score) as avg_score FROM guilds g LEFT JOIN players p ON g.id = p.guild_id LEFT JOIN sessions s ON p.id = s.player_id WHERE s.id IS NOT NULL GROUP BY g.id ORDER BY avg_score DESC")
     rows = cursor.fetchall()
     return jsonify({'status': 'success', 'guilds': [r['guild'] for r in rows], 'scores': [round(r['avg_score'] or 0, 2) for r in rows]})
 
 @app.route('/api/statistics/best-player-week', methods=['GET'])
 def get_best_player_week():
-    guild_id = request.args.get('guild_id')
+    guild_id = request.args.get('guild_id', type=int)
     if not guild_id: return jsonify({'status': 'error', 'message': 'guild_id required'}), 400
+    
     cursor = get_db().cursor()
-    cursor.execute("SELECT p.nickname, AVG(s.score) as avg_score FROM sessions s JOIN players p ON s.player_id = p.id WHERE s.session_date >= DATETIME('now', '-7 days') AND p.guild_id = ? GROUP BY p.id ORDER BY avg_score DESC LIMIT 1", (guild_id,))
+    query = """
+        WITH PlayerWeekStats AS (
+            SELECT
+                p.id,
+                p.nickname,
+                AVG(s.score) as avg_score,
+                (SELECT role FROM sessions WHERE player_id = p.id AND session_date >= DATETIME('now', '-7 days') GROUP BY role ORDER BY COUNT(*) DESC LIMIT 1) as main_role,
+                (SELECT c.name FROM sessions s_c JOIN content c ON s_c.content_id = c.id WHERE s_c.player_id = p.id AND s_c.session_date >= DATETIME('now', '-7 days') GROUP BY c.id ORDER BY AVG(s_c.score) DESC LIMIT 1) as best_content
+            FROM sessions s
+            JOIN players p ON s.player_id = p.id
+            WHERE s.session_date >= DATETIME('now', '-7 days') AND p.guild_id = ?
+            GROUP BY p.id
+            HAVING COUNT(s.id) >= 3
+        )
+        SELECT * FROM PlayerWeekStats ORDER BY avg_score DESC LIMIT 1
+    """
+    cursor.execute(query, (guild_id,))
     player = cursor.fetchone()
-    return jsonify({'status': 'success', 'player': {'nickname': player['nickname'] if player else '-'}})
+    
+    if player:
+        return jsonify({'status': 'success', 'player': dict(player)})
+    return jsonify({'status': 'success', 'player': None})
+
 
 @app.route('/api/statistics/total-sessions', methods=['GET'])
 def get_total_sessions():
@@ -674,7 +862,6 @@ def internal_error(error):
     return jsonify({'status': 'error', 'message': 'Internal server error'}), 500
 
 if __name__ == '__main__':
-    os.makedirs('data', exist_ok=True)
     with app.app_context():
         init_db()
     app.run(port=3000, debug=True)

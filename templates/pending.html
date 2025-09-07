@@ -46,7 +46,7 @@
             const savedTheme = localStorage.getItem('theme') || 'system';
             applyTheme(savedTheme);
 
-            // ИСПРАВЛЕНИЕ: Плавно показываем контейнер, решая проблему белого экрана
+            // Плавно показываем контейнер
             setTimeout(() => {
                 const container = document.querySelector('.login-container');
                 if (container) {
