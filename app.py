@@ -51,16 +51,18 @@ def management_required(f):
         player_id = session['player_id']
         db = get_db()
         cursor = db.cursor()
+        # Fetch player and their guild_id for context
         cursor.execute("SELECT status, guild_id FROM players WHERE id = ?", (player_id,))
         player = cursor.fetchone()
 
         if not player:
             return jsonify({'status': 'error', 'message': 'Player not found'}), 401
         
-        # Разрешаем доступ и основателям, и менторам
+        # Check if the player is a mentor or a founder
         if player['status'] not in ['founder', 'mentor']:
             return jsonify({'status': 'error', 'message': 'Access denied: Founder or Mentor rights required'}), 403
 
+        # Pass guild_id for context if needed later
         g.management_guild_id = player['guild_id']
         return f(*args, **kwargs)
     return decorated_function
@@ -313,6 +315,66 @@ def login():
 def logout_endpoint():
     session.pop('player_id', None)
     return jsonify({'success': True})
+
+@app.route('/api/players/current/recent-sessions', methods=['GET'])
+def get_my_recent_sessions():
+    """Endpoint for players to get their own last 5 sessions."""
+    if 'player_id' not in session:
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
+    
+    player_id = session['player_id']
+    cursor = get_db().cursor()
+    # Fetch the last 5 sessions for the current player
+    cursor.execute('''
+        SELECT s.session_date, s.score, s.role, c.name as content_name
+        FROM sessions s
+        JOIN content c ON s.content_id = c.id
+        WHERE s.player_id = ?
+        ORDER BY s.session_date DESC
+        LIMIT 5
+    ''', (player_id,))
+    sessions = cursor.fetchall()
+    
+    return jsonify({'status': 'success', 'sessions': [dict(row) for row in sessions]})
+
+@app.route('/api/management/player-details/<int:player_id>', methods=['GET'])
+@management_required
+def get_player_details_for_management(player_id):
+    """Endpoint for mentors/founders to get a player's profile and last 7 sessions."""
+    db = get_db()
+    cursor = db.cursor()
+
+    # Ensure the requested player is in the same guild as the mentor/founder
+    cursor.execute("SELECT guild_id FROM players WHERE id = ?", (player_id,))
+    target_player_guild = cursor.fetchone()
+    
+    if not target_player_guild or target_player_guild['guild_id'] != g.management_guild_id:
+        return jsonify({'status': 'error', 'message': 'Player not found in your guild'}), 404
+
+    # Fetch player profile details
+    cursor.execute("SELECT id, nickname, status, balance, created_at FROM players WHERE id = ?", (player_id,))
+    player_profile = cursor.fetchone()
+
+    # Fetch last 7 sessions for that player
+    cursor.execute('''
+        SELECT s.session_date, s.score, s.role, s.comments, c.name as content_name, p_mentor.nickname as mentor_name
+        FROM sessions s
+        JOIN content c ON s.content_id = c.id
+        LEFT JOIN players p_mentor ON s.mentor_id = p_mentor.id
+        WHERE s.player_id = ?
+        ORDER BY s.session_date DESC
+        LIMIT 7
+    ''', (player_id,))
+    recent_sessions = cursor.fetchall()
+
+    if not player_profile:
+        return jsonify({'status': 'error', 'message': 'Player profile not found'}), 404
+
+    return jsonify({
+        'status': 'success',
+        'profile': dict(player_profile),
+        'sessions': [dict(row) for row in recent_sessions]
+    })
 
 # --- FOUNDER-SPECIFIC ROUTES ---
 @app.route('/api/guilds/pending-players', methods=['GET'])

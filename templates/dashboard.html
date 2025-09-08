@@ -48,7 +48,7 @@
                     <i class="material-icons">groups</i>
                     <span>Гильдия</span>
                 </div>
-                <div class="nav-item founder-btn" style="display: none;">
+                <div class="nav-item management-btn" style="display: none;">
                     <i class="material-icons">admin_panel_settings</i>
                     <span>Управление</span>
                 </div>
@@ -208,6 +208,12 @@
                         </div>
                     </div>
                 </div>
+                <div class="players-list-container" style="margin-top: 24px;">
+                    <h2><i class="material-icons" style="vertical-align: middle; margin-right: 8px;">history</i>Последние сессии</h2>
+                    <div id="recent-sessions-list">
+                         <p>Загрузка...</p>
+                    </div>
+                </div>
             </section>
             
             <section id="general-dashboard" class="dashboard-section" style="display: none;">
@@ -327,22 +333,8 @@
                 </div>
             </section>
             
-            <section id="founder-content" class="dashboard-section" style="display: none;">
-                <header class="dashboard-header">
-                    <div class="header-left"><h1>Панель управления гильдией</h1></div>
-                </header>
-                <div class="players-list-container">
-                    <h2><i class="material-icons">person_add</i> Заявки на вступление</h2>
-                    <div id="pending-players-list">
-                        </div>
-                </div>
-                <div class="players-list-container" style="margin-top: var(--spacing-xl);">
-                    <h2><i class="material-icons">manage_accounts</i> Управление составом гильдии</h2>
-                    <p>Здесь вы можете просмотреть всех участников гильдии и удалить тех, кто покинул состав.</p>
-                    <div id="manage-players-list" style="margin-top: var(--spacing-md);">
-                        </div>
-                </div>
-            </section>
+            <section id="management-content" class="dashboard-section" style="display: none;">
+                </section>
             
             <section id="recommendations-content" class="dashboard-section" style="display: none;">
                 <header class="recommendations-header">

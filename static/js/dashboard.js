@@ -155,8 +155,8 @@ function initNavigation() {
                     loadGuildData();
                     break;
                 case 'Управление':
-                    document.getElementById('founder-content').style.display = 'block';
-                    loadFounderPanel();
+                    document.getElementById('management-content').style.display = 'block';
+                    loadManagementPanel(); // НОВАЯ функция для обработки обеих ролей
                     break;
                 case 'Рекомендации':
                     document.getElementById('recommendations-content').style.display = 'block';
@@ -186,9 +186,9 @@ function initDashboard() {
     document.querySelector('.nav-item').classList.add('active');
     document.querySelector('.view-toggle').style.display = 'flex';
 
-    const founderBtn = document.querySelector('.founder-btn');
-    if (founderBtn) {
-        founderBtn.style.display = (currentPlayerData?.status === 'founder') ? 'flex' : 'none';
+    const managementBtn = document.querySelector('.management-btn');
+    if (managementBtn) {
+        managementBtn.style.display = ['mentor', 'founder'].includes(currentPlayerData?.status) ? 'flex' : 'none';
     }
     
     const mentorBtn = document.querySelector('.mentor-btn');
@@ -400,6 +400,7 @@ async function loadPlayerDataAndCharts() {
     }
 
     skeletonHandler.show(['avg-score', 'session-count', 'comparison', 'last-update-player']);
+    loadMyRecentSessions();
     try {
         const endpoints = [
             `/api/statistics/player/${currentPlayerId}?period=${currentDatePeriod}`,
@@ -793,6 +794,54 @@ function initAvatarCropper() {
     });
 }
 
+function loadMyRecentSessions() {
+    const container = document.getElementById('recent-sessions-list');
+    if (!container) return;
+
+    fetch('/api/players/current/recent-sessions')
+        .then(response => response.ok ? response.json() : Promise.reject('Failed to load'))
+        .then(data => {
+            if (data.status === 'success') {
+                renderRecentSessions(container, data.sessions);
+            } else {
+                container.innerHTML = '<p class="error-message">Не удалось загрузить сессии.</p>';
+            }
+        })
+        .catch(() => {
+            container.innerHTML = '<p class="error-message">Ошибка загрузки сессий.</p>';
+        });
+}
+
+function renderRecentSessions(container, sessions) {
+    if (!sessions || sessions.length === 0) {
+        container.innerHTML = '<p class="placeholder" style="position: static; height: auto;">У вас еще нет зарегистрированных сессий.</p>';
+        return;
+    }
+
+    container.innerHTML = `
+        <table class="players-table">
+            <thead>
+                <tr>
+                    <th>Дата</th>
+                    <th>Контент</th>
+                    <th>Роль</th>
+                    <th>Оценка</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${sessions.map(s => `
+                    <tr>
+                        <td data-label="Дата">${new Date(s.session_date).toLocaleDateString()}</td>
+                        <td data-label="Контент">${s.content_name}</td>
+                        <td data-label="Роль">${s.role}</td>
+                        <td data-label="Оценка">${s.score.toFixed(1)}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
 async function loadGuildData() {
     if (!currentGuildId) return;
 
@@ -860,12 +909,52 @@ function renderRoleRatings(ratings) {
     }
 }
 
-function loadFounderPanel() {
-    loadPendingPlayers();
-    loadManageablePlayers();
+// УДАЛИТЕ старые функции loadFounderPanel, renderPendingPlayers, approvePlayer, denyPlayer.
+// ДОБАВЬТЕ следующие новые функции.
+
+/**
+ * Главный обработчик для раздела "Управление".
+ * Отображает правильный вид в зависимости от роли текущего пользователя (основатель или ментор).
+ */
+function loadManagementPanel() {
+    const container = document.getElementById('management-content');
+    if (!container) return;
+    container.innerHTML = ''; // Очищаем предыдущее содержимое
+
+    if (currentPlayerData.status === 'founder') {
+        // Если пользователь основатель, отображаем вид управления заявками.
+        container.innerHTML = `
+            <header class="dashboard-header">
+                <div class="header-left"><h1>Управление заявками</h1></div>
+            </header>
+            <div class="players-list-container">
+                <h2>Заявки на вступление в гильдию</h2>
+                <div id="pending-players-list"></div>
+            </div>`;
+        loadPendingPlayersList(); // Эта функция теперь будет обрабатывать получение и отображение для основателей.
+    } else if (currentPlayerData.status === 'mentor') {
+        // Если пользователь ментор, отображаем вид анализа игроков.
+        container.innerHTML = `
+            <header class="dashboard-header">
+                <div class="header-left"><h1>Анализ игроков</h1></div>
+            </header>
+            <div class="form-group" style="padding: 0 16px;">
+                <label>Выберите игрока для просмотра</label>
+                <select id="mentor-player-select" class="form-control">
+                    <option value="" disabled selected>Выберите игрока...</option>
+                </select>
+            </div>
+            <div id="mentor-player-details-view" style="margin-top: 16px;">
+                <p class="placeholder" style="position: static; height: auto;">Выберите игрока из списка выше, чтобы увидеть его профиль и последние сессии.</p>
+            </div>`;
+        populatePlayerSelectForMentor();
+    }
 }
 
-function loadPendingPlayers() {
+/**
+ * Получает и отображает список ожидающих игроков для основателей.
+ */
+function loadPendingPlayersList() {
     const container = document.getElementById('pending-players-list');
     if (!container) return;
     container.innerHTML = '<p>Загрузка заявок...</p>';
@@ -874,75 +963,159 @@ function loadPendingPlayers() {
         .then(response => response.ok ? response.json() : Promise.reject(response))
         .then(data => {
             if (data.status === 'success') {
-                renderPendingPlayers(data.players);
-            } else {
-                throw new Error(data.message || 'Не удалось загрузить заявки');
-            }
+                if (data.players.length === 0) {
+                    container.innerHTML = '<p class="placeholder" style="position: static; height: auto;">Нет новых заявок на вступление.</p>';
+                    return;
+                }
+                const table = document.createElement('table');
+                table.className = 'players-table';
+                table.innerHTML = `
+                    <thead><tr><th>Игрок</th><th>Дата заявки</th><th>Действия</th></tr></thead>
+                    <tbody>
+                        ${data.players.map(p => `
+                            <tr>
+                                <td data-label="Игрок">${p.nickname}</td>
+                                <td data-label="Дата">${new Date(p.date).toLocaleDateString()}</td>
+                                <td data-label="Действия">
+                                    <button class="btn btn-primary approve-btn" data-id="${p.id}">Одобрить</button>
+                                    <button class="btn btn-secondary deny-btn" data-id="${p.id}">Отклонить</button>
+                                </td>
+                            </tr>`).join('')}
+                    </tbody>`;
+                container.innerHTML = '';
+                container.appendChild(table);
+
+                // Добавляем обработчики событий для одобрения/отклонения
+                container.querySelectorAll('.approve-btn').forEach(btn => btn.addEventListener('click', e => handlePlayerAction(e.target.dataset.id, 'approve')));
+                container.querySelectorAll('.deny-btn').forEach(btn => btn.addEventListener('click', e => handlePlayerAction(e.target.dataset.id, 'deny')));
+            } else { throw new Error(data.message); }
         })
-        .catch(() => {
-            container.innerHTML = '<p class="error-message">Ошибка загрузки заявок на вступление.</p>';
+        .catch(() => container.innerHTML = '<p class="error-message">Ошибка загрузки заявок.</p>');
+}
+
+/**
+ * Обрабатывает действие основателя (одобрить/отклонить) над игроком.
+ * @param {string} playerId - ID игрока.
+ * @param {string} action - Действие для выполнения ('approve' или 'deny').
+ */
+function handlePlayerAction(playerId, action) {
+    fetch(`/api/players/${playerId}/${action}`, { method: 'POST' })
+        .then(response => response.ok ? response.json() : Promise.reject(response))
+        .then(data => {
+            if (data.status === 'success') {
+                showSuccess('management-content', `Игрок успешно ${action === 'approve' ? 'одобрен' : 'отклонен'}.`);
+                loadPendingPlayersList(); // Обновляем список
+            } else { throw new Error(data.message); }
+        })
+        .catch(() => showError('management-content', `Не удалось ${action === 'approve' ? 'одобрить' : 'отклонить'} игрока.`));
+}
+
+/**
+ * Заполняет выпадающий список выбора игрока для вида ментора.
+ */
+function populatePlayerSelectForMentor() {
+    const select = document.getElementById('mentor-player-select');
+    if (!select) return;
+
+    fetch('/api/players')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Исключаем самого ментора из списка
+                const otherPlayers = data.players.filter(p => p.id !== currentPlayerId);
+                otherPlayers.forEach(player => {
+                    const option = document.createElement('option');
+                    option.value = player.id;
+                    option.textContent = player.nickname;
+                    select.appendChild(option);
+                });
+
+                select.addEventListener('change', (e) => {
+                    const selectedPlayerId = e.target.value;
+                    if (selectedPlayerId) {
+                        loadPlayerDetailsForMentor(selectedPlayerId);
+                    }
+                });
+            }
         });
 }
 
-function renderPendingPlayers(players) {
-    const container = document.getElementById('pending-players-list');
+/**
+ * Получает и отображает детали конкретного игрока для ментора.
+ * @param {string} playerId - ID игрока для отображения.
+ */
+function loadPlayerDetailsForMentor(playerId) {
+    const container = document.getElementById('mentor-player-details-view');
     if (!container) return;
+    container.innerHTML = '<p>Загрузка данных игрока...</p>';
 
-    if (players.length === 0) {
-        container.innerHTML = '<p class="placeholder" style="position: static; height: auto;">Нет новых заявок на вступление.</p>';
+    fetch(`/api/management/player-details/${playerId}`)
+        .then(response => response.ok ? response.json() : Promise.reject('Failed to load details'))
+        .then(data => {
+            if (data.status === 'success') {
+                const { profile, sessions } = data;
+                container.innerHTML = `
+                    <div class="profile-section">
+                        <h2><i class="material-icons">person</i> Профиль игрока: ${profile.nickname}</h2>
+                        <div class="profile-info-grid">
+                            <div class="info-item"><label>Статус</label><span>${profile.status}</span></div>
+                            <div class="info-item"><label>Баланс</label><span>${profile.balance}</span></div>
+                            <div class="info-item"><label>Дата регистрации</label><span>${new Date(profile.created_at).toLocaleDateString()}</span></div>
+                        </div>
+                    </div>
+                    <div class="players-list-container">
+                        <h2>Последние 7 сессий</h2>
+                        <div id="mentor-recent-sessions"></div>
+                    </div>
+                `;
+                // Отображаем таблицу сессий в только что созданном div
+                renderRecentSessionsForMentor(document.getElementById('mentor-recent-sessions'), sessions);
+            } else {
+                container.innerHTML = `<p class="error-message">${data.message || 'Не удалось загрузить данные.'}</p>`;
+            }
+        })
+        .catch(() => {
+            container.innerHTML = '<p class="error-message">Ошибка при загрузке данных игрока.</p>';
+        });
+}
+
+/**
+ * Отображает список сессий для вида ментора (включает больше деталей).
+ * @param {HTMLElement} container - Элемент для отображения таблицы.
+ * @param {Array} sessions - Массив объектов сессий.
+ */
+function renderRecentSessionsForMentor(container, sessions) {
+    if (!sessions || sessions.length === 0) {
+        container.innerHTML = '<p class="placeholder" style="position: static; height: auto;">У игрока нет зарегистрированных сессий.</p>';
         return;
     }
 
     container.innerHTML = `
         <table class="players-table">
             <thead>
-                <tr><th>Игрок</th><th>Дата заявки</th><th>Действия</th></tr>
+                <tr>
+                    <th>Дата</th>
+                    <th>Контент</th>
+                    <th>Роль</th>
+                    <th>Оценка</th>
+                    <th>Ментор</th>
+                    <th>Комментарий</th>
+                </tr>
             </thead>
             <tbody>
-                ${players.map(player => `
+                ${sessions.map(s => `
                     <tr>
-                        <td data-label="Игрок">${player.nickname}</td>
-                        <td data-label="Дата заявки">${new Date(player.date).toLocaleDateString()}</td>
-                        <td data-label="Действия">
-                            <button class="btn btn-primary approve-btn" data-id="${player.id}">Одобрить</button>
-                            <button class="btn btn-secondary deny-btn" data-id="${player.id}">Отклонить</button>
-                        </td>
+                        <td data-label="Дата">${new Date(s.session_date).toLocaleDateString()}</td>
+                        <td data-label="Контент">${s.content_name}</td>
+                        <td data-label="Роль">${s.role}</td>
+                        <td data-label="Оценка">${s.score.toFixed(1)}</td>
+                        <td data-label="Ментор">${s.mentor_name || '-'}</td>
+                        <td data-label="Комментарий">${s.comments || '-'}</td>
                     </tr>
                 `).join('')}
             </tbody>
         </table>
     `;
-
-    container.querySelectorAll('.approve-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => approvePlayer(e.target.dataset.id));
-    });
-    container.querySelectorAll('.deny-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => denyPlayer(e.target.dataset.id));
-    });
-}
-
-function approvePlayer(playerId) {
-    fetch(`/api/players/${playerId}/approve`, { method: 'POST' })
-        .then(response => response.ok ? response.json() : Promise.reject(response))
-        .then(data => {
-            if (data.status === 'success') {
-                showSuccess('founder-content', 'Игрок успешно одобрен.');
-                loadFounderPanel();
-            } else { throw new Error(data.message); }
-        })
-        .catch(() => showError('founder-content', 'Не удалось одобрить игрока.'));
-}
-
-function denyPlayer(playerId) {
-    fetch(`/api/players/${playerId}/deny`, { method: 'POST' })
-        .then(response => response.ok ? response.json() : Promise.reject(response))
-        .then(data => {
-            if (data.status === 'success') {
-                showSuccess('founder-content', 'Заявка игрока отклонена.');
-                loadFounderPanel();
-            } else { throw new Error(data.message); }
-        })
-        .catch(() => showError('founder-content', 'Не удалось отклонить заявку.'));
 }
 
 function loadManageablePlayers() {
