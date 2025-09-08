@@ -29,25 +29,19 @@
                     <option value="" disabled selected>Загрузка гильдий...</option>
                 </select>
             </div>
+            
+            <!-- ИЗМЕНЕНО: Единое поле для пароля / кода -->
             <div class="form-group">
-                <label for="code">Код гильдии</label>
+                <label for="password">Пароль / Код гильдии</label>
                 <div class="input-group">
-                    <input type="password" id="code" required>
+                    <input type="password" id="password" required>
                     <button type="button" class="password-toggle">
                         <i class="material-icons">visibility</i>
                     </button>
                 </div>
-            </div>
-            
-            <div class="form-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="is-founder-checkbox">
-                    <span>Я регистрирую гильдию (я основатель)</span>
-                </label>
-            </div>
-            <div class="form-group" id="founder-code-group" style="display: none;">
-                <label for="founder-code">Секретный код основателя</label>
-                <input type="password" id="founder-code" placeholder="Введите секретный код">
+                <small style="color: var(--text-muted); margin-top: 4px; display: block;">
+                    Для входа введите пароль вашего статуса. Для регистрации нового игрока введите общий код гильдии.
+                </small>
             </div>
 
             <button type="submit" class="btn btn-primary btn-block">Войти или Зарегистрироваться</button>
