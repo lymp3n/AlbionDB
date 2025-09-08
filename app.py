@@ -143,8 +143,9 @@ def init_db():
             status TEXT DEFAULT 'active',
             balance INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            avatar_url TEXT,
-            FOREIGN KEY (guild_id) REFERENCES guilds(id) ON DELETE CASCADE
+            mentor_id INTEGER,
+            FOREIGN KEY (guild_id) REFERENCES guilds(id) ON DELETE CASCADE,
+            FOREIGN KEY (mentor_id) REFERENCES players(id) ON DELETE SET NULL
         )
         ''')
 
@@ -154,9 +155,16 @@ def init_db():
             cursor.execute("ALTER TABLE players ADD COLUMN avatar_url TEXT")
             logger.info("Column 'avatar_url' added to 'players' table.")
 
+        try:
+            cursor.execute("SELECT description FROM players LIMIT 1")
+        except sqlite3.OperationalError:
+            cursor.execute("ALTER TABLE players ADD COLUMN description TEXT")
+            logger.info("Column 'description' added to 'players' table.")
+
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS content (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL)
         ''')
+
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -684,25 +692,45 @@ def get_players():
     cursor.execute('SELECT p.id, p.nickname, g.name as guild_name FROM players p JOIN guilds g ON p.guild_id = g.id')
     return jsonify({'status': 'success', 'players': [dict(p) for p in cursor.fetchall()]})
     
+# In app.py
+
 @app.route('/api/players/current', methods=['GET'])
 def get_current_player():
     if 'player_id' not in session:
         return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
     cursor = get_db().cursor()
-    cursor.execute("SELECT p.*, g.name as guild_name FROM players p JOIN guilds g ON p.guild_id = g.id WHERE p.id = ?", (session['player_id'],))
+    
+    # ИЗМЕНЕНИЕ: Добавили 'p.description' в SQL-запрос
+    cursor.execute("""
+        SELECT 
+            p.id, p.nickname, p.status, p.balance, p.guild_id, p.created_at, p.avatar_url, p.description,
+            g.name as guild_name, 
+            m.nickname as mentor_name 
+        FROM players p 
+        JOIN guilds g ON p.guild_id = g.id
+        LEFT JOIN players m ON p.mentor_id = m.id
+        WHERE p.id = ?
+    """, (session['player_id'],))
+    
     player = cursor.fetchone()
     if not player:
+        session.pop('player_id', None)
         return jsonify({'status': 'error', 'message': 'Player not found'}), 404
     
-    player_dict = dict(player)
-    # Ensure avatar_url is included, even if null
-    if 'avatar_url' not in player_dict:
-        player_dict['avatar_url'] = None
-        
+    player_data = dict(player)
+    
+    # ИЗМЕНЕНИЕ: Добавили 'description' в возвращаемый объект JSON
     return jsonify({'status': 'success', 'player': {
-        'id': player_dict['id'], 'nickname': player_dict['nickname'], 'status': player_dict['status'],
-        'balance': player_dict['balance'], 'guild': player_dict['guild_name'], 'guild_id': player_dict['guild_id'],
-        'created_at': player_dict['created_at'], 'avatar_url': player_dict['avatar_url']
+        'id': player_data['id'], 
+        'nickname': player_data['nickname'], 
+        'status': player_data['status'],
+        'balance': player_data['balance'], 
+        'guild': player_data['guild_name'], 
+        'guild_id': player_data['guild_id'],
+        'created_at': player_data['created_at'],
+        'avatar_url': player_data['avatar_url'],
+        'description': player_data['description'],
+        'mentor': player_data.get('mentor_name')
     }})
 
 @app.route('/api/players/current/avatar', methods=['POST'])
@@ -1090,6 +1118,34 @@ def not_found_error(error):
 def internal_error(error):
     logger.error(f"Internal server error: {error}\n{traceback.format_exc()}")
     return jsonify({'status': 'error', 'message': 'Internal server error'}), 500
+
+@app.route('/api/mentors/students', methods=['GET'])
+@management_required # Используем существующий декоратор для менторов и основателей
+def get_my_students():
+    """Возвращает список учеников текущего ментора."""
+    mentor_id = session['player_id']
+    cursor = get_db().cursor()
+    cursor.execute("""
+        SELECT p.id, p.nickname, AVG(s.score) as avg_score, COUNT(s.id) as session_count
+        FROM players p
+        LEFT JOIN sessions s ON p.id = s.player_id
+        WHERE p.mentor_id = ?
+        GROUP BY p.id
+    """, (mentor_id,))
+    students = [dict(row) for row in cursor.fetchall()]
+    return jsonify({'status': 'success', 'students': students})
+
+@app.route('/api/mentors/students/<int:student_id>', methods=['POST'])
+@management_required
+def assign_student(student_id):
+    """Назначает ученика текущему ментору."""
+    mentor_id = session['player_id']
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("UPDATE players SET mentor_id = ? WHERE id = ?", (mentor_id, student_id))
+    db.commit()
+    return jsonify({'status': 'success', 'message': 'Ученик назначен'})
+
 
 @app.route('/api/mentoring/request-help', methods=['POST'])
 def request_mentor_help():

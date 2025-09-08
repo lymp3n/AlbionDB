@@ -158,6 +158,10 @@ function initNavigation() {
                     document.getElementById('management-content').style.display = 'block';
                     loadManagementPanel(); // НОВАЯ функция для обработки обеих ролей
                     break;
+                case 'Мои ученики':
+                    document.getElementById('my-students-content').style.display = 'block';
+                    loadMyStudents();
+                    break;
                 case 'Рекомендации':
                     document.getElementById('recommendations-content').style.display = 'block';
                     loadRecommendations();
@@ -171,6 +175,24 @@ function initNavigation() {
         });
     });
 }
+
+function checkAndShowMyStudentsTab() {
+    if (currentPlayerData?.status !== 'mentor') return; // Выполнять только для менторов
+
+    const myStudentsBtn = document.querySelector('.my-students-btn');
+    if (!myStudentsBtn) return;
+
+    fetch('/api/mentors/students')
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success' && data.students.length > 0) {
+                myStudentsBtn.style.display = 'flex'; // Показываем кнопку, если есть ученики
+            } else {
+                myStudentsBtn.style.display = 'none'; // Скрываем, если нет
+            }
+        });
+}
+
 
 function initDashboard() {
     initViewToggle();
@@ -212,6 +234,7 @@ function initDashboard() {
     loadMentorRequestCount();
     setInterval(loadOnlineMembers, 15000);
     setInterval(loadMentorRequestCount, 30000);
+    checkAndShowMyStudentsTab();
 }
 
 function loadMentorRequestCount() {
@@ -651,7 +674,6 @@ function loadProfile() {
                 document.querySelector('.profile-guild').textContent = `Гильдия: ${player.guild || '-'}`;
                 document.querySelector('.profile-status').textContent = `Статус: ${formatPlayerStatus(player.status) || '-'}`;
                 document.querySelector('.profile-balance').textContent = `Баланс: ${player.balance || 0}`;
-                document.querySelector('#reg-date').textContent = player.created_at ? new Date(player.created_at).toLocaleDateString() : '-';
                 document.querySelector('#mentor-name').textContent = player.mentor || 'Не назначен';
                 document.querySelector('#description').textContent = player.description || 'Нет описания';
                 updateAvatarDisplay(player);
@@ -925,7 +947,7 @@ function loadManagementPanel() {
         // Если пользователь основатель, отображаем вид управления заявками.
         container.innerHTML = `
             <header class="dashboard-header">
-                <div class="header-left"><h1>Управление заявками</h1></div>
+                <div class="header-left"><h1 id="founder-title">Управление заявками <span class="stat-badge" id="pending-count"></span></h1></div>
             </header>
             <div class="players-list-container">
                 <h2>Заявки на вступление в гильдию</h2>
@@ -963,6 +985,12 @@ function loadPendingPlayersList() {
         .then(response => response.ok ? response.json() : Promise.reject(response))
         .then(data => {
             if (data.status === 'success') {
+                const countEl = document.getElementById('pending-count');
+                if (countEl) {
+                    countEl.textContent = data.players.length;
+                    countEl.style.display = data.players.length > 0 ? 'inline-flex' : 'none'; // Показываем только если есть заявки
+                }
+
                 if (data.players.length === 0) {
                     container.innerHTML = '<p class="placeholder" style="position: static; height: auto;">Нет новых заявок на вступление.</p>';
                     return;
@@ -988,7 +1016,9 @@ function loadPendingPlayersList() {
                 // Добавляем обработчики событий для одобрения/отклонения
                 container.querySelectorAll('.approve-btn').forEach(btn => btn.addEventListener('click', e => handlePlayerAction(e.target.dataset.id, 'approve')));
                 container.querySelectorAll('.deny-btn').forEach(btn => btn.addEventListener('click', e => handlePlayerAction(e.target.dataset.id, 'deny')));
-            } else { throw new Error(data.message); }
+            } else {
+                throw new Error(data.message);
+            }
         })
         .catch(() => container.innerHTML = '<p class="error-message">Ошибка загрузки заявок.</p>');
 }
@@ -1054,21 +1084,55 @@ function loadPlayerDetailsForMentor(playerId) {
         .then(data => {
             if (data.status === 'success') {
                 const { profile, sessions } = data;
+
+                // Логика для кнопки "Взять в ученики"
+                let mentorButtonHtml = '';
+                // ИСПОЛЬЗУЕМ 'profile.mentor_id', которое теперь приходит с бэкенда
+                if (!profile.mentor_id) { 
+                    mentorButtonHtml = `<button id="assign-student-btn" class="btn btn-primary" data-student-id="${profile.id}">Взять в ученики</button>`;
+                } else if (profile.mentor_id === currentPlayerData.id) {
+                    mentorButtonHtml = `<span class="stat-badge">Это ваш ученик</span>`;
+                } else {
+                    mentorButtonHtml = `<span class="stat-badge">Ментор уже назначен</span>`;
+                }
+
+                // ИСПРАВЛЕНИЕ: Полностью переписан HTML для корректного отображения данных
                 container.innerHTML = `
                     <div class="profile-section">
-                        <h2><i class="material-icons">person</i> Профиль игрока: ${profile.nickname}</h2>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h2><i class="material-icons">person</i> Профиль игрока: ${profile.nickname}</h2>
+                            ${mentorButtonHtml} 
+                        </div>
                         <div class="profile-info-grid">
-                            <div class="info-item"><label>Статус</label><span>${profile.status}</span></div>
-                            <div class="info-item"><label>Баланс</label><span>${profile.balance}</span></div>
-                            <div class="info-item"><label>Дата регистрации</label><span>${new Date(profile.created_at).toLocaleDateString()}</span></div>
+                            <div class="info-item">
+                                <label>Статус</label>
+                                <span>${formatPlayerStatus(profile.status)}</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Баланс</label>
+                                <span>${profile.balance}</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Дата регистрации</label>
+                                <span>${new Date(profile.created_at).toLocaleDateString()}</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="players-list-container">
-                        <h2>Последние 7 сессий</h2>
+                    <div class="profile-section">
+                        <h2><i class="material-icons">history</i> Последние сессии игрока</h2>
                         <div id="mentor-recent-sessions"></div>
                     </div>
                 `;
-                // Отображаем таблицу сессий в только что созданном div
+
+                // Обработчик для новой кнопки
+                const assignBtn = document.getElementById('assign-student-btn');
+                if (assignBtn) {
+                    assignBtn.addEventListener('click', (e) => {
+                        assignStudentToMentor(e.target.dataset.studentId);
+                    });
+                }
+                
+                // Теперь эта функция найдёт контейнер 'mentor-recent-sessions'
                 renderRecentSessionsForMentor(document.getElementById('mentor-recent-sessions'), sessions);
             } else {
                 container.innerHTML = `<p class="error-message">${data.message || 'Не удалось загрузить данные.'}</p>`;
@@ -1727,4 +1791,37 @@ function showSuccess(containerId, message) {
     successElement.textContent = message;
     messageContainer.insertBefore(successElement, messageContainer.firstChild);
     setTimeout(() => { successElement.remove(); }, 3000);
+}
+
+function loadMyStudents() {
+    const container = document.getElementById('my-students-list-container');
+    container.innerHTML = '<p>Загрузка учеников...</p>';
+
+    fetch('/api/mentors/students')
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success' && data.students.length > 0) {
+                renderPlayerTable(container, data.students, null); // Используем существующую функцию рендера таблицы
+            } else {
+                container.innerHTML = '<p class="placeholder" style="position: static; height: auto;">У вас нет назначенных учеников.</p>';
+            }
+        });
+}
+
+/**
+ * Отправляет запрос на назначение ученика.
+ * @param {string} studentId - ID игрока, которого нужно назначить.
+ */
+function assignStudentToMentor(studentId) {
+    fetch(`/api/mentors/students/${studentId}`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showSuccess('management-content', 'Игрок назначен вашим учеником!');
+                loadPlayerDetailsForMentor(studentId); // Обновляем информацию об игроке
+                checkAndShowMyStudentsTab(); // Обновляем видимость вкладки "Мои ученики"
+            } else {
+                showError('management-content', 'Не удалось назначить ученика.');
+            }
+        });
 }
