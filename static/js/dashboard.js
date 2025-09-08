@@ -71,9 +71,15 @@ function checkAuthStatus() {
         });
 }
 
+
 function loadCurrentPlayerData() {
     fetch('/api/players/current')
-        .then(response => response.ok ? response.json() : Promise.reject(response))
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            return Promise.reject(response);
+        })
         .then(playerData => {
             if (playerData.status === 'success') {
                 currentPlayerId = playerData.player.id;
@@ -84,35 +90,42 @@ function loadCurrentPlayerData() {
                 }
                 initDashboard();
             } else {
-                throw new Error(playerData.message || 'Ошибка загрузки данных игрока');
+                throw new Error(playerData.message || 'Ошибка обработки данных игрока');
             }
         })
         .catch(error => {
             console.error('Ошибка загрузки данных игрока:', error);
-            showError('player-dashboard', 'Ошибка загрузки данных игрока');
+
+            if (error instanceof Response) {
+                if (error.status === 404 || error.status === 401) {
+                    window.location.href = '/login.html';
+                    return; 
+                }
+            }
+            showError('player-dashboard', 'Критическая ошибка загрузки данных. Попробуйте обновить страницу или войти заново.');
         });
 }
+
+
 function initNavigation() {
     document.querySelectorAll('.close-modal, .close-modal-btn').forEach(button => {
         button.addEventListener('click', function() {
-            const modal = this.closest('.modal');
-            if(modal) modal.style.display = 'none';
+            document.querySelectorAll('.modal').forEach(modal => modal.style.display = 'none');
+            document.body.classList.remove('modal-open');
         });
     });
 
-    document.querySelector('.help-btn')?.addEventListener('click', () => {
+    document.querySelector('.help-btn')?.addEventListener('click', function() {
         document.getElementById('help-modal').style.display = 'flex';
+        document.body.classList.add('modal-open');
     });
 
     document.querySelector('.refresh-btn')?.addEventListener('click', refreshActiveSection);
-
-    document.querySelector('.member-btn')?.addEventListener('click', () => {
-        if (confirm('Вы уверены, что хотите отправить запрос на разбор ваших сессий ментору?')) {
-            requestMentorHelp();
-        }
-    });
     
+    document.querySelector('.member-btn')?.addEventListener('click', requestMentorHelp);
+
     document.querySelector('.mentor-view-btn')?.addEventListener('click', loadAndShowReviewRequestsModal);
+
 
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
@@ -122,14 +135,21 @@ function initNavigation() {
             const text = textElement.textContent.trim();
             
             if (text === 'Оценить игрока') {
-                if (currentPlayerData && ['mentor', 'founder'].includes(currentPlayerData.status)) {
+                if (currentPlayerData && ['наставник', 'mentor', 'founder'].includes(currentPlayerData.status)) {
                     document.getElementById('mentor-modal').style.display = 'flex';
+                    document.body.classList.add('modal-open');
                     loadMentorForm();
                 }
                 return;
             }
-             if (text === 'Выйти') {
+            if (text === 'Выйти') {
                 logout();
+                return;
+            }
+            if (text === 'Запросы на разбор') {
+                 if (['mentor', 'founder'].includes(currentPlayerData?.status)) {
+                    loadAndShowReviewRequestsModal();
+                 }
                 return;
             }
             
@@ -150,49 +170,48 @@ function initNavigation() {
                     document.getElementById('profile-content').style.display = 'block';
                     loadProfile();
                     break;
+                case 'Мои ученики':
+                    document.getElementById('my-students-content').style.display = 'block';
+                    loadMyStudents();
+                    break;
                 case 'Гильдия':
                     document.getElementById('guild-content').style.display = 'block';
                     loadGuildData();
                     break;
                 case 'Управление':
                     document.getElementById('management-content').style.display = 'block';
-                    loadManagementPanel(); // НОВАЯ функция для обработки обеих ролей
+                    loadManagementPanel();
                     break;
-                case 'Мои ученики':
-                    document.getElementById('my-students-content').style.display = 'block';
-                    loadMyStudents();
-                    break;
-                case 'Рекомендации':
-                    document.getElementById('recommendations-content').style.display = 'block';
-                    loadRecommendations();
+                case 'Прогресс':
+                    document.getElementById('progress-content').style.display = 'block';
                     break;
                 case 'Настройки':
                     document.getElementById('settings-content').style.display = 'block';
                     loadSettings();
                     break;
             }
-            closeMobileMenu();
         });
     });
 }
 
+
+
 function checkAndShowMyStudentsTab() {
-    if (currentPlayerData?.status !== 'mentor') return; // Выполнять только для менторов
+    if (!['наставник', 'mentor', 'founder'].includes(currentPlayerData?.status)) return;
 
     const myStudentsBtn = document.querySelector('.my-students-btn');
     if (!myStudentsBtn) return;
 
-    fetch('/api/mentors/students')
+    fetch('/api/mentors/my-students')
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success' && data.students.length > 0) {
-                myStudentsBtn.style.display = 'flex'; // Показываем кнопку, если есть ученики
+                myStudentsBtn.style.display = 'flex';
             } else {
-                myStudentsBtn.style.display = 'none'; // Скрываем, если нет
+                myStudentsBtn.style.display = 'none';
             }
         });
 }
-
 
 function initDashboard() {
     initViewToggle();
@@ -200,7 +219,7 @@ function initDashboard() {
     initThemeSwitcher();
     initMentorForm();
     initCompareModal();
-    initRecommendationsFilter();
+    initProgressFilter();
     initAvatarCropper();
 
     updateSidebarInfo();
@@ -208,14 +227,19 @@ function initDashboard() {
     document.querySelector('.nav-item').classList.add('active');
     document.querySelector('.view-toggle').style.display = 'flex';
 
-    const managementBtn = document.querySelector('.management-btn');
-    if (managementBtn) {
-        managementBtn.style.display = ['mentor', 'founder'].includes(currentPlayerData?.status) ? 'flex' : 'none';
-    }
+    const userStatus = currentPlayerData?.status;
+    const isPrivileged = ['наставник', 'mentor', 'founder'].includes(userStatus);
+    const isTopLevel = ['mentor', 'founder'].includes(userStatus);
     
+    // ИСПРАВЛЕНИЕ: Добавлены проверки на существование элементов
     const mentorBtn = document.querySelector('.mentor-btn');
     if (mentorBtn) {
-        mentorBtn.style.display = ['mentor', 'founder'].includes(currentPlayerData?.status) ? 'flex' : 'none';
+        mentorBtn.style.display = isPrivileged ? 'flex' : 'none';
+    }
+
+    const managementBtn = document.querySelector('.management-btn');
+    if (managementBtn) {
+        managementBtn.style.display = isTopLevel ? 'flex' : 'none';
     }
 
     const memberBtn = document.querySelector('.member-btn');
@@ -225,7 +249,7 @@ function initDashboard() {
 
     const mentorViewBtn = document.querySelector('.mentor-view-btn');
     if (mentorViewBtn) {
-        mentorViewBtn.style.display = ['mentor', 'founder'].includes(currentPlayerData?.status) ? 'flex' : 'none';
+        mentorViewBtn.style.display = isTopLevel ? 'flex' : 'none';
     }
 
     refreshActiveSection();
@@ -235,6 +259,21 @@ function initDashboard() {
     setInterval(loadOnlineMembers, 15000);
     setInterval(loadMentorRequestCount, 30000);
     checkAndShowMyStudentsTab();
+}
+
+function initProgressFilter() {
+    const filterContainer = document.querySelector('#progress-content .filter-controls');
+    if (!filterContainer) return;
+
+    filterContainer.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            filterContainer.querySelector('.active')?.classList.remove('active');
+            e.target.classList.add('active');
+            
+            const filter = e.target.dataset.filter;
+            console.log(`Фильтр прогресса установлен на: ${filter}`);
+        }
+    });
 }
 
 function loadMentorRequestCount() {
@@ -301,24 +340,22 @@ function initCollapsibleSections() {
 function refreshActiveSection() {
     const activeSection = document.querySelector('.dashboard-section[style*="block"]');
     if (!activeSection) {
-        // Если активной секции нет, по умолчанию показываем дашборд игрока
         document.getElementById('player-dashboard').style.display = 'block';
         loadPlayerDataAndCharts();
         return;
-    }
-    
-    const activeSectionId = activeSection.id;
+    };
 
-    switch (activeSectionId) {
+    switch (activeSection.id) {
         case 'player-dashboard': loadPlayerDataAndCharts(); break;
         case 'general-dashboard': loadGeneralData(); break;
         case 'profile-content': loadProfile(); break;
         case 'guild-content': loadGuildData(); break;
-        case 'founder-content': loadFounderPanel(); break; 
+        case 'management-content': loadManagementPanel(); break;
+        case 'my-students-content': loadMyStudents(); break;
         case 'recommendations-content': loadRecommendations(); break;
+        case 'settings-content': loadSettings(); break;
     }
     loadSystemStatus();
-    loadOnlineMembers();
 }
 
 function updateAvatarDisplay(player) {
@@ -410,13 +447,13 @@ function formatPlayerStatus(status) {
         'mentor': 'Ментор',
         'active': 'Игрок',
         'inactive': 'Неактивный',
-        'pending': 'Ожидает'
+        'pending': 'Ожидает',
+        'наставник': 'Наставник'
     };
     return statuses[status] || status;
 }
 
 async function loadPlayerDataAndCharts() {
-    // ГЛАВНОЕ ИСПРАВЛЕНИЕ: Защита от запуска без ID игрока
     if (!currentPlayerId) {
         console.log("loadPlayerDataAndCharts skipped: currentPlayerId is null.");
         return;
@@ -438,10 +475,8 @@ async function loadPlayerDataAndCharts() {
 
         const responses = await Promise.all(endpoints.map(url => fetch(url)));
 
-        // Улучшенная обработка ошибок: проверяем все ответы перед парсингом JSON
         for (const res of responses) {
             if (!res.ok) {
-                // Если хоть один запрос неудачен, прерываем выполнение и показываем ошибку
                 throw new Error(`Ошибка сети: ${res.status} ${res.statusText} для ${res.url}`);
             }
         }
@@ -473,7 +508,7 @@ async function loadPlayerDataAndCharts() {
 // --- Chart Creation ---
 function prepareChartContainer(canvasId) {
     const canvas = document.getElementById(canvasId);
-    const container = canvas ? canvas.parentElement : document.body; // Fallback
+    const container = canvas ? canvas.parentElement : document.body; 
     if (!container) return null;
 
     if (charts[canvasId]) {
@@ -481,11 +516,10 @@ function prepareChartContainer(canvasId) {
         delete charts[canvasId];
     }
     
-    // Очищаем только содержимое контейнера, оставляя сам контейнер и его заголовок
     let chartHeader = container.querySelector('.chart-header');
-    container.innerHTML = ''; // Удаляем старый canvas и placeholder
+    container.innerHTML = ''; 
     if (chartHeader) {
-        container.appendChild(chartHeader); // Возвращаем заголовок
+        container.appendChild(chartHeader);
     }
 
     const newCanvas = document.createElement('canvas');
@@ -674,8 +708,9 @@ function loadProfile() {
                 document.querySelector('.profile-guild').textContent = `Гильдия: ${player.guild || '-'}`;
                 document.querySelector('.profile-status').textContent = `Статус: ${formatPlayerStatus(player.status) || '-'}`;
                 document.querySelector('.profile-balance').textContent = `Баланс: ${player.balance || 0}`;
-                document.querySelector('#mentor-name').textContent = player.mentor || 'Не назначен';
+                document.querySelector('#mentor-name').textContent = player.mentor_name || 'Не назначен';
                 document.querySelector('#description').textContent = player.description || 'Нет описания';
+                document.querySelector('#reg-date').textContent = new Date(player.created_at).toLocaleDateString();
                 updateAvatarDisplay(player);
             }
         })
@@ -684,6 +719,136 @@ function loadProfile() {
     document.querySelector('.export-btn')?.addEventListener('click', () => {
         window.location.href = `/api/players/${currentPlayerId}/export`;
     });
+}
+
+function loadMyStudents() {
+    const container = document.getElementById('my-students-list');
+    container.innerHTML = '<p>Загрузка учеников...</p>';
+
+    fetch('/api/mentors/my-students')
+        .then(response => response.ok ? response.json() : Promise.reject(response))
+        .then(data => {
+            if (data.status === 'success') {
+                renderMyStudents(data.students);
+            } else {
+                throw new Error(data.message || 'Не удалось загрузить список учеников');
+            }
+        })
+        .catch(() => {
+            container.innerHTML = '<p class="error-message">Ошибка загрузки учеников.</p>';
+        });
+}
+
+function renderMyStudents(students) {
+    const container = document.getElementById('my-students-list');
+    container.innerHTML = '';
+
+    if (students.length === 0) {
+        container.innerHTML = '<p class="placeholder" style="position: static; height: auto;">У вас пока нет учеников.</p>';
+        return;
+    }
+
+    students.forEach(student => {
+        const card = document.createElement('div');
+        card.className = 'progress-card'; 
+        card.innerHTML = `
+            <div class="progress-header">
+                <h3 class="progress-title">${student.nickname}</h3>
+                <span class="progress-status">Ученик</span>
+            </div>
+            <p class="progress-description">${student.description || 'Нет описания.'}</p>
+            <div class="profile-info-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 16px;">
+                <div class="info-item">
+                    <label>Ср. балл</label>
+                    <span>${(student.avg_score || 0).toFixed(2)}</span>
+                </div>
+                <div class="info-item">
+                    <label>Сессий</label>
+                    <span>${student.session_count || 0}</span>
+                </div>
+            </div>
+            <div class="form-actions" style="margin-top: 0; justify-content: flex-start;">
+                <button class="btn btn-secondary sessions-btn" data-id="${student.id}" data-name="${student.nickname}">Сессии</button>
+                <button class="btn btn-secondary remove-student-btn" data-id="${student.id}" data-name="${student.nickname}">Открепить</button>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+
+    container.querySelectorAll('.sessions-btn').forEach(btn => { 
+        btn.addEventListener('click', (e) => {
+            const { id, name } = e.target.dataset;
+            showRecentSessionsModal(id, name);
+        });
+     });
+
+    container.querySelectorAll('.remove-student-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const { id, name } = e.target.dataset;
+            if (confirm(`Вы уверены, что хотите открепить ученика ${name}?`)) {
+                removeStudent(id);
+            }
+        });
+    });
+}
+
+function removeStudent(studentId) {
+    fetch(`/api/mentors/students/${studentId}/remove`, { method: 'POST' })
+        .then(res => res.ok ? res.json() : Promise.reject(res.json()))
+        .then(data => {
+            if (data.status === 'success') {
+                showSuccess('my-students-content', data.message || 'Ученик успешно откреплен.');
+                loadMyStudents(); 
+                checkAndShowMyStudentsTab(); 
+            } else {
+                throw new Error(data.message);
+            }
+        })
+        .catch(errPromise => {
+            errPromise.then(err => {
+                showError('my-students-content', err.message || 'Не удалось открепить ученика.');
+            });
+        });
+}
+
+function showRecentSessionsModal(playerId, playerName) {
+    const modal = document.getElementById('sessions-modal');
+    const title = document.getElementById('sessions-modal-title');
+    const body = document.getElementById('sessions-modal-body');
+
+    title.textContent = `Последние сессии: ${playerName}`;
+    body.innerHTML = '<p>Загрузка...</p>';
+    modal.style.display = 'flex';
+
+    fetch(`/api/players/${playerId}/sessions`)
+        .then(response => response.ok ? response.json() : Promise.reject(response))
+        .then(data => {
+            if (data.status === 'success' && data.sessions.length > 0) {
+                body.innerHTML = `
+                    <table class="players-table">
+                        <thead>
+                            <tr><th>Дата</th><th>Контент</th><th>Роль</th><th>Балл</th><th>Ошибки</th></tr>
+                        </thead>
+                        <tbody>
+                            ${data.sessions.map(s => `
+                                <tr>
+                                    <td data-label="Дата">${new Date(s.session_date).toLocaleString()}</td>
+                                    <td data-label="Контент">${s.content_name}</td>
+                                    <td data-label="Роль">${s.role}</td>
+                                    <td data-label="Балл">${s.score}</td>
+                                    <td data-label="Ошибки">${s.error_types || '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                 body.innerHTML = '<p class="placeholder" style="position: static; height: auto;">Нет данных о сессиях.</p>';
+            }
+        })
+        .catch(() => {
+            body.innerHTML = '<p class="error-message">Не удалось загрузить сессии.</p>';
+        });
 }
 
 function requestMentorHelp() {
@@ -931,31 +1096,27 @@ function renderRoleRatings(ratings) {
     }
 }
 
-// УДАЛИТЕ старые функции loadFounderPanel, renderPendingPlayers, approvePlayer, denyPlayer.
-// ДОБАВЬТЕ следующие новые функции.
-
-/**
- * Главный обработчик для раздела "Управление".
- * Отображает правильный вид в зависимости от роли текущего пользователя (основатель или ментор).
- */
 function loadManagementPanel() {
     const container = document.getElementById('management-content');
     if (!container) return;
-    container.innerHTML = ''; // Очищаем предыдущее содержимое
+    container.innerHTML = ''; 
 
     if (currentPlayerData.status === 'founder') {
-        // Если пользователь основатель, отображаем вид управления заявками.
         container.innerHTML = `
-            <header class="dashboard-header">
-                <div class="header-left"><h1 id="founder-title">Управление заявками <span class="stat-badge" id="pending-count"></span></h1></div>
+            <header class="dashboard-header" style="margin-bottom: 0; padding-bottom: 0; border: none;">
+                <div class="header-left"><h1 id="founder-title">Управление гильдией</h1></div>
             </header>
             <div class="players-list-container">
-                <h2>Заявки на вступление в гильдию</h2>
+                <h2>Заявки на вступление <span class="stat-badge" id="pending-count" style="vertical-align: middle;"></span></h2>
                 <div id="pending-players-list"></div>
+            </div>
+            <div class="players-list-container">
+                <h2>Управление составом</h2>
+                <div id="manage-players-list"></div>
             </div>`;
-        loadPendingPlayersList(); // Эта функция теперь будет обрабатывать получение и отображение для основателей.
+        loadPendingPlayersList();
+        loadManageablePlayers();
     } else if (currentPlayerData.status === 'mentor') {
-        // Если пользователь ментор, отображаем вид анализа игроков.
         container.innerHTML = `
             <header class="dashboard-header">
                 <div class="header-left"><h1>Анализ игроков</h1></div>
@@ -973,9 +1134,6 @@ function loadManagementPanel() {
     }
 }
 
-/**
- * Получает и отображает список ожидающих игроков для основателей.
- */
 function loadPendingPlayersList() {
     const container = document.getElementById('pending-players-list');
     if (!container) return;
@@ -988,7 +1146,7 @@ function loadPendingPlayersList() {
                 const countEl = document.getElementById('pending-count');
                 if (countEl) {
                     countEl.textContent = data.players.length;
-                    countEl.style.display = data.players.length > 0 ? 'inline-flex' : 'none'; // Показываем только если есть заявки
+                    countEl.style.display = data.players.length > 0 ? 'inline-flex' : 'none'; 
                 }
 
                 if (data.players.length === 0) {
@@ -1013,7 +1171,6 @@ function loadPendingPlayersList() {
                 container.innerHTML = '';
                 container.appendChild(table);
 
-                // Добавляем обработчики событий для одобрения/отклонения
                 container.querySelectorAll('.approve-btn').forEach(btn => btn.addEventListener('click', e => handlePlayerAction(e.target.dataset.id, 'approve')));
                 container.querySelectorAll('.deny-btn').forEach(btn => btn.addEventListener('click', e => handlePlayerAction(e.target.dataset.id, 'deny')));
             } else {
@@ -1023,26 +1180,19 @@ function loadPendingPlayersList() {
         .catch(() => container.innerHTML = '<p class="error-message">Ошибка загрузки заявок.</p>');
 }
 
-/**
- * Обрабатывает действие основателя (одобрить/отклонить) над игроком.
- * @param {string} playerId - ID игрока.
- * @param {string} action - Действие для выполнения ('approve' или 'deny').
- */
 function handlePlayerAction(playerId, action) {
     fetch(`/api/players/${playerId}/${action}`, { method: 'POST' })
         .then(response => response.ok ? response.json() : Promise.reject(response))
         .then(data => {
             if (data.status === 'success') {
                 showSuccess('management-content', `Игрок успешно ${action === 'approve' ? 'одобрен' : 'отклонен'}.`);
-                loadPendingPlayersList(); // Обновляем список
+                loadPendingPlayersList(); 
+                if(action === 'approve') loadManageablePlayers(); 
             } else { throw new Error(data.message); }
         })
         .catch(() => showError('management-content', `Не удалось ${action === 'approve' ? 'одобрить' : 'отклонить'} игрока.`));
 }
 
-/**
- * Заполняет выпадающий список выбора игрока для вида ментора.
- */
 function populatePlayerSelectForMentor() {
     const select = document.getElementById('mentor-player-select');
     if (!select) return;
@@ -1051,7 +1201,6 @@ function populatePlayerSelectForMentor() {
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                // Исключаем самого ментора из списка
                 const otherPlayers = data.players.filter(p => p.id !== currentPlayerId);
                 otherPlayers.forEach(player => {
                     const option = document.createElement('option');
@@ -1070,10 +1219,6 @@ function populatePlayerSelectForMentor() {
         });
 }
 
-/**
- * Получает и отображает детали конкретного игрока для ментора.
- * @param {string} playerId - ID игрока для отображения.
- */
 function loadPlayerDetailsForMentor(playerId) {
     const container = document.getElementById('mentor-player-details-view');
     if (!container) return;
@@ -1085,9 +1230,7 @@ function loadPlayerDetailsForMentor(playerId) {
             if (data.status === 'success') {
                 const { profile, sessions } = data;
 
-                // Логика для кнопки "Взять в ученики"
                 let mentorButtonHtml = '';
-                // ИСПОЛЬЗУЕМ 'profile.mentor_id', которое теперь приходит с бэкенда
                 if (!profile.mentor_id) { 
                     mentorButtonHtml = `<button id="assign-student-btn" class="btn btn-primary" data-student-id="${profile.id}">Взять в ученики</button>`;
                 } else if (profile.mentor_id === currentPlayerData.id) {
@@ -1096,7 +1239,6 @@ function loadPlayerDetailsForMentor(playerId) {
                     mentorButtonHtml = `<span class="stat-badge">Ментор уже назначен</span>`;
                 }
 
-                // ИСПРАВЛЕНИЕ: Полностью переписан HTML для корректного отображения данных
                 container.innerHTML = `
                     <div class="profile-section">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -1124,7 +1266,6 @@ function loadPlayerDetailsForMentor(playerId) {
                     </div>
                 `;
 
-                // Обработчик для новой кнопки
                 const assignBtn = document.getElementById('assign-student-btn');
                 if (assignBtn) {
                     assignBtn.addEventListener('click', (e) => {
@@ -1132,7 +1273,6 @@ function loadPlayerDetailsForMentor(playerId) {
                     });
                 }
                 
-                // Теперь эта функция найдёт контейнер 'mentor-recent-sessions'
                 renderRecentSessionsForMentor(document.getElementById('mentor-recent-sessions'), sessions);
             } else {
                 container.innerHTML = `<p class="error-message">${data.message || 'Не удалось загрузить данные.'}</p>`;
@@ -1143,11 +1283,6 @@ function loadPlayerDetailsForMentor(playerId) {
         });
 }
 
-/**
- * Отображает список сессий для вида ментора (включает больше деталей).
- * @param {HTMLElement} container - Элемент для отображения таблицы.
- * @param {Array} sessions - Массив объектов сессий.
- */
 function renderRecentSessionsForMentor(container, sessions) {
     if (!sessions || sessions.length === 0) {
         container.innerHTML = '<p class="placeholder" style="position: static; height: auto;">У игрока нет зарегистрированных сессий.</p>';
@@ -1222,6 +1357,7 @@ function renderManageablePlayers(players) {
                         <td data-label="Статус">${formatPlayerStatus(player.status)}</td>
                         <td data-label="Дата регистрации">${new Date(player.created_at).toLocaleDateString()}</td>
                         <td data-label="Действия">
+                            ${player.status === 'active' ? `<button class="btn btn-primary promote-btn" data-id="${player.id}" data-name="${player.nickname}">Сделать наставником</button>` : ''}
                             <button class="btn btn-secondary delete-btn" data-id="${player.id}" data-name="${player.nickname}">Удалить</button>
                         </td>
                     </tr>
@@ -1230,6 +1366,16 @@ function renderManageablePlayers(players) {
         </table>
     `;
 
+    container.querySelectorAll('.promote-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const playerId = e.target.dataset.id;
+            const playerName = e.target.dataset.name;
+            if (confirm(`Вы уверены, что хотите повысить игрока "${playerName}" до Наставника?`)) {
+                promotePlayer(playerId);
+            }
+        });
+    });
+
     container.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const playerId = e.target.dataset.id;
@@ -1237,6 +1383,24 @@ function renderManageablePlayers(players) {
             deletePlayer(playerId, playerName);
         });
     });
+}
+
+function promotePlayer(playerId) {
+    fetch(`/api/players/${playerId}/promote`, { method: 'POST' })
+        .then(response => response.ok ? response.json() : Promise.reject(response.json()))
+        .then(data => {
+            if (data.status === 'success') {
+                showSuccess('management-content', data.message || `Игрок успешно повышен.`);
+                loadManageablePlayers(); 
+            } else {
+                throw new Error(data.message);
+            }
+        })
+        .catch(errPromise => {
+             errPromise.then(err => {
+                showError('management-content', err.message || 'Не удалось повысить игрока.');
+            });
+        });
 }
 
 function deletePlayer(playerId, playerName) {
@@ -1248,47 +1412,13 @@ function deletePlayer(playerId, playerName) {
         .then(response => response.ok ? response.json() : Promise.reject(response))
         .then(data => {
             if (data.status === 'success') {
-                showSuccess('founder-content', `Игрок ${playerName} успешно удален.`);
+                showSuccess('management-content', `Игрок ${playerName} успешно удален.`);
                 loadManageablePlayers();
             } else {
                 throw new Error(data.message);
             }
         })
-        .catch(() => showError('founder-content', `Не удалось удалить игрока ${playerName}.`));
-}
-
-function loadRecommendations() {
-    fetch(`/api/recommendations/player/${currentPlayerId}`)
-        .then(response => response.json())
-        .then(data => {
-            const grid = document.querySelector('.recommendations-grid');
-            if (data.status === 'success' && data.recommendations.length > 0) {
-                grid.innerHTML = data.recommendations.map(rec => `
-                    <div class="recommendation-card ${rec.status}">
-                        <div class="recommendation-header">
-                            <h3 class="recommendation-title">${rec.title}</h3>
-                            <span class="recommendation-status">${rec.status}</span>
-                        </div>
-                        <p class="recommendation-description">${rec.description}</p>
-                        <div class="recommendation-meta">
-                            <span>Приоритет: ${rec.priority}</span>
-                            <span>${new Date(rec.created_at).toLocaleDateString()}</span>
-                        </div>
-                    </div>`).join('');
-            } else {
-                 grid.innerHTML = '<div class="placeholder" style="position: static; height: auto; grid-column: 1 / -1;"><i class="material-icons">lightbulb</i><p>Для вас пока нет рекомендаций.</p></div>';
-            }
-        });
-}
-
-function initRecommendationsFilter() {
-    const filterContainer = document.querySelector('.filter-controls');
-    filterContainer?.addEventListener('click', (e) => {
-        if (e.target.classList.contains('filter-pill')) {
-            filterContainer.querySelectorAll('.filter-pill').forEach(f => f.classList.remove('active'));
-            e.target.classList.add('active');
-        }
-    });
+        .catch(() => showError('management-content', `Не удалось удалить игрока ${playerName}.`));
 }
 
 function initViewToggle() {
@@ -1325,7 +1455,6 @@ function initDateFilter() {
 }
 
 async function loadGeneralData() {
-    // ИСПРАВЛЕНИЕ: Защита от запуска без ID гильдии
     if (!currentGuildId) {
         console.log("loadGeneralData skipped: currentGuildId is null.");
         return;
@@ -1533,7 +1662,6 @@ function applyTheme(theme, isInitialLoad = false) {
     if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         document.documentElement.setAttribute('data-theme', 'dark');
     }
-    // На начальной загрузке не нужно обновлять секцию, это произойдет после получения ID
     if (!isInitialLoad) {
         refreshActiveSection();
     }
@@ -1580,22 +1708,46 @@ function initMentorForm() {
 
 async function loadMentorForm() {
     const playerSelect = document.getElementById('player-select');
+    if (playerSelect) {
+        playerSelect.innerHTML = '<option value="" disabled selected>Загрузка игроков...</option>';
+        fetch('/api/players') 
+            .then(response => response.ok ? response.json() : Promise.reject(response))
+            .then(data => {
+                if (data.status === 'success') {
+                    playerSelect.innerHTML = '<option value="" disabled selected>Выберите игрока</option>';
+                    if (data.players.length === 0) {
+                        playerSelect.innerHTML = '<option value="" disabled>Нет игроков для оценки</option>';
+                        return;
+                    }
+                    data.players.forEach(player => {
+                        if (player.id !== currentPlayerId) {
+                            const option = document.createElement('option');
+                            option.value = player.id;
+                            option.textContent = player.nickname;
+                            playerSelect.appendChild(option);
+                        }
+                    });
+                }
+            })
+            .catch(() => playerSelect.innerHTML = '<option value="" disabled>Ошибка загрузки игроков</option>');
+    }
     const contentSelect = document.getElementById('content-select');
-    try {
-        const [playersRes, contentRes] = await Promise.all([ fetch('/api/players'), fetch('/api/content') ]);
-        const playersData = await playersRes.json();
-        const contentData = await contentRes.json();
-        
-        playerSelect.innerHTML = '<option value="" disabled selected>Выберите игрока</option>';
-        playersData.players.forEach(p => {
-            if (p.id !== currentPlayerId) playerSelect.innerHTML += `<option value="${p.id}">${p.nickname}</option>`;
-        });
-        
-        contentSelect.innerHTML = '<option value="" disabled selected>Выберите контент</option>';
-        contentData.content.forEach(c => contentSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`);
-
-    } catch(err) {
-        showError('mentor-modal', 'Ошибка загрузки данных для формы');
+    if (contentSelect) {
+        contentSelect.innerHTML = '<option value="" disabled selected>Загрузка контента...</option>';
+        fetch('/api/content')
+            .then(response => response.ok ? response.json() : Promise.reject(response))
+            .then(data => {
+                if (data.status === 'success') {
+                    contentSelect.innerHTML = '<option value="" disabled selected>Выберите контент</option>';
+                    data.content.forEach(content => {
+                        const option = document.createElement('option');
+                        option.value = content.id;
+                        option.textContent = content.name;
+                        contentSelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(() => contentSelect.innerHTML = '<option value="" disabled>Ошибка загрузки контента</option>');
     }
 }
 
@@ -1769,7 +1921,7 @@ function showError(containerId, message) {
     }
     const existingError = messageContainer.querySelector('.error-message');
     if (existingError) {
-        existingError.textContent = message; // Обновляем текст существующего сообщения
+        existingError.textContent = message;
         return;
     }
     const errorElement = document.createElement('div');
@@ -1793,35 +1945,17 @@ function showSuccess(containerId, message) {
     setTimeout(() => { successElement.remove(); }, 3000);
 }
 
-function loadMyStudents() {
-    const container = document.getElementById('my-students-list-container');
-    container.innerHTML = '<p>Загрузка учеников...</p>';
-
-    fetch('/api/mentors/students')
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'success' && data.students.length > 0) {
-                renderPlayerTable(container, data.students, null); // Используем существующую функцию рендера таблицы
-            } else {
-                container.innerHTML = '<p class="placeholder" style="position: static; height: auto;">У вас нет назначенных учеников.</p>';
-            }
-        });
-}
-
-/**
- * Отправляет запрос на назначение ученика.
- * @param {string} studentId - ID игрока, которого нужно назначить.
- */
 function assignStudentToMentor(studentId) {
     fetch(`/api/mentors/students/${studentId}`, { method: 'POST' })
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
                 showSuccess('management-content', 'Игрок назначен вашим учеником!');
-                loadPlayerDetailsForMentor(studentId); // Обновляем информацию об игроке
-                checkAndShowMyStudentsTab(); // Обновляем видимость вкладки "Мои ученики"
+                loadPlayerDetailsForMentor(studentId); 
+                checkAndShowMyStudentsTab();
             } else {
-                showError('management-content', 'Не удалось назначить ученика.');
+                showError('management-content', data.message || 'Не удалось назначить ученика.');
             }
-        });
+        })
+        .catch(() => showError('management-content', 'Произошла ошибка при назначении ученика.'));
 }

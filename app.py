@@ -67,6 +67,8 @@ def management_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+
+
 # НОВЫЙ ДЕКОРАТОР ТОЛЬКО ДЛЯ ОСНОВАТЕЛЕЙ
 def founder_required(f):
     """Decorator to ensure the user is a guild founder."""
@@ -93,24 +95,21 @@ def founder_required(f):
 
 
 def mentor_or_founder_required(f):
-    """Decorator to ensure the user is a mentor or founder."""
+    """Декоратор для проверки, что пользователь является ментором или основателем."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'player_id' not in session:
             return jsonify({'status': 'error', 'message': 'Authentication required'}), 401
-
+        
         player_id = session['player_id']
-        db = get_db()
-        cursor = db.cursor()
+        cursor = get_db().cursor()
         cursor.execute("SELECT status, guild_id FROM players WHERE id = ?", (player_id,))
         player = cursor.fetchone()
 
-        if not player:
-            return jsonify({'status': 'error', 'message': 'Player not found'}), 401
-        
-        if player['status'] not in ['mentor', 'founder']:
+        if not player or player['status'] not in ['mentor', 'founder']:
             return jsonify({'status': 'error', 'message': 'Access denied: Mentor or Founder rights required'}), 403
-
+        
+        # Сохраняем ID гильдии в глобальный контекст запроса 'g'
         g.current_player_guild_id = player['guild_id']
         return f(*args, **kwargs)
     return decorated_function
@@ -118,12 +117,11 @@ def mentor_or_founder_required(f):
 
 # --- DATABASE INITIALIZATION ---
 def init_db():
-    os.makedirs(app.config['AVATAR_UPLOAD_FOLDER'], exist_ok=True)
     with app.app_context():
         db = get_db()
         cursor = db.cursor()
         cursor.execute('PRAGMA foreign_keys = ON')
-        
+
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS guilds (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -135,6 +133,8 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         ''')
+        
+        # FIXED PLAYERS TABLE SCHEMA
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS players (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -142,29 +142,18 @@ def init_db():
             guild_id INTEGER NOT NULL,
             status TEXT DEFAULT 'active',
             balance INTEGER DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             mentor_id INTEGER,
+            description TEXT,
+            avatar_url TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (guild_id) REFERENCES guilds(id) ON DELETE CASCADE,
-            FOREIGN KEY (mentor_id) REFERENCES players(id) ON DELETE SET NULL
+            FOREIGN KEY (mentor_id) REFERENCES players(id)
         )
         ''')
-
-        try:
-            cursor.execute("SELECT avatar_url FROM players LIMIT 1")
-        except sqlite3.OperationalError:
-            cursor.execute("ALTER TABLE players ADD COLUMN avatar_url TEXT")
-            logger.info("Column 'avatar_url' added to 'players' table.")
-
-        try:
-            cursor.execute("SELECT description FROM players LIMIT 1")
-        except sqlite3.OperationalError:
-            cursor.execute("ALTER TABLE players ADD COLUMN description TEXT")
-            logger.info("Column 'description' added to 'players' table.")
 
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS content (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL)
         ''')
-
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -195,7 +184,8 @@ def init_db():
             FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
         )
         ''')
-
+        
+        # ADDED HELP_REQUESTS TABLE
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS help_requests (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -208,16 +198,12 @@ def init_db():
         )
         ''')
 
-
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_sessions_player ON sessions(player_id)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_players_guild ON players(guild_id)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_sessions_date ON sessions(session_date)')
 
         if cursor.execute("SELECT COUNT(*) FROM guilds").fetchone()[0] == 0:
-            guilds_data = [
-                ("Grey Knights", "GK123", "SECRET_GK_123"),
-                ("Mure", "MURE456", "SECRET_MURE_456")
-            ]
+            guilds_data = [("Grey Knights", "GK123", "SECRET_GK_123"), ("Mure", "MURE456", "SECRET_MURE_456")]
             for name, code, founder_code in guilds_data:
                 hashed_code = hashlib.sha256(code.encode()).hexdigest()
                 hashed_founder_code = hashlib.sha256(founder_code.encode()).hexdigest()
@@ -232,19 +218,23 @@ def init_db():
             grey_knights_id_row = cursor.fetchone()
             cursor.execute("SELECT id FROM guilds WHERE name = 'Mure'")
             mure_id_row = cursor.fetchone()
+
             if grey_knights_id_row and mure_id_row:
                 grey_knights_id = grey_knights_id_row[0]
                 mure_id = mure_id_row[0]
+
+                # FIXED SEED DATA TO INCLUDE avatar_url
                 players_to_insert = [
-                    ("CORPUS", grey_knights_id, "founder"),
-                    ("lympeen", grey_knights_id, "mentor"),
-                    ("VoldeDron", grey_knights_id, "active"),
-                    ("misterhe111", mure_id, "founder")
+                    ("CORPUS", grey_knights_id, "founder", None, "Основатель гильдии Grey Knights", None),
+                    ("lympeen", grey_knights_id, "mentor", 1, "Ментор альянса", None),
+                    ("VoldeDron", grey_knights_id, "active", 2, "Активный участник", None),
+                    ("misterhe111", mure_id, "founder", None, "Основатель гильдии Mure", None)
                 ]
-                cursor.executemany("INSERT INTO players (nickname, guild_id, status) VALUES (?, ?, ?)", players_to_insert)
+                cursor.executemany("INSERT INTO players (nickname, guild_id, status, mentor_id, description, avatar_url) VALUES (?, ?, ?, ?, ?, ?)", players_to_insert)
                 logger.info("Successfully inserted initial players.")
             else:
                 logger.error("Could not find required guilds 'Grey Knights' or 'Mure' to seed initial players.")
+
         db.commit()
 
 # --- LOGGING MIDDLEWARE ---
@@ -252,7 +242,7 @@ def init_db():
 def log_request_info():
     logger.debug(f"Request: {request.method} {request.path} | Session: {session}")
     if 'player_id' in session:
-        ACTIVE_USERS[session['player_id']] = datetime.datetime.utcnow()
+        ACTIVE_USERS[session['player_id']] = datetime.datetime.now(datetime.UTC)
 
 @app.after_request
 def log_response_info(response):
@@ -352,18 +342,18 @@ def get_player_details_for_management(player_id):
     db = get_db()
     cursor = db.cursor()
 
-    # Ensure the requested player is in the same guild as the mentor/founder
+    # Убедимся, что запрашиваемый игрок находится в той же гильдии
     cursor.execute("SELECT guild_id FROM players WHERE id = ?", (player_id,))
     target_player_guild = cursor.fetchone()
     
     if not target_player_guild or target_player_guild['guild_id'] != g.management_guild_id:
         return jsonify({'status': 'error', 'message': 'Player not found in your guild'}), 404
 
-    # Fetch player profile details
-    cursor.execute("SELECT id, nickname, status, balance, created_at FROM players WHERE id = ?", (player_id,))
+    # ИСПРАВЛЕНИЕ: Добавлено поле 'mentor_id' в SQL-запрос
+    cursor.execute("SELECT id, nickname, status, balance, created_at, mentor_id FROM players WHERE id = ?", (player_id,))
     player_profile = cursor.fetchone()
 
-    # Fetch last 7 sessions for that player
+    # Запрашиваем последние 7 сессий
     cursor.execute('''
         SELECT s.session_date, s.score, s.role, s.comments, c.name as content_name, p_mentor.nickname as mentor_name
         FROM sessions s
@@ -386,10 +376,10 @@ def get_player_details_for_management(player_id):
 
 # --- FOUNDER-SPECIFIC ROUTES ---
 @app.route('/api/guilds/pending-players', methods=['GET'])
-@management_required
+@founder_required
 def get_pending_players():
     cursor = get_db().cursor()
-    cursor.execute("SELECT id, nickname, created_at FROM players WHERE guild_id = ? AND status = 'pending' ORDER BY created_at DESC", (g.management_guild_id,))
+    cursor.execute("SELECT id, nickname, created_at FROM players WHERE guild_id = ? AND status = 'pending' ORDER BY created_at DESC", (g.founder_guild_id,)) # ИЗМЕНЕНО
     players = cursor.fetchall()
     return jsonify({'status': 'success', 'players': [{'id': p['id'], 'nickname': p['nickname'], 'date': p['created_at']} for p in players]})
 
@@ -414,6 +404,108 @@ def deny_player(player_id):
     if cursor.rowcount > 0:
         return jsonify({'status': 'success', 'message': 'Player denied and removed'})
     return jsonify({'status': 'error', 'message': 'Player not found or not pending'}), 404
+
+@app.route('/api/players/<int:player_id>/promote', methods=['POST'])
+@management_required # Декоратор, допускающий только менторов или основателей
+def promote_player_to_tutor(player_id):
+    """Повышает статус активного игрока до 'наставник'."""
+    db = get_db()
+    cursor = db.cursor()
+
+    # Проверяем, что игрок существует и состоит в той же гильдии
+    cursor.execute("SELECT status FROM players WHERE id = ? AND guild_id = ?", (player_id, g.management_guild_id))
+    player = cursor.fetchone()
+
+    if not player:
+        return jsonify({'status': 'error', 'message': 'Игрок не найден в вашей гильдии.'}), 404
+    
+    # Повышать можно только игроков со статусом 'active'
+    if player['status'] != 'active':
+        return jsonify({'status': 'error', 'message': 'Только активных игроков можно повысить.'}), 400
+
+    # Обновляем статус игрока в базе данных
+    cursor.execute("UPDATE players SET status = 'наставник' WHERE id = ?", (player_id,))
+    db.commit()
+
+    if cursor.rowcount > 0:
+        return jsonify({'status': 'success', 'message': 'Игрок успешно повышен до наставника.'})
+    
+    return jsonify({'status': 'error', 'message': 'Не удалось повысить игрока.'}), 500
+
+@app.route('/api/mentors/students/<int:student_id>/remove', methods=['POST'])
+@mentor_or_founder_required # Декоратор для менторов, наставников и основателей
+def remove_student_assignment(student_id):
+    """Убирает привязку ментора к ученику."""
+    mentor_id = session['player_id']
+    db = get_db()
+    cursor = db.cursor()
+
+    # Получаем статус текущего пользователя, чтобы применить правильную логику
+    cursor.execute("SELECT status FROM players WHERE id = ?", (mentor_id,))
+    mentor = cursor.fetchone()
+
+    # Ментор или наставник может открепить только своего ученика
+    if mentor['status'] in ['mentor', 'наставник']:
+        cursor.execute("UPDATE players SET mentor_id = NULL WHERE id = ? AND mentor_id = ?", (student_id, mentor_id))
+    # Основатель может открепить любого ученика в своей гильдии
+    elif mentor['status'] == 'founder':
+        cursor.execute("UPDATE players SET mentor_id = NULL WHERE id = ? AND guild_id = ?", (student_id, g.current_player_guild_id))
+    else:
+        return jsonify({'status': 'error', 'message': 'Доступ запрещен.'}), 403
+
+    db.commit()
+
+    if cursor.rowcount > 0:
+        return jsonify({'status': 'success', 'message': 'Ученик откреплен.'})
+    
+    return jsonify({'status': 'error', 'message': 'Ученик не найден или не является вашим учеником.'}), 404
+
+@app.route('/api/management/assignable-players', methods=['GET'])
+@mentor_or_founder_required
+def get_assignable_players():
+    """Возвращает игроков для назначения и менторов/наставников."""
+    db = get_db()
+    cursor = db.cursor()
+    
+    # Игроки без наставника
+    # ИСПРАВЛЕНО: g.user_guild_id -> g.current_player_guild_id
+    cursor.execute("SELECT id, nickname FROM players WHERE guild_id = ? AND status = 'active' AND mentor_id IS NULL", (g.current_player_guild_id,))
+    unassigned_players = [dict(p) for p in cursor.fetchall()]
+
+    # Доступные наставники и менторы
+    # ИСПРАВЛЕНО: g.user_guild_id -> g.current_player_guild_id
+    cursor.execute("SELECT id, nickname, status FROM players WHERE guild_id = ? AND status IN ('mentor', 'наставник', 'founder')", (g.current_player_guild_id,))
+    mentors = [dict(m) for m in cursor.fetchall()]
+
+    return jsonify({
+        'status': 'success',
+        'unassigned_players': unassigned_players,
+        'mentors': mentors
+    })
+
+
+@app.route('/api/management/assign-mentor', methods=['POST'])
+@mentor_or_founder_required
+def assign_mentor():
+    """Назначает ментора/наставника игроку."""
+    data = request.json
+    player_id = data.get('playerId')
+    mentor_id = data.get('mentorId')
+
+    if not player_id or not mentor_id:
+        return jsonify({'status': 'error', 'message': 'Player ID and Mentor ID are required'}), 400
+
+    db = get_db()
+    cursor = db.cursor()
+    # Убедимся, что оба игрока в одной гильдии
+    # ИСПРАВЛЕНО: g.user_guild_id -> g.current_player_guild_id
+    cursor.execute("UPDATE players SET mentor_id = ? WHERE id = ? AND guild_id = ?", (mentor_id, player_id, g.current_player_guild_id))
+    db.commit()
+
+    if cursor.rowcount > 0:
+        return jsonify({'status': 'success', 'message': 'Mentor assigned successfully'})
+    else:
+        return jsonify({'status': 'error', 'message': 'Failed to assign mentor. Player not found or invalid data.'}), 404
 
 # --- НОВЫЕ МАРШРУТЫ ДЛЯ УПРАВЛЕНИЯ ИГРОКАМИ ---
 @app.route('/api/guilds/manageable-players', methods=['GET'])
@@ -496,7 +588,7 @@ def serve_page(filename):
     if player_status == 'pending':
         if filename != 'pending.html':
             return redirect('/pending.html')
-    elif player_status in ['active', 'mentor', 'founder']:
+    elif player_status in ['active', 'mentor', 'founder', 'наставник']:
         if filename == 'pending.html':
             return redirect('/dashboard.html')
             
@@ -569,18 +661,15 @@ def system_status():
         'last_update': last_update, 'total_players': total_players, 'total_mentors': total_mentors
     })
 
-# --- ДОБАВЛЕНИЕ НОВОГО API-ЭНДПОИНТА ДЛЯ ПОЛУЧЕНИЯ ОНЛАЙН-УЧАСТНИКОВ ---
 @app.route('/api/system/online-members', methods=['GET'])
 def get_online_members():
     online_members_list = []
-    current_time = datetime.datetime.utcnow()
-    # Use .items() to safely iterate while potentially modifying the dict elsewhere
+    current_time = datetime.datetime.now(datetime.UTC)
     active_users_copy = list(ACTIVE_USERS.items())
 
-    # Remove users inactive for more than 15 minutes
     timeout = datetime.timedelta(minutes=15)
     for player_id, last_seen in active_users_copy:
-        if datetime.datetime.utcnow() - last_seen > timeout:
+        if current_time - last_seen > timeout:
             ACTIVE_USERS.pop(player_id, None)
 
     active_player_ids = list(ACTIVE_USERS.keys())
@@ -602,7 +691,7 @@ def get_online_members():
     for player_id, last_seen in ACTIVE_USERS.items():
         if player_id in players_data:
             player = players_data[player_id]
-            duration = (datetime.datetime.utcnow() - last_seen).total_seconds()
+            duration = (current_time - last_seen).total_seconds()
             online_members_list.append({
                 'player_id': player['id'],
                 'player_name': player['nickname'],
@@ -650,12 +739,16 @@ def get_top_players(guild_id):
     if players:
         valid_scores = [p['avg_score'] for p in players if p['avg_score'] is not None]
         valid_counts = [p['session_count'] for p in players]
-        if not valid_scores: valid_scores = [1]
-        if not valid_counts: valid_counts = [1]
-        max_score = max(valid_scores)
-        max_count = max(valid_counts)
+
+        max_score_val = max(valid_scores) if valid_scores else 0
+        max_count_val = max(valid_counts) if valid_counts else 0
+
+        max_score = max_score_val if max_score_val > 0 else 1
+        max_count = max_count_val if max_count_val > 0 else 1
+
         for p in players:
             p['rank'] = (0.7 * (p.get('avg_score') or 0) / max_score) + (0.3 * p['session_count'] / max_count)
+
         players.sort(key=lambda p: p['rank'], reverse=True)
 
     players_to_return = players if limit == 0 else players[:limit]
@@ -685,53 +778,73 @@ def get_role_ratings(guild_id):
         
     return jsonify({'status': 'success', 'ratings': ratings})
 
-
 @app.route('/api/players', methods=['GET'])
 def get_players():
-    cursor = get_db().cursor()
-    cursor.execute('SELECT p.id, p.nickname, g.name as guild_name FROM players p JOIN guilds g ON p.guild_id = g.id')
-    return jsonify({'status': 'success', 'players': [dict(p) for p in cursor.fetchall()]})
+    """Возвращает игроков для формы оценки с учетом прав доступа."""
+    if 'player_id' not in session:
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
+        
+    db = get_db()
+    cursor = db.cursor()
     
-# In app.py
+    cursor.execute("SELECT status, guild_id FROM players WHERE id = ?", (session['player_id'],))
+    user = cursor.fetchone()
+    
+    if not user:
+        return jsonify({'status': 'error', 'message': 'User not found'}), 404
+
+    query = ""
+    params = ()
+    
+    if user['status'] in ['mentor', 'founder']:
+        # Менторы и основатели видят всех в своей гильдии
+        query = "SELECT p.id, p.nickname, g.name as guild_name FROM players p JOIN guilds g ON p.guild_id = g.id WHERE p.guild_id = ?"
+        params = (user['guild_id'],)
+    elif user['status'] == 'наставник':
+        # Наставники видят только своих учеников
+        query = "SELECT p.id, p.nickname, g.name as guild_name FROM players p JOIN guilds g ON p.guild_id = g.id WHERE p.mentor_id = ?"
+        params = (session['player_id'],)
+    else:
+        # Остальные никого не видят в форме (хотя она им и не должна быть доступна)
+        return jsonify({'status': 'success', 'players': []})
+
+    cursor.execute(query, params)
+    return jsonify({'status': 'success', 'players': [dict(p) for p in cursor.fetchall()]})
 
 @app.route('/api/players/current', methods=['GET'])
 def get_current_player():
     if 'player_id' not in session:
         return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
-    cursor = get_db().cursor()
-    
-    # ИЗМЕНЕНИЕ: Добавили 'p.description' в SQL-запрос
+
+    db = get_db()
+    cursor = db.cursor()
+
     cursor.execute("""
-        SELECT 
-            p.id, p.nickname, p.status, p.balance, p.guild_id, p.created_at, p.avatar_url, p.description,
-            g.name as guild_name, 
-            m.nickname as mentor_name 
-        FROM players p 
+        SELECT p.*, g.name as guild_name, m.nickname as mentor_name
+        FROM players p
         JOIN guilds g ON p.guild_id = g.id
         LEFT JOIN players m ON p.mentor_id = m.id
         WHERE p.id = ?
     """, (session['player_id'],))
-    
     player = cursor.fetchone()
+
     if not player:
-        session.pop('player_id', None)
+        session.pop('player_id', None) # Очищаем недействительную сессию
         return jsonify({'status': 'error', 'message': 'Player not found'}), 404
-    
-    player_data = dict(player)
-    
-    # ИЗМЕНЕНИЕ: Добавили 'description' в возвращаемый объект JSON
+
     return jsonify({'status': 'success', 'player': {
-        'id': player_data['id'], 
-        'nickname': player_data['nickname'], 
-        'status': player_data['status'],
-        'balance': player_data['balance'], 
-        'guild': player_data['guild_name'], 
-        'guild_id': player_data['guild_id'],
-        'created_at': player_data['created_at'],
-        'avatar_url': player_data['avatar_url'],
-        'description': player_data['description'],
-        'mentor': player_data.get('mentor_name')
+        'id': player['id'],
+        'nickname': player['nickname'],
+        'status': player['status'],
+        'balance': player['balance'],
+        'guild': player['guild_name'],
+        'guild_id': player['guild_id'],
+        'created_at': player['created_at'],
+        'mentor_name': player['mentor_name'],
+        'description': player['description'],
+        'avatar_url': player['avatar_url']
     }})
+
 
 @app.route('/api/players/current/avatar', methods=['POST'])
 def upload_avatar():
@@ -780,6 +893,46 @@ def export_player_data(player_id):
         writer.writerow([s['id'], s['session_date'], s['content_name'], s['role'], s['score'], s['error_types'], s['work_on'], s['comments']])
     output.seek(0)
     return Response(output.getvalue(), mimetype='text/csv', headers={"Content-disposition": f"attachment; filename=player_{player_id}_data.csv"})
+
+@app.route('/api/players/<int:player_id>/sessions', methods=['GET'])
+def get_player_sessions(player_id):
+    """Возвращает 5 последних сессий для игрока."""
+    # Можно добавить проверку, имеет ли текущий юзер право смотреть сессии этого игрока
+    cursor = get_db().cursor()
+    query = """
+        SELECT s.session_date, s.score, s.role, s.error_types, c.name as content_name
+        FROM sessions s
+        JOIN content c ON s.content_id = c.id
+        WHERE s.player_id = ?
+        ORDER BY s.session_date DESC
+        LIMIT 5
+    """
+    cursor.execute(query, (player_id,))
+    sessions = [dict(s) for s in cursor.fetchall()]
+    return jsonify({'status': 'success', 'sessions': sessions})
+
+
+@app.route('/api/mentors/my-students', methods=['GET'])
+def get_my_students():
+    """Возвращает список учеников текущего ментора/наставника."""
+    if 'player_id' not in session:
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
+
+    cursor = get_db().cursor()
+    query = """
+        SELECT
+            p.id,
+            p.nickname,
+            p.status,
+            p.description,
+            (SELECT AVG(s.score) FROM sessions s WHERE s.player_id = p.id) as avg_score,
+            (SELECT COUNT(s.id) FROM sessions s WHERE s.player_id = p.id) as session_count
+        FROM players p
+        WHERE p.mentor_id = ?
+    """
+    cursor.execute(query, (session['player_id'],))
+    students = [dict(s) for s in cursor.fetchall()]
+    return jsonify({'status': 'success', 'students': students})
 
 @app.route('/api/content', methods=['GET'])
 def get_content():
@@ -1059,7 +1212,6 @@ def get_best_player_week():
     if not guild_id: return jsonify({'status': 'error', 'message': 'guild_id required'}), 400
     
     cursor = get_db().cursor()
-    # ИЗМЕНЕНИЕ: Добавлен p.avatar_url в SELECT
     query = """
         WITH PlayerWeekStats AS (
             SELECT
@@ -1119,21 +1271,6 @@ def internal_error(error):
     logger.error(f"Internal server error: {error}\n{traceback.format_exc()}")
     return jsonify({'status': 'error', 'message': 'Internal server error'}), 500
 
-@app.route('/api/mentors/students', methods=['GET'])
-@management_required # Используем существующий декоратор для менторов и основателей
-def get_my_students():
-    """Возвращает список учеников текущего ментора."""
-    mentor_id = session['player_id']
-    cursor = get_db().cursor()
-    cursor.execute("""
-        SELECT p.id, p.nickname, AVG(s.score) as avg_score, COUNT(s.id) as session_count
-        FROM players p
-        LEFT JOIN sessions s ON p.id = s.player_id
-        WHERE p.mentor_id = ?
-        GROUP BY p.id
-    """, (mentor_id,))
-    students = [dict(row) for row in cursor.fetchall()]
-    return jsonify({'status': 'success', 'students': students})
 
 @app.route('/api/mentors/students/<int:student_id>', methods=['POST'])
 @management_required
@@ -1142,9 +1279,13 @@ def assign_student(student_id):
     mentor_id = session['player_id']
     db = get_db()
     cursor = db.cursor()
-    cursor.execute("UPDATE players SET mentor_id = ? WHERE id = ?", (mentor_id, student_id))
+    # Убедимся, что студент и ментор в одной гильдии
+    cursor.execute("UPDATE players SET mentor_id = ? WHERE id = ? AND guild_id = ?", 
+                   (mentor_id, student_id, g.management_guild_id))
     db.commit()
-    return jsonify({'status': 'success', 'message': 'Ученик назначен'})
+    if cursor.rowcount > 0:
+        return jsonify({'status': 'success', 'message': 'Ученик назначен'})
+    return jsonify({'status': 'error', 'message': 'Не удалось назначить ученика. Возможно, он из другой гильдии.'}), 404
 
 
 @app.route('/api/mentoring/request-help', methods=['POST'])
@@ -1210,6 +1351,9 @@ def mark_request_as_reviewed(request_id):
 
 
 if __name__ == '__main__':
+    # Ensure the 'data' and 'static/avatars' directories exist
+    os.makedirs('data', exist_ok=True)
+    os.makedirs(AVATAR_UPLOAD_FOLDER, exist_ok=True)
     with app.app_context():
         init_db()
     app.run(port=3000, debug=True)

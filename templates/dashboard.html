@@ -48,9 +48,8 @@
                     <i class="material-icons">groups</i>
                     <span>Гильдия</span>
                 </div>
-                <div class="nav-item management-btn" style="display: none;">
-                    <i class="material-icons">admin_panel_settings</i>
-                    <span>Управление</span>
+                <div class="nav-item">
+                    <i class="material-icons">trending_up</i> <span>Прогресс</span>
                 </div>
                 <div class="nav-item my-students-btn" style="display: none;">
                     <i class="material-icons">school</i>
@@ -61,15 +60,15 @@
                     <span>Запросы на разбор</span>
                     <span class="notification-badge" style="display: none;"></span>
                 </div>
-                <div class="nav-item">
-                    <i class="material-icons">lightbulb</i>
-                    <span>Рекомендации</span>
+                <div class="nav-item management-btn" style="display: none;">
+                    <i class="material-icons">admin_panel_settings</i>
+                    <span>Управление</span>
                 </div>
                 <div class="nav-item">
                     <i class="material-icons">settings</i>
                     <span>Настройки</span>
                 </div>
-                <div class="nav-item mentor-btn">
+                <div class="nav-item mentor-btn" style="display: none;">
                     <i class="material-icons">rate_review</i>
                     <span>Оценить игрока</span>
                 </div>
@@ -316,7 +315,7 @@
                     <button class="btn btn-primary export-btn"><i class="material-icons">download</i> Экспортировать данные</button>
                 </div>
             </section>
-            
+
             <section id="guild-content" class="dashboard-section" style="display: none;">
                 <div class="guild-header">
                     <h2><i class="material-icons">groups</i> Информация о гильдии</h2>
@@ -338,26 +337,37 @@
             </section>
             
             <section id="management-content" class="dashboard-section" style="display: none;">
-                </section>
+                <header class="dashboard-header">
+                    <div class="header-left"><h1>Управление</h1></div>
+                </header>
+                <div class="players-list-container">
+                    <h2>Заявки на вступление</h2>
+                    <div id="pending-players-list"></div>
+                </div>
+                <div class="players-list-container">
+                    <h2>Назначение наставников</h2>
+                    <div id="assign-mentor-list"></div>
+                </div>
+            </section>
             
             <section id="my-students-content" class="dashboard-section" style="display: none;">
                 <header class="dashboard-header">
-                    <div class="header-left"><h1>Статистика моих учеников</h1></div>
+                    <div class="header-left"><h1>Мои ученики</h1></div>
                 </header>
-                <div id="my-students-list-container" class="players-list-container">
+                <div id="my-students-list" class="recommendations-grid">
                     </div>
             </section>
 
-            <section id="recommendations-content" class="dashboard-section" style="display: none;">
-                <header class="recommendations-header">
-                    <h1>Персонализированные рекомендации</h1>
+            <section id="progress-content" class="dashboard-section" style="display: none;">
+                <header class="progress-header">
+                    <h1>Мой прогресс</h1>
                     <div class="filter-controls">
                         <button class="filter-pill active" data-filter="Все">Все</button>
                         <button class="filter-pill" data-filter="В процессе">В процессе</button>
                         <button class="filter-pill" data-filter="Завершено">Завершено</button>
                     </div>
                 </header>
-                <div class="recommendations-grid"></div>
+                <div class="progress-grid"></div>
             </section>
 
             <section id="review-requests-content" class="dashboard-section" style="display: none;">
@@ -539,6 +549,16 @@
                 <button class="close-modal">&times;</button>
             </header>
             <div class="modal-body" id="review-requests-list-modal">
+                </div>
+        </div>
+    </div>
+    <div id="sessions-modal" class="modal">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2 id="sessions-modal-title">Последние сессии</h2>
+                <button class="close-modal">&times;</button>
+            </header>
+            <div class="modal-body" id="sessions-modal-body">
                 </div>
         </div>
     </div>
