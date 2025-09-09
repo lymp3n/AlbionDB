@@ -401,7 +401,7 @@ def promote_player_to_tutor(player_id):
     db = get_db()
     cursor = db.cursor()
 
-    cursor.execute("SELECT status FROM players WHERE id = ? AND guild_id = ?", (player_id, g.management_guild_id))
+    cursor.execute("SELECT status FROM players WHERE id = ? AND guild_id = ?", (player_id, g.founder_guild_id))
     player = cursor.fetchone()
 
     if not player:
