@@ -303,16 +303,29 @@
                             <label>Ментор</label>
                             <span id="mentor-name"><span class="skeleton">-</span></span>
                         </div>
-                        <div class="info-item">
-                            <label>Описание</label>
-                            <span id="description"><span class="skeleton">-</span></span>
-                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label for="profile-description">Описание</label>
+                        <textarea id="profile-description" class="form-control" rows="3" placeholder="Расскажите немного о себе..."></textarea>
+                    </div>
+                    <div class="form-group" id="specialization-block" style="display: none; margin-top: 16px;">
+                        <label for="specialization-select">Специализация наставника</label>
+                        <select id="specialization-select" class="form-control">
+                            <option value="">Не выбрана</option>
+                            <option value="DD">DD</option>
+                            <option value="Support">Support</option>
+                            <option value="Healer">Healer</option>
+                            <option value="D-Tank/E-Tank">D-Tank/E-Tank</option>
+                        </select>
                     </div>
                 </div>
+
                 <div class="profile-section">
-                    <h2><i class="material-icons">download</i> Экспорт данных</h2>
-                    <p>Экспортируйте свою статистику в CSV для дальнейшего анализа</p>
-                    <button class="btn btn-primary export-btn"><i class="material-icons">download</i> Экспортировать данные</button>
+                    <h2><i class="material-icons">settings_applications</i> Действия</h2>
+                     <div class="form-actions" style="justify-content: flex-start;">
+                        <button class="btn btn-primary" id="save-profile-btn"><i class="material-icons">save</i> Сохранить профиль</button>
+                        <button class="btn btn-secondary export-btn"><i class="material-icons">download</i> Экспортировать данные</button>
+                    </div>
                 </div>
             </section>
 
@@ -337,16 +350,24 @@
             </section>
             
             <section id="management-content" class="dashboard-section" style="display: none;">
-                <header class="dashboard-header">
+                <header class="dashboard-header" style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
                     <div class="header-left"><h1>Управление</h1></div>
+                    <div class="header-right">
+                        <button id="show-assign-mentor-modal-btn" class="btn btn-primary" style="display: none;">
+                            <i class="material-icons">add_moderator</i>
+                            <span>Назначить наставника</span>
+                        </button>
+                    </div>
                 </header>
-                <div class="players-list-container">
-                    <h2>Заявки на вступление</h2>
+
+                <div id="pending-players-container" class="players-list-container" style="display: none;">
+                    <h2>Заявки на вступление <span class="stat-badge" id="pending-count" style="vertical-align: middle;"></span></h2>
                     <div id="pending-players-list"></div>
                 </div>
+                
                 <div class="players-list-container">
-                    <h2>Назначение наставников</h2>
-                    <div id="assign-mentor-list"></div>
+                    <h2>Управление составом</h2>
+                    <div id="manage-players-list"></div>
                 </div>
             </section>
             
@@ -562,6 +583,33 @@
                 </div>
         </div>
     </div>
+    
+    <div id="assign-mentor-modal" class="modal wide-modal">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2>Назначение наставника</h2>
+                <button class="close-modal">&times;</button>
+            </header>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="assign-student-select">1. Выберите ученика</label>
+                    <select id="assign-student-select" class="form-control">
+                        <option value="">Загрузка...</option>
+                    </select>
+                </div>
+                 <div class="form-group">
+                    <label>2. Выберите наставника</label>
+                    <div id="assign-mentor-list" class="online-members-list" style="max-height: 40vh; overflow-y: auto;">
+                        </div>
+                </div>
+            </div>
+            <footer class="modal-footer">
+                <button class="btn btn-secondary close-modal-btn">Отмена</button>
+                <button id="confirm-assignment-btn" class="btn btn-primary">Назначить</button>
+            </footer>
+        </div>
+    </div>
+
     <button id="compare-btn" class="btn btn-primary compare-btn">Сравнить игроков</button>
 </body>
 </html>

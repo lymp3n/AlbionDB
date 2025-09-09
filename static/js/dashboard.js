@@ -194,7 +194,109 @@ function initNavigation() {
     });
 }
 
+/**
+ * Загружает панель основателя гильдии, включая список заявок.
+ */
+function loadFounderPanel() {
+    const container = document.getElementById('pending-players-list');
+    if (!container) return;
+    container.innerHTML = '<p>Загрузка заявок...</p>';
 
+    fetch('/api/guilds/pending-players')
+        .then(response => response.ok ? response.json() : Promise.reject(response))
+        .then(data => {
+            if (data.status === 'success') {
+                renderPendingPlayers(data.players);
+            } else {
+                throw new Error(data.message || 'Не удалось загрузить заявки');
+            }
+        })
+        .catch(() => {
+            container.innerHTML = '<p class="error-message">Ошибка загрузки заявок на вступление.</p>';
+        });
+}
+
+/**
+ * Отрисовывает список игроков, ожидающих одобрения.
+ * @param {Array} players - Массив объектов игроков.
+ */
+function renderPendingPlayers(players) {
+    const container = document.getElementById('pending-players-list');
+    if (!container) return;
+
+    if (players.length === 0) {
+        container.innerHTML = '<p class="placeholder" style="position: static; height: auto;">Нет новых заявок на вступление.</p>';
+        return;
+    }
+
+    container.innerHTML = `
+        <table class="players-table">
+            <thead>
+                <tr>
+                    <th>Игрок</th>
+                    <th>Дата заявки</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${players.map(player => `
+                    <tr>
+                        <td data-label="Игрок">${player.nickname}</td>
+                        <td data-label="Дата заявки">${new Date(player.date).toLocaleDateString()}</td>
+                        <td data-label="Действия">
+                            <button class="btn btn-primary approve-btn" data-id="${player.id}">Одобрить</button>
+                            <button class="btn btn-secondary deny-btn" data-id="${player.id}">Отклонить</button>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+
+    // Добавляем обработчики событий для новых кнопок
+    container.querySelectorAll('.approve-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => approvePlayer(e.target.dataset.id));
+    });
+    container.querySelectorAll('.deny-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => denyPlayer(e.target.dataset.id));
+    });
+}
+
+/**
+ * Отправляет запрос на одобрение игрока.
+ * @param {number} playerId - ID игрока.
+ */
+function approvePlayer(playerId) {
+    fetch(`/api/players/${playerId}/approve`, { method: 'POST' })
+        .then(response => response.ok ? response.json() : Promise.reject(response))
+        .then(data => {
+            if (data.status === 'success') {
+                showSuccess('founder-content', 'Игрок успешно одобрен.');
+                loadFounderPanel(); // Обновляем список
+            } else {
+                throw new Error(data.message);
+            }
+        })
+        .catch(() => showError('founder-content', 'Не удалось одобрить игрока.'));
+}
+
+/**
+ * Отправляет запрос на отклонение заявки игрока.
+ * @param {number} playerId - ID игрока.
+ */
+function denyPlayer(playerId) {
+    fetch(`/api/players/${playerId}/deny`, { method: 'POST' })
+        .then(response => response.ok ? response.json() : Promise.reject(response))
+        .then(data => {
+            if (data.status === 'success') {
+                showSuccess('founder-content', 'Заявка игрока отклонена.');
+                loadFounderPanel(); // Обновляем список
+            } else {
+                throw new Error(data.message);
+            }
+        })
+        .catch(() => showError('founder-content', 'Не удалось отклонить заявку.'));
+}
 
 function checkAndShowMyStudentsTab() {
     if (!['наставник', 'mentor', 'founder'].includes(currentPlayerData?.status)) return;
@@ -696,29 +798,47 @@ function createErrorScoreChart(correlationData) {
     });
 }
 
-// --- Content Loading for other sections ---
 function loadProfile() {
-    skeletonHandler.show(['profile-nickname', 'profile-guild', 'profile-status', 'profile-balance', 'reg-date', 'mentor-name', 'description']);
-    fetch(`/api/players/current`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                const player = data.player;
-                document.querySelector('.profile-nickname').textContent = player.nickname || '-';
-                document.querySelector('.profile-guild').textContent = `Гильдия: ${player.guild || '-'}`;
-                document.querySelector('.profile-status').textContent = `Статус: ${formatPlayerStatus(player.status) || '-'}`;
-                document.querySelector('.profile-balance').textContent = `Баланс: ${player.balance || 0}`;
-                document.querySelector('#mentor-name').textContent = player.mentor_name || 'Не назначен';
-                document.querySelector('#description').textContent = player.description || 'Нет описания';
-                document.querySelector('#reg-date').textContent = new Date(player.created_at).toLocaleDateString();
-                updateAvatarDisplay(player);
-            }
-        })
-        .catch(error => showError('profile-content', 'Ошибка загрузки профиля'));
-    
-    document.querySelector('.export-btn')?.addEventListener('click', () => {
-        window.location.href = `/api/players/${currentPlayerId}/export`;
-    });
+    skeletonHandler.show(['profile-nickname', 'profile-guild', 'profile-status', 'profile-balance', 'reg-date', 'mentor-name']);
+    fetch(`/api/players/current`).then(r => r.json()).then(data => {
+        if (data.status === 'success') {
+            const player = data.player;
+            document.querySelector('.profile-nickname').textContent = player.nickname || '-';
+            document.querySelector('.profile-guild').textContent = `Гильдия: ${player.guild || '-'}`;
+            document.querySelector('.profile-status').textContent = formatPlayerStatus(player.status) || '-';
+            document.querySelector('.profile-balance').textContent = `Баланс: ${player.balance || 0}`;
+            document.querySelector('#mentor-name').textContent = player.mentor_name || 'Не назначен';
+            document.querySelector('#reg-date').textContent = new Date(player.created_at).toLocaleDateString();
+            document.getElementById('profile-description').value = player.description || '';
+
+            const specBlock = document.getElementById('specialization-block');
+            const isMentorFigure = ['mentor', 'founder', 'наставник'].includes(player.status);
+            specBlock.style.display = isMentorFigure ? 'block' : 'none';
+            if (isMentorFigure) document.getElementById('specialization-select').value = player.specialization || '';
+
+            updateAvatarDisplay(player);
+        }
+    }).catch(() => showError('profile-content', 'Ошибка загрузки профиля'));
+
+    document.querySelector('.export-btn')?.addEventListener('click', () => { window.location.href = `/api/players/${currentPlayerId}/export`; });
+    document.getElementById('save-profile-btn')?.addEventListener('click', saveProfile);
+}
+
+function saveProfile() {
+    const description = document.getElementById('profile-description').value;
+    const specSelect = document.getElementById('specialization-select');
+    const specialization = specSelect.closest('#specialization-block').style.display === 'block' ? specSelect.value : currentPlayerData.specialization;
+
+    fetch('/api/players/current/profile', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description, specialization })
+    }).then(r => r.ok ? r.json() : Promise.reject(r.json())).then(data => {
+        if (data.status === 'success') {
+            showSuccess('profile-content', 'Профиль обновлен!');
+            currentPlayerData.description = description;
+            currentPlayerData.specialization = specialization;
+        } else throw new Error(data.message);
+    }).catch(errPromise => errPromise.then(err => showError('profile-content', err.message || 'Не удалось сохранить.')));
 }
 
 function loadMyStudents() {
@@ -1096,41 +1216,29 @@ function renderRoleRatings(ratings) {
     }
 }
 
+// ЗАМЕНИТЬ
 function loadManagementPanel() {
-    const container = document.getElementById('management-content');
-    if (!container) return;
-    container.innerHTML = ''; 
+    const pendingContainer = document.getElementById('pending-players-container');
 
+    // Сначала все скрываем
+    pendingContainer.style.display = 'none';
+
+    // Загружаем общий список игроков для всех (менторов и основателей)
+    loadManageablePlayers();
+
+    // Показываем блок с заявками ТОЛЬКО для основателя
     if (currentPlayerData.status === 'founder') {
-        container.innerHTML = `
-            <header class="dashboard-header" style="margin-bottom: 0; padding-bottom: 0; border: none;">
-                <div class="header-left"><h1 id="founder-title">Управление гильдией</h1></div>
-            </header>
-            <div class="players-list-container">
-                <h2>Заявки на вступление <span class="stat-badge" id="pending-count" style="vertical-align: middle;"></span></h2>
-                <div id="pending-players-list"></div>
-            </div>
-            <div class="players-list-container">
-                <h2>Управление составом</h2>
-                <div id="manage-players-list"></div>
-            </div>`;
+        pendingContainer.style.display = 'block';
         loadPendingPlayersList();
-        loadManageablePlayers();
-    } else if (currentPlayerData.status === 'mentor') {
-        container.innerHTML = `
-            <header class="dashboard-header">
-                <div class="header-left"><h1>Анализ игроков</h1></div>
-            </header>
-            <div class="form-group" style="padding: 0 16px;">
-                <label>Выберите игрока для просмотра</label>
-                <select id="mentor-player-select" class="form-control">
-                    <option value="" disabled selected>Выберите игрока...</option>
-                </select>
-            </div>
-            <div id="mentor-player-details-view" style="margin-top: 16px;">
-                <p class="placeholder" style="position: static; height: auto;">Выберите игрока из списка выше, чтобы увидеть его профиль и последние сессии.</p>
-            </div>`;
-        populatePlayerSelectForMentor();
+    }
+
+    // Кнопка назначения видна и менторам, и основателям
+    const assignBtn = document.getElementById('show-assign-mentor-modal-btn');
+    if (assignBtn) {
+        assignBtn.style.display = 'flex';
+        // Убираем старые обработчики, чтобы не было дублей
+        assignBtn.replaceWith(assignBtn.cloneNode(true));
+        document.getElementById('show-assign-mentor-modal-btn').addEventListener('click', loadAndShowAssignmentModal);
     }
 }
 
@@ -1336,6 +1444,7 @@ function loadManageablePlayers() {
         });
 }
 
+// ЗАМЕНИТЬ
 function renderManageablePlayers(players) {
     const container = document.getElementById('manage-players-list');
     if (!container) return;
@@ -1344,6 +1453,9 @@ function renderManageablePlayers(players) {
         container.innerHTML = '<p class="placeholder" style="position: static; height: auto;">В гильдии пока нет других участников.</p>';
         return;
     }
+
+    // Определяем, является ли текущий пользователь основателем
+    const isFounder = currentPlayerData.status === 'founder';
 
     container.innerHTML = `
         <table class="players-table">
@@ -1357,8 +1469,11 @@ function renderManageablePlayers(players) {
                         <td data-label="Статус">${formatPlayerStatus(player.status)}</td>
                         <td data-label="Дата регистрации">${new Date(player.created_at).toLocaleDateString()}</td>
                         <td data-label="Действия">
-                            ${player.status === 'active' ? `<button class="btn btn-primary promote-btn" data-id="${player.id}" data-name="${player.nickname}">Сделать наставником</button>` : ''}
-                            <button class="btn btn-secondary delete-btn" data-id="${player.id}" data-name="${player.nickname}">Удалить</button>
+                            ${isFounder ? 
+                                (player.status === 'active' ? `<button class="btn btn-primary promote-btn" data-id="${player.id}" data-name="${player.nickname}">В наставники</button>` : '') +
+                                `<button class="btn btn-secondary delete-btn" data-id="${player.id}" data-name="${player.nickname}">Удалить</button>`
+                                : 'Нет прав'
+                            }
                         </td>
                     </tr>
                 `).join('')}
@@ -1366,23 +1481,24 @@ function renderManageablePlayers(players) {
         </table>
     `;
 
-    container.querySelectorAll('.promote-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const playerId = e.target.dataset.id;
-            const playerName = e.target.dataset.name;
-            if (confirm(`Вы уверены, что хотите повысить игрока "${playerName}" до Наставника?`)) {
-                promotePlayer(playerId);
-            }
+    // Навешиваем события только если пользователь - основатель
+    if (isFounder) {
+        container.querySelectorAll('.promote-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const { id, name } = e.target.dataset;
+                if (confirm(`Вы уверены, что хотите повысить игрока "${name}" до Наставника?`)) {
+                    promotePlayer(id);
+                }
+            });
         });
-    });
 
-    container.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const playerId = e.target.dataset.id;
-            const playerName = e.target.dataset.name;
-            deletePlayer(playerId, playerName);
+        container.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const { id, name } = e.target.dataset;
+                deletePlayer(id, name);
+            });
         });
-    });
+    }
 }
 
 function promotePlayer(playerId) {
@@ -1419,6 +1535,163 @@ function deletePlayer(playerId, playerName) {
             }
         })
         .catch(() => showError('management-content', `Не удалось удалить игрока ${playerName}.`));
+}
+
+function loadAndShowAssignmentModal() {
+    const modal = document.getElementById('assign-mentor-modal'); modal.style.display = 'flex';
+    const studentSelect = document.getElementById('assign-student-select'), mentorList = document.getElementById('assign-mentor-list');
+    studentSelect.innerHTML = '<option>Загрузка...</option>'; mentorList.innerHTML = '<p>Загрузка...</p>';
+    fetch('/api/management/assignment-info').then(r => r.ok ? r.json() : Promise.reject(r)).then(data => {
+        if (data.status === 'success') {
+            studentSelect.innerHTML = '<option value="" disabled selected>Выберите ученика</option>';
+            if (data.unassignedPlayers.length > 0) data.unassignedPlayers.forEach(p => { const opt = document.createElement('option'); opt.value = p.id; opt.textContent = p.nickname; studentSelect.appendChild(opt); });
+            else studentSelect.innerHTML = '<option value="" disabled>Нет игроков для назначения</option>';
+
+            mentorList.innerHTML = '';
+            if (data.mentors.length > 0) {
+                data.mentors.forEach(m => {
+                    const card = document.createElement('div'); card.className = 'online-member-card mentor-assign-card'; card.dataset.mentorId = m.id;
+                    const avatar = m.avatar_url ? `<img src="${m.avatar_url}?t=${new Date().getTime()}" alt="${m.nickname}">` : `<div class="sidebar-avatar-fallback" style="width: 64px; height: 64px; font-size: 32px; flex-shrink: 0;">${m.nickname.charAt(0).toUpperCase()}</div>`;
+                    card.innerHTML = `${avatar}<div class="online-member-info" style="text-align: left;"><h3>${m.nickname}</h3><div class="mentor-card-details" style="justify-content: flex-start; margin-top: 8px;"><span class="mentor-card-spec"><i class="material-icons">star</i> ${m.specialization || 'Не указана'}</span><span class="mentor-card-students"><i class="material-icons">school</i> ${m.student_count} учеников</span></div></div>`;
+                    mentorList.appendChild(card);
+                });
+                mentorList.querySelectorAll('.mentor-assign-card').forEach(card => card.addEventListener('click', () => { mentorList.querySelector('.selected')?.classList.remove('selected'); card.classList.add('selected'); }));
+            } else mentorList.innerHTML = '<p class="placeholder" style="grid-column: 1 / -1;">Нет доступных наставников.</p>';
+        } else throw new Error(data.message);
+    }).catch(err => { console.error(err); showError('assign-mentor-modal', 'Ошибка загрузки данных.'); });
+    document.getElementById('confirm-assignment-btn').onclick = assignMentor;
+}
+
+function assignMentor() {
+    const studentId = document.getElementById('assign-student-select').value;
+    const mentorCard = document.querySelector('#assign-mentor-list .mentor-assign-card.selected');
+    if (!studentId) { showError('assign-mentor-modal', 'Выберите ученика.'); return; }
+    if (!mentorCard) { showError('assign-mentor-modal', 'Выберите наставника.'); return; }
+    const mentorId = mentorCard.dataset.mentorId;
+    fetch('/api/management/assign-mentor', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ studentId, mentorId }) })
+        .then(r => r.ok ? r.json() : Promise.reject(r.json())).then(data => {
+        if (data.status === 'success') { document.getElementById('assign-mentor-modal').style.display = 'none'; showSuccess('management-content', data.message); }
+        else throw new Error(data.message);
+    }).catch(err => err.then(e => showError('assign-mentor-modal', e.message)));
+}
+
+function loadAndShowAssignmentModal() {
+    const modal = document.getElementById('assign-mentor-modal');
+    modal.style.display = 'flex';
+    
+    const studentSelect = document.getElementById('assign-student-select');
+    const mentorList = document.getElementById('assign-mentor-list');
+    studentSelect.innerHTML = '<option>Загрузка игроков...</option>';
+    mentorList.innerHTML = '<p>Загрузка наставников...</p>';
+
+    fetch('/api/management/assignment-info')
+        .then(res => res.ok ? res.json() : Promise.reject(res))
+        .then(data => {
+            if (data.status === 'success') {
+                // Заполняем выпадающий список учеников
+                studentSelect.innerHTML = '<option value="" disabled selected>Выберите ученика из списка</option>';
+                if (data.unassignedPlayers.length > 0) {
+                    data.unassignedPlayers.forEach(p => {
+                        const option = document.createElement('option');
+                        option.value = p.id;
+                        option.textContent = p.nickname;
+                        studentSelect.appendChild(option);
+                    });
+                } else {
+                    studentSelect.innerHTML = '<option value="" disabled>Нет игроков без наставника</option>';
+                }
+
+                // Рендерим карточки наставников
+                mentorList.innerHTML = '';
+                if (data.mentors.length > 0) {
+                    data.mentors.forEach(m => {
+                        const card = document.createElement('div');
+                        // Используем классы от "онлайн" секции для похожего вида
+                        card.className = 'online-member-card mentor-assign-card';
+                        card.dataset.mentorId = m.id;
+
+                        const avatar = m.avatar_url 
+                            ? `<img src="${m.avatar_url}?t=${new Date().getTime()}" alt="${m.nickname}">`
+                            : `<div class="sidebar-avatar-fallback" style="width: 64px; height: 64px; font-size: 32px; flex-shrink: 0;">${m.nickname.charAt(0).toUpperCase()}</div>`;
+                        
+                        card.innerHTML = `
+                            ${avatar}
+                            <div class="online-member-info" style="text-align: left;">
+                                <h3>${m.nickname}</h3>
+                                <div class="mentor-card-details" style="justify-content: flex-start; margin-top: 8px;">
+                                    <span class="mentor-card-spec">
+                                        <i class="material-icons">star</i>
+                                        ${m.specialization || 'Не указана'}
+                                    </span>
+                                    <span class="mentor-card-students">
+                                        <i class="material-icons">school</i>
+                                        ${m.student_count} учеников
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                        mentorList.appendChild(card);
+                    });
+                    
+                    // Добавляем обработчик клика на все карточки
+                    mentorList.querySelectorAll('.mentor-assign-card').forEach(card => {
+                        card.addEventListener('click', () => {
+                            // Снимаем выделение с предыдущей выбранной карточки
+                            mentorList.querySelector('.selected')?.classList.remove('selected');
+                            // Выделяем текущую
+                            card.classList.add('selected');
+                        });
+                    });
+                } else {
+                    mentorList.innerHTML = '<p class="placeholder" style="grid-column: 1 / -1;">В гильдии нет доступных наставников.</p>';
+                }
+            } else {
+                throw new Error(data.message);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            showError('assign-mentor-modal', 'Ошибка загрузки данных для назначения.');
+        });
+        
+    // Назначаем обработчик на кнопку подтверждения
+    document.getElementById('confirm-assignment-btn').onclick = assignMentor;
+}
+
+function assignMentor() {
+    const studentId = document.getElementById('assign-student-select').value;
+    const selectedMentorCard = document.querySelector('#assign-mentor-list .mentor-assign-card.selected');
+    
+    if (!studentId) {
+        showError('assign-mentor-modal', 'Пожалуйста, выберите ученика из списка.');
+        return;
+    }
+    if (!selectedMentorCard) {
+        showError('assign-mentor-modal', 'Пожалуйста, кликните по карточке, чтобы выбрать наставника.');
+        return;
+    }
+    
+    const mentorId = selectedMentorCard.dataset.mentorId;
+
+    fetch('/api/management/assign-mentor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId, mentorId })
+    })
+    .then(res => res.ok ? res.json() : Promise.reject(res.json()))
+    .then(data => {
+        if (data.status === 'success') {
+            document.getElementById('assign-mentor-modal').style.display = 'none';
+            showSuccess('management-content', data.message);
+            // Можно обновить панель управления, чтобы ученик пропал из списка
+            // Но пока просто закроем окно.
+        } else {
+            throw new Error(data.message);
+        }
+    })
+    .catch(errPromise => {
+        errPromise.then(err => showError('assign-mentor-modal', err.message || 'Произошла непредвиденная ошибка.'));
+    });
 }
 
 function initViewToggle() {
