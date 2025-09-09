@@ -378,7 +378,7 @@ def get_pending_players():
 def approve_player(player_id):
     db = get_db()
     cursor = db.cursor()
-    cursor.execute("UPDATE players SET status = 'active' WHERE id = ? AND guild_id = ? AND status = 'pending'", (player_id, g.management_guild_id))
+    cursor.execute("UPDATE players SET status = 'active' WHERE id = ? AND guild_id = ? AND status = 'pending'", (player_id, g.founder_guild_id))
     db.commit()
     if cursor.rowcount > 0:
         return jsonify({'status': 'success', 'message': 'Player approved'})
@@ -389,7 +389,7 @@ def approve_player(player_id):
 def deny_player(player_id):
     db = get_db()
     cursor = db.cursor()
-    cursor.execute("DELETE FROM players WHERE id = ? AND guild_id = ? AND status = 'pending'", (player_id, g.management_guild_id))
+    cursor.execute("DELETE FROM players WHERE id = ? AND guild_id = ? AND status = 'pending'", (player_id, g.founder_guild_id))
     db.commit()
     if cursor.rowcount > 0:
         return jsonify({'status': 'success', 'message': 'Player denied and removed'})
