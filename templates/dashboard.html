@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
-    <script src="/static/js/dashboard.js" defer></script>
+    <script src="static/js/dashboard.js" defer></script>
 </head>
 <body>
     <div id="sidebar-overlay"></div>
@@ -85,7 +85,8 @@
                 <p id="total-players">Игроков: -</p>
                 <p id="total-mentors">Менторов: -</p>
             </div>
-        </aside> <main class="main-content">
+        </aside>
+        <main class="main-content">
             <header class="dashboard-header">
                 <div class="header-left">
                     <button class="menu-toggle">
@@ -111,25 +112,22 @@
                     </button>
                 </div>
             </header>
-
-            <div class="dashboard-content">
-                <div class="online-members-section collapsible collapsed">
-                    <div class="section-header">
-                        <div class="section-header-left">
-                           <i class="material-icons">groups</i>
-                           <h2>Текущий Онлайн</h2>
-                           <span class="online-indicator"></span>
-                        </div>
-                        <div class="section-header-right">
-                           <span class="total-online-count">Всего онлайн: 0</span>
-                           <button class="toggle-collapse-btn">
-                               <i class="material-icons">expand_more</i>
-                           </button>
-                        </div>
+            <div class="online-members-section collapsible collapsed">
+                <div class="section-header">
+                    <div class="section-header-left">
+                       <i class="material-icons">groups</i>
+                       <h2>Текущий Онлайн</h2>
+                       <span class="online-indicator"></span>
                     </div>
-                    <div class="online-members-list">
-                        <p style="text-align: center; color: var(--text-muted); grid-column: 1 / -1;">Загрузка онлайн-игроков...</p>
+                    <div class="section-header-right">
+                       <span class="total-online-count">Всего онлайн: 0</span>
+                       <button class="toggle-collapse-btn">
+                           <i class="material-icons">expand_more</i>
+                       </button>
                     </div>
+                </div>
+                <div class="online-members-list">
+                    <p style="text-align: center; color: var(--text-muted); grid-column: 1 / -1;">Загрузка онлайн-игроков...</p>
                 </div>
             </div>
             <section id="player-dashboard" class="dashboard-section" style="display: block;">
@@ -152,7 +150,7 @@
                     <div class="stat-card">
                         <div class="stat-icon"><i class="material-icons">compare_arrows</i></div>
                         <div class="stat-value" id="comparison"><span class="skeleton">&nbsp;</span></div>
-                        <div class="stat-label">Сравнение с топ-10
+                        <div class="stat-label">Сравнение с лучшим
                             <i class="material-icons tooltip-trigger" data-tooltip="Ваш средний балл сравнивается со средним баллом топ-10 игроков гильдии за выбранный период.">help_outline</i>
                         </div>
                     </div>
@@ -162,7 +160,6 @@
                         <div class="stat-label">Последняя сессия</div>
                     </div>
                 </div>
-                
                 <div class="charts-rows-container">
                     <div class="charts-row-squares">
                         <div class="chart-container">
@@ -170,28 +167,36 @@
                                 <h3 class="chart-title"><i class="material-icons">bar_chart</i> Средний балл по ролям</h3>
                                 <i class="material-icons tooltip-trigger" data-tooltip="Показывает ваш средний балл в разных ролях. Помогает понять, в какой роли вы наиболее эффективны.">help_outline</i>
                             </div>
-                            <canvas id="role-scores-chart"></canvas>
+                            <div class="chart-wrapper">
+                                <canvas id="role-scores-chart"></canvas>
+                            </div>
                         </div>
                         <div class="chart-container">
                              <div class="chart-header">
                                 <h3 class="chart-title"><i class="material-icons">radar</i> Средний балл по контенту</h3>
                                 <i class="material-icons tooltip-trigger" data-tooltip="Сравнивает вашу успеваемость в разных типах контента (Замки, Клаймы и т.д.), выявляя сильные и слабые стороны.">help_outline</i>
                             </div>
-                            <canvas id="content-scores-chart"></canvas>
+                            <div class="chart-wrapper">
+                                <canvas id="content-scores-chart"></canvas>
+                            </div>
                         </div>
                         <div class="chart-container">
                             <div class="chart-header">
                                 <h3 class="chart-title"><i class="material-icons">pie_chart</i> Категории ошибок</h3>
                                 <i class="material-icons tooltip-trigger" data-tooltip="Визуализирует, какие категории ошибок (Позиционка, Тайминг и т.д.) вы допускаете чаще всего.">help_outline</i>
                             </div>
-                            <canvas id="error-types-chart"></canvas>
+                            <div class="chart-wrapper">
+                                <canvas id="error-types-chart"></canvas>
+                            </div>
                         </div>
                         <div class="chart-container">
                             <div class="chart-header">
                                 <h3 class="chart-title"><i class="material-icons">bar_chart</i> Распределение ошибок</h3>
                                 <i class="material-icons tooltip-trigger" data-tooltip="Показывает, в каких типах контента вы совершаете больше всего ошибок.">help_outline</i>
                             </div>
-                            <canvas id="error-distribution-chart"></canvas>
+                            <div class="chart-wrapper">
+                                <canvas id="error-distribution-chart"></canvas>
+                            </div>
                         </div>
                     </div>
                     <div class="charts-row-wide">
@@ -200,14 +205,18 @@
                                 <h3 class="chart-title"><i class="material-icons">trending_up</i> Тренд баллов (по неделям)</h3>
                                 <i class="material-icons tooltip-trigger" data-tooltip="Отображает динамику вашего среднего балла по неделям, позволяя отслеживать прогресс во времени.">help_outline</i>
                             </div>
-                            <canvas id="score-trend-chart"></canvas>
+                            <div class="chart-wrapper">
+                                <canvas id="score-trend-chart"></canvas>
+                            </div>
                         </div>
                         <div class="chart-container">
                              <div class="chart-header">
                                 <h3 class="chart-title"><i class="material-icons">scatter_plot</i> Связь ошибок и баллов</h3>
                                 <i class="material-icons tooltip-trigger" data-tooltip="Сопоставляет количество ошибок за сессию с итоговым баллом. Помогает понять, как ошибки влияют на оценку.">help_outline</i>
                             </div>
-                            <canvas id="error-score-chart"></canvas>
+                            <div class="chart-wrapper">
+                                <canvas id="error-score-chart"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -218,7 +227,6 @@
                     </div>
                 </div>
             </section>
-            
             <section id="general-dashboard" class="dashboard-section" style="display: none;">
                 <div class="stats-grid general-stats-grid">
                      <div class="stat-card">
@@ -245,28 +253,36 @@
                             <h3 class="chart-title"><i class="material-icons">bar_chart</i> Рейтинг гильдий</h3>
                             <i class="material-icons tooltip-trigger" data-tooltip="Сравнительный рейтинг гильдий на платформе по среднему баллу всех их игроков.">help_outline</i>
                         </div>
-                        <canvas id="guild-ranking-chart"></canvas>
+                        <div class="chart-wrapper">
+                            <canvas id="guild-ranking-chart"></canvas>
+                        </div>
                     </div>
                     <div class="chart-container">
                         <div class="chart-header">
                             <h3 class="chart-title"><i class="material-icons">pie_chart</i> Распределение по ролям</h3>
                              <i class="material-icons tooltip-trigger" data-tooltip="Показывает, как распределены игровые сессии по ролям внутри вашей гильдии.">help_outline</i>
                         </div>
-                        <canvas id="guild-role-distribution"></canvas>
+                        <div class="chart-wrapper">
+                            <canvas id="guild-role-distribution"></canvas>
+                        </div>
                     </div>
                     <div class="chart-container">
                          <div class="chart-header">
                             <h3 class="chart-title"><i class="material-icons">bar_chart</i> Категории ошибок в гильдии</h3>
                              <i class="material-icons tooltip-trigger" data-tooltip="Анализирует самые частые категории ошибок, допускаемые всеми игроками гильдии.">help_outline</i>
                         </div>
-                        <canvas id="guild-error-types"></canvas>
+                        <div class="chart-wrapper">
+                            <canvas id="guild-error-types"></canvas>
+                        </div>
                     </div>
                     <div class="chart-container">
                         <div class="chart-header">
                             <h3 class="chart-title"><i class="material-icons">error</i> Топ-3 частых ошибок</h3>
                             <i class="material-icons tooltip-trigger" data-tooltip="Выделяет три самые распространенные ошибки в гильдии для целенаправленной работы.">help_outline</i>
                         </div>
-                        <canvas id="top-errors-chart"></canvas>
+                        <div class="chart-wrapper">
+                            <canvas id="top-errors-chart"></canvas>
+                        </div>
                     </div>
                 </div>
                 <div class="players-list-container">
@@ -274,7 +290,6 @@
                     <div id="top-players-list"></div>
                 </div>
             </section>
-            
             <section id="profile-content" class="dashboard-section" style="display: none;">
                 <header class="profile-header">
                     <div class="profile-avatar-wrapper avatar-changer">
@@ -300,7 +315,7 @@
                             <span id="reg-date"><span class="skeleton">-</span></span>
                         </div>
                         <div class="info-item">
-                            <label>Ментор</label>
+                            <label>Наставник</label>
                             <span id="mentor-name"><span class="skeleton">-</span></span>
                         </div>
                     </div>
@@ -319,7 +334,6 @@
                         </select>
                     </div>
                 </div>
-
                 <div class="profile-section">
                     <h2><i class="material-icons">settings_applications</i> Действия</h2>
                      <div class="form-actions" style="justify-content: flex-start;">
@@ -328,7 +342,6 @@
                     </div>
                 </div>
             </section>
-
             <section id="guild-content" class="dashboard-section" style="display: none;">
                 <div class="guild-header">
                     <h2><i class="material-icons">groups</i> Информация о гильдии</h2>
@@ -348,7 +361,6 @@
                     <div id="all-players-list"></div>
                 </div>
             </section>
-            
             <section id="management-content" class="dashboard-section" style="display: none;">
                 <header class="dashboard-header" style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
                     <div class="header-left"><h1>Управление</h1></div>
@@ -359,80 +371,115 @@
                         </button>
                     </div>
                 </header>
-
                 <div id="pending-players-container" class="players-list-container" style="display: none;">
                     <h2>Заявки на вступление <span class="stat-badge" id="pending-count" style="vertical-align: middle;"></span></h2>
                     <div id="pending-players-list"></div>
                 </div>
-                
                 <div class="players-list-container">
                     <h2>Управление составом</h2>
                     <div id="manage-players-list"></div>
                 </div>
             </section>
-            
             <section id="my-students-content" class="dashboard-section" style="display: none;">
                 <header class="dashboard-header">
                     <div class="header-left"><h1>Мои ученики</h1></div>
                 </header>
-                <div id="my-students-list" class="recommendations-grid">
-                    </div>
+                <div id="my-students-list" class="student-grid">
+                    <!-- Карточки учеников будут сгенерированы JavaScript -->
+                </div>
             </section>
-
             <section id="progress-content" class="dashboard-section" style="display: none;">
-                <header class="progress-header">
-                    <h1>Мой прогресс</h1>
-                    <div class="filter-controls">
-                        <button class="filter-pill active" data-filter="Все">Все</button>
-                        <button class="filter-pill" data-filter="В процессе">В процессе</button>
-                        <button class="filter-pill" data-filter="Завершено">Завершено</button>
+                <div id="player-selection-container" style="display: none;">
+                    <header class="dashboard-header">
+                         <div class="header-left">
+                            <h1>Выбор игрока</h1>
+                        </div>
+                    </header>
+                    <div id="progress-player-grid">
+                        <p class="placeholder">Загрузка игроков...</p>
                     </div>
-                </header>
-                <div class="progress-grid"></div>
-            </section>
-
-            <section id="review-requests-content" class="dashboard-section" style="display: none;">
-                <header class="dashboard-header">
-                    <div class="header-left"><h1>Запросы на разбор от игроков</h1></div>
-                </header>
-                <div class="players-list-container">
-                    <h2>Активные запросы</h2>
-                    <div id="review-requests-list">
+                </div>
+                <div id="goals-display-container" style="display: none;">
+                    <header class="dashboard-header">
+                        <div class="header-left">
+                           <button id="back-to-selection-btn" class="btn help-btn" style="display: none; margin-right: 16px;">
+                               <i class="material-icons">arrow_back</i>
+                           </button>
+                            <h1 id="goals-header-title">Прогресс игрока</h1>
+                        </div>
+                        <div class="header-right">
+                            <button id="create-goal-btn" class="btn btn-primary" style="display: none;">
+                                <i class="material-icons">add</i>
+                                <span>Создать цель</span>
+                            </button>
+                        </div>
+                    </header>
+                    <div class="collapsible">
+                        <div class="section-header">
+                             <div class="section-header-left">
+                                <h2>Активные цели</h2>
+                             </div>
+                        </div>
+                        <div class="progress-grid" id="active-goals-grid"></div>
+                    </div>
+                    <div class="collapsible completed-goals-section collapsed">
+                        <div class="section-header">
+                             <div class="section-header-left">
+                                <h2>Завершенные цели <span id="completed-goals-count"></span></h2>
+                             </div>
+                             <div class="section-header-right">
+                               <button class="toggle-collapse-btn">
+                                   <i class="material-icons">expand_more</i>
+                               </button>
+                            </div>
+                        </div>
+                        <div class="progress-grid" id="completed-goals-grid"></div>
                     </div>
                 </div>
             </section>
-            
             <section id="settings-content" class="dashboard-section" style="display: none;">
-                <h1><i class="material-icons">tune</i> Основные настройки</h1>
-                <div class="settings-group">
-                    <label>Тема интерфейса</label>
-                    <select id="theme-selector">
-                        <option value="light">Светлая</option>
-                        <option value="dark">Темная</option>
-                        <option value="system">Системная</option>
-                    </select>
-                    <p>Выберите предпочитаемую тему интерфейса</p>
+                <header class="dashboard-header">
+                    <h1><i class="material-icons">tune</i> Настройки</h1>
+                </header>
+                <div class="settings-section">
+                    <h2>Внешний вид</h2>
+                    <div class="settings-group">
+                        <label for="theme-selector">Тема интерфейса</label>
+                        <select id="theme-selector" class="form-control">
+                            <option value="light">Светлая</option>
+                            <option value="dark">Темная</option>
+                            <option value="system">Системная</option>
+                        </select>
+                    </div>
+                    <div class="settings-group">
+                        <p>Включить/выключить анимации интерфейса</p>
+                        <label class="switch">
+                            <input type="checkbox" id="animations-toggle" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
                 </div>
-                <div class="settings-group">
-                    <label>Анимации</label>
-                    <input type="checkbox" id="animations-toggle" checked>
-                    <p>Включить анимации интерфейса</p>
-                </div>
-                <div class="settings-group">
-                    <label>Уведомления по email</label>
-                    <input type="checkbox" id="notifications-toggle">
-                    <p>Получать email-уведомления о новых рекомендациях</p>
-                </div>
-                <div class="settings-group">
-                    <label>Публиковать статистику</label>
-                    <input type="checkbox" id="publish-toggle">
-                    <p>Разрешить другим видеть вашу статистику</p>
+                <div class="settings-section">
+                    <h2>Уведомления</h2>
+                    <div class="settings-group">
+                        <p>Получать email-уведомления о новых рекомендациях</p>
+                         <label class="switch">
+                            <input type="checkbox" id="notifications-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                     <div class="settings-group">
+                        <p>Разрешить другим видеть вашу статистику</p>
+                        <label class="switch">
+                            <input type="checkbox" id="publish-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
                 </div>
                 <button class="btn btn-primary save-settings">Сохранить изменения</button>
             </section>
         </main>
     </div>
-
     <div id="help-modal" class="modal">
         <div class="modal-content">
             <header class="modal-header">
@@ -455,65 +502,67 @@
         </div>
     </div>
     <div id="mentor-modal" class="modal">
-        <div class="modal-content mentor-form">
+        <div class="modal-content">
             <header class="modal-header">
                 <h2>Оценка игрока</h2>
                 <button class="close-modal">&times;</button>
             </header>
             <form id="mentor-form">
-                <div class="form-group">
-                    <label>Игрок</label>
-                    <select id="player-select" required>
-                        <option value="" disabled selected>Выберите игрока</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Контент</label>
-                    <select id="content-select" required>
-                        <option value="" disabled selected>Выберите контент</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Роль</label>
-                    <select id="role-select" required>
-                        <option value="" disabled selected>Выберите роль</option>
-                        <option value="D-Tank">D-Tank</option>
-                        <option value="E-Tank">E-Tank</option>
-                        <option value="Healer">Healer</option>
-                        <option value="Support">Support</option>
-                        <option value="DPS">DPS</option>
-                        <option value="Battlemount">Battlemount</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Оценка (обязательно)</label>
-                    <div class="star-rating">
-                        <i class="material-icons" data-value="1">star_border</i>
-                        <i class="material-icons" data-value="2">star_border</i>
-                        <i class="material-icons" data-value="3">star_border</i>
-                        <i class="material-icons" data-value="4">star_border</i>
-                        <i class="material-icons" data-value="5">star_border</i>
-                        <i class="material-icons" data-value="6">star_border</i>
-                        <i class="material-icons" data-value="7">star_border</i>
-                        <i class="material-icons" data-value="8">star_border</i>
-                        <i class="material-icons" data-value="9">star_border</i>
-                        <i class="material-icons" data-value="10">star_border</i>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Игрок</label>
+                        <select id="player-select" class="form-control" required>
+                            <option value="" disabled selected>Выберите игрока</option>
+                        </select>
                     </div>
-                    <input type="hidden" id="score" value="0" required min="1">
+                    <div class="form-group">
+                        <label>Контент</label>
+                        <select id="content-select" class="form-control" required>
+                            <option value="" disabled selected>Выберите контент</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Роль</label>
+                        <select id="role-select" class="form-control" required>
+                            <option value="" disabled selected>Выберите роль</option>
+                            <option value="D-Tank">D-Tank</option>
+                            <option value="E-Tank">E-Tank</option>
+                            <option value="Healer">Healer</option>
+                            <option value="Support">Support</option>
+                            <option value="DPS">DPS</option>
+                            <option value="Battlemount">Battlemount</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Оценка (обязательно)</label>
+                        <div class="star-rating">
+                            <i class="material-icons" data-value="1">star_border</i>
+                            <i class="material-icons" data-value="2">star_border</i>
+                            <i class="material-icons" data-value="3">star_border</i>
+                            <i class="material-icons" data-value="4">star_border</i>
+                            <i class="material-icons" data-value="5">star_border</i>
+                            <i class="material-icons" data-value="6">star_border</i>
+                            <i class="material-icons" data-value="7">star_border</i>
+                            <i class="material-icons" data-value="8">star_border</i>
+                            <i class="material-icons" data-value="9">star_border</i>
+                            <i class="material-icons" data-value="10">star_border</i>
+                        </div>
+                        <input type="hidden" id="score" value="0" required min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Типы ошибок (например, "далеко от танка, поздно нажал деф")</label>
+                        <input type="text" id="error-types" class="form-control" placeholder="Введите через запятую" maxlength="200">
+                    </div>
+                    <div class="form-group">
+                        <label>Над чем работать (например, "следи за позицией хила, быстрее реагируй")</label>
+                        <textarea id="work-on" class="form-control" placeholder="Введите через запятую" rows="3" maxlength="300"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Комментарии</label>
+                        <textarea id="comments" class="form-control" placeholder="Общие комментарии" rows="5" maxlength="500"></textarea>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Типы ошибок (например, "далеко от танка, поздно нажал деф")</label>
-                    <input type="text" id="error-types" placeholder="Введите через запятую" maxlength="200">
-                </div>
-                <div class="form-group">
-                    <label>Над чем работать (например, "следи за позицией хила, быстрее реагируй")</label>
-                    <textarea id="work-on" placeholder="Введите через запятую" rows="3" maxlength="300"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Комментарии</label>
-                    <textarea id="comments" placeholder="Общие комментарии" rows="5" maxlength="500"></textarea>
-                </div>
-                <div class="form-actions">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-secondary close-modal-btn">Отмена</button>
                     <button type="submit" class="btn btn-primary">Сохранить оценку</button>
                 </div>
@@ -530,19 +579,18 @@
                 <div class="compare-controls">
                     <div class="form-group">
                         <label>Игрок 1</label>
-                        <select id="compare-player1-select">
+                        <select id="compare-player1-select" class="form-control">
                             <option value="" disabled selected>Выберите игрока</option>
                         </select>
                     </div>
                      <div class="form-group">
                         <label>Игрок 2</label>
-                        <select id="compare-player2-select">
+                        <select id="compare-player2-select" class="form-control">
                             <option value="" disabled selected>Выберите игрока</option>
                         </select>
                     </div>
                 </div>
-                <div id="compare-results">
-                    </div>
+                <div id="compare-results"></div>
             </div>
         </div>
     </div>
@@ -569,8 +617,7 @@
                 <h2>Запросы на разбор</h2>
                 <button class="close-modal">&times;</button>
             </header>
-            <div class="modal-body" id="review-requests-list-modal">
-                </div>
+            <div class="modal-body" id="review-requests-list-modal"></div>
         </div>
     </div>
     <div id="sessions-modal" class="modal">
@@ -579,11 +626,9 @@
                 <h2 id="sessions-modal-title">Последние сессии</h2>
                 <button class="close-modal">&times;</button>
             </header>
-            <div class="modal-body" id="sessions-modal-body">
-                </div>
+            <div class="modal-body" id="sessions-modal-body"></div>
         </div>
     </div>
-    
     <div id="assign-mentor-modal" class="modal wide-modal">
         <div class="modal-content">
             <header class="modal-header">
@@ -599,8 +644,7 @@
                 </div>
                  <div class="form-group">
                     <label>2. Выберите наставника</label>
-                    <div id="assign-mentor-list" class="online-members-list" style="max-height: 40vh; overflow-y: auto;">
-                        </div>
+                    <div id="assign-mentor-list" class="online-members-list" style="max-height: 40vh; overflow-y: auto;"></div>
                 </div>
             </div>
             <footer class="modal-footer">
@@ -609,7 +653,73 @@
             </footer>
         </div>
     </div>
-
+    <div id="goal-modal" class="modal">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2 id="goal-modal-title">Новая цель</h2>
+                <button class="close-modal">&times;</button>
+            </header>
+            <form id="goal-form">
+                <input type="hidden" id="goal-id">
+                <input type="hidden" id="goal-player-id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="goal-title">Название цели</label>
+                        <input type="text" id="goal-title" class="form-control" placeholder="Например, 'Освоить роль D-Tank'" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="goal-description">Описание</label>
+                        <textarea id="goal-description" class="form-control" rows="3" placeholder="Подробно опишите, что нужно сделать"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="goal-due-date">Срок выполнения</label>
+                        <input type="date" id="goal-due-date" class="form-control">
+                    </div>
+                    <div id="goal-metrics-group">
+                        <hr style="margin: 20px 0;">
+                        <h4 style="margin-bottom: 16px;">Условие выполнения цели</h4>
+                        <div class="form-group">
+                            <label for="goal-metric-select">Отслеживаемая метрика</label>
+                            <select id="goal-metric-select" class="form-control">
+                                <option value="">Без метрики (задача)</option>
+                                <option value="avg_score">Средний балл</option>
+                                <option value="session_count">Количество сессий</option>
+                            </select>
+                        </div>
+                        <div id="metric-conditions-container" style="display: none;">
+                            <div class="form-group">
+                                <label for="goal-metric-target">Целевое значение</label>
+                                <input type="number" id="goal-metric-target" step="0.1" class="form-control" placeholder="Например, 8.5">
+                            </div>
+                            <div class="form-group">
+                                <label for="goal-metric-content">Контент (необязательно)</label>
+                                <select id="goal-metric-content" class="form-control">
+                                    <option value="">Любой контент</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="goal-metric-role">Роль (необязательно)</label>
+                                <select id="goal-metric-role" class="form-control">
+                                    <option value="">Любая роль</option>
+                                    <option value="D-Tank">D-Tank</option>
+                                    <option value="E-Tank">E-Tank</option>
+                                    <option value="Healer">Healer</option>
+                                    <option value="Support">Support</option>
+                                    <option value="DPS">DPS</option>
+                                    <option value="Battlemount">Battlemount</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="delete-goal-btn" class="btn btn-danger" style="display: none; margin-right: auto;">Удалить</button>
+                    <button type="button" class="btn btn-secondary close-modal-btn">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
     <button id="compare-btn" class="btn btn-primary compare-btn">Сравнить игроков</button>
 </body>
 </html>
