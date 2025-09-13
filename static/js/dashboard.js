@@ -636,7 +636,7 @@ function loadGoals() {
             
             currentGoalsData = result.data; 
 
-            if (isManager && currentGoalsData.student_goals) {
+            if (isManager && currentGoalsData?.student_goals?.length > 0) {
                 selectionContainer.style.display = 'block';
                 renderPlayerSelection(currentGoalsData.student_goals);
             } else {

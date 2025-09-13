@@ -1862,6 +1862,16 @@ def get_comparable_players():
     return jsonify({'status': 'success', 'players': [dict(p) for p in players]})
 
 
+@app.route('/init-db', methods=['GET'])
+def manual_init_db():
+    try:
+        with app.app_context():
+            init_db()
+        return jsonify({'status': 'success', 'message': 'Database initialized successfully.'})
+    except Exception as e:
+        logger.error(f"Manual DB init failed: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 if __name__ == '__main__':
     os.makedirs('data', exist_ok=True)
     os.makedirs(AVATAR_UPLOAD_FOLDER, exist_ok=True)
