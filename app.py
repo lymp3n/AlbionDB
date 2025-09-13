@@ -38,11 +38,6 @@ def get_db():
             port=os.environ.get('DB_PORT'),
             cursor_factory=RealDictCursor
         )
-        # <<< ВРЕМЕННО: Закомментирована проверка для первоначальной инициализации >>>
-        # with db.cursor() as cursor:
-        #     cursor.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'players');")
-        #     if not cursor.fetchone()[0]:
-        #         init_db()
     return db
 
 @app.teardown_appcontext
@@ -345,6 +340,7 @@ def init_db():
 # --- LOGGING MIDDLEWARE ---
 
 @app.before_request
+@app.before_request
 def log_request_info():
     logger.debug(f"Request: {request.method} {request.path} | Session: {session}")
     if 'player_id' in session:
@@ -354,9 +350,10 @@ def log_request_info():
             # Проверяем, существует ли таблица 'players'. Если нет — инициализируем БД.
             cursor.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'players');")
             if not cursor.fetchone()[0]:
+                logger.info("Database not initialized. Running init_db()...")
                 init_db()
-                logger.info("Database initialized on first request.")
-            # Обновляем активность игрока
+                logger.info("Database initialized successfully on first request.")
+            # Обновляем активность игрока с использованием корректного синтаксиса PostgreSQL
             cursor.execute(
                 """
                 INSERT INTO online_activity (player_id, last_seen)
@@ -369,7 +366,8 @@ def log_request_info():
             db.commit()
         except Exception as e:
             logger.error(f"Failed to update online activity for player {session.get('player_id')}: {e}")
-            
+            logger.error(traceback.format_exc())
+
 @app.after_request
 def log_response_info(response):
     logger.debug(f"Response status: {response.status}")
@@ -1020,22 +1018,13 @@ def system_status():
 
 @app.route('/api/system/online-members', methods=['GET'])
 def get_online_members():
-    """
-    Получает список онлайн-игроков из базы данных.
-    1. Удаляет устаревшие записи (игроков, которых не было более 15 минут).
-    2. Выбирает активных игроков и присоединяет их данные (имя, гильдия, аватар).
-    3. Рассчитывает продолжительность их текущей сессии.
-    """
     db = get_db()
     cursor = db.cursor()
     timeout_seconds = 15 * 60  # 15 минут
-
     try:
-        # 1. Удаляем старые сессии, чтобы не запрашивать их каждый раз
-        cursor.execute("DELETE FROM online_activity WHERE (strftime('%s', 'now') - strftime('%s', last_seen)) > %s", (timeout_seconds,))
+        # <<< ИСПРАВЛЕНИЕ: Заменено strftime на EXTRACT(EPOCH FROM ...)
+        cursor.execute("DELETE FROM online_activity WHERE EXTRACT(EPOCH FROM (NOW() - last_seen)) > %s", (timeout_seconds,))
         db.commit()
-
-        # 2. Получаем всех активных игроков с их данными
         query = """
             SELECT 
                 p.id, 
@@ -1049,17 +1038,12 @@ def get_online_members():
             LEFT JOIN guilds g ON p.guild_id = g.id
         """
         cursor.execute(query)
-        
         online_members_list = []
         current_time = datetime.datetime.now(datetime.UTC)
-        
         for player_row in cursor.fetchall():
             player = dict(player_row)
             last_seen_dt = datetime.datetime.fromisoformat(player['last_seen'])
-            
-            # 3. Рассчитываем продолжительность сессии в секундах
             duration_seconds = (current_time - last_seen_dt).total_seconds()
-
             online_members_list.append({
                 'player_id': player['id'],
                 'player_name': player['nickname'],
@@ -1068,12 +1052,8 @@ def get_online_members():
                 'avatar_url': player['avatar_url'],
                 'duration_seconds': int(duration_seconds)
             })
-
-        # Сортируем по продолжительности сессии
         online_members_list.sort(key=lambda x: x['duration_seconds'], reverse=True)
-        
         return jsonify({'status': 'success', 'online_members': online_members_list})
-
     except Exception as e:
         logger.error(f"Error in get_online_members: {e}\n{traceback.format_exc()}")
         return jsonify({'status': 'error', 'message': "Internal server error"}), 500
@@ -1865,17 +1845,6 @@ def get_comparable_players():
     cursor.execute("SELECT id, nickname FROM players WHERE guild_id = %s ORDER BY nickname ASC", (player_guild['guild_id'],))
     players = cursor.fetchall()
     return jsonify({'status': 'success', 'players': [dict(p) for p in players]})
-
-
-@app.route('/init-db', methods=['GET'])
-def manual_init_db():
-    try:
-        with app.app_context():
-            init_db()
-        return jsonify({'status': 'success', 'message': 'Database initialized successfully.'})
-    except Exception as e:
-        logger.error(f"Manual DB init failed: {e}")
-        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 if __name__ == '__main__':
     os.makedirs('data', exist_ok=True)
