@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
-app.secret_key = 'your-super-secret-key-that-is-long-and-random'
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-for-local-use-only')
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 DB_PATH = 'data/database.db'
@@ -904,13 +904,18 @@ def create_goal():
         
         query_suffix = " ".join(query_parts)
         if metric == 'avg_score':
-            cursor.execute(f"SELECT AVG(score) {query_suffix}", params)
+            # Добавляем псевдоним 'avg' для колонки
+            cursor.execute(f"SELECT AVG(score) as avg {query_suffix}", params)
             result = cursor.fetchone()
-            start_value = result[0] if result and result[0] is not None else 0
+            # Обращаемся по имени 'avg'
+            start_value = result['avg'] if result and result['avg'] is not None else 0
         elif metric == 'session_count':
-            cursor.execute(f"SELECT COUNT(id) {query_suffix}", params)
+            # Добавляем псевдоним 'count' для колонки
+            cursor.execute(f"SELECT COUNT(id) as count {query_suffix}", params)
             result = cursor.fetchone()
-            start_value = result[0] if result and result[0] is not None else 0
+            # Обращаемся по имени 'count'
+            start_value = result['count'] if result and result['count'] is not None else 0
+
 
     due_date = None
     if due_date_str:
@@ -1042,8 +1047,10 @@ def get_online_members():
         current_time = datetime.datetime.now(datetime.timezone.utc)
         for player_row in cursor.fetchall():
             player = dict(player_row)
-            # ИСПРАВЛЕНИЕ: psycopg2 уже возвращает объект datetime, парсинг не нужен
             last_seen_dt = player['last_seen']
+            # >>> ИСПРАВЛЕНИЕ: Проверяем, есть ли у времени часовой пояс. Если нет, считаем его как UTC.
+            if last_seen_dt.tzinfo is None:
+                last_seen_dt = last_seen_dt.replace(tzinfo=datetime.timezone.utc)
             duration_seconds = (current_time - last_seen_dt).total_seconds()
             online_members_list.append({
                 'player_id': player['id'],
