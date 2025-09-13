@@ -724,18 +724,21 @@ function createPlayerCard(player, goals) {
  * @param {number} playerId - The player's ID.
  * @param {string} playerName - The player's name.
  */
-function renderPlayerGoals(playerId, playerName) {
-    const isMyGoals = (playerId === currentPlayerId);
+function renderPlayerGoals(playerId, playerName, playerGuild) {
+    const isMyGoals = (String(playerId) === String(currentPlayerId));
     let goals;
 
     if (isMyGoals) {
         goals = currentGoalsData.my_goals || [];
+        // <<< ИЗМЕНЕНИЕ: Добавляем гильдию в заголовок
+        document.getElementById('goals-header-title').textContent = `Прогресс: ${playerName} (${currentPlayerData.guild})`;
     } else {
         const student = currentGoalsData.student_goals.find(p => p.id == playerId);
         goals = student ? student.goals : [];
+        // <<< ИЗМЕНЕНИЕ: Добавляем гильдию в заголовок
+        const guildText = playerGuild ? ` (${playerGuild})` : '';
+        document.getElementById('goals-header-title').textContent = `Прогресс: ${playerName}${guildText}`;
     }
-
-    document.getElementById('goals-header-title').textContent = `Прогресс: ${playerName}`;
     
     const activeGrid = document.getElementById('active-goals-grid');
     const completedGrid = document.getElementById('completed-goals-grid');
@@ -1075,6 +1078,8 @@ function loadMyStudents() {
             container.innerHTML = '<p class="error-message">Ошибка загрузки учеников.</p>';
         });
 }
+
+// <<< ПРОВЕРКА: Убедитесь, что эта функция полностью заменена
 function renderMyStudents(students) {
     const container = document.getElementById('my-students-list');
     container.innerHTML = '';
@@ -1087,8 +1092,10 @@ function renderMyStudents(students) {
         card.className = 'student-card'; 
         
         const avatarContent = student.avatar_url
-            ? `<img src="${student.avatar_url}" alt="Аватар" class="student-avatar-img">`
+            ? `<img src="${student.avatar_url}?t=${new Date().getTime()}" alt="Аватар" class="student-avatar-img">`
             : `<div class="student-avatar-fallback">${student.nickname.charAt(0).toUpperCase()}</div>`;
+        
+        const guildInfo = student.guild_name ? `<p class="student-guild">${student.guild_name}</p>` : '';
 
         card.innerHTML = `
             <div class="student-card-header">
@@ -1098,6 +1105,7 @@ function renderMyStudents(students) {
                 <div class="student-info">
                     <h3 class="student-name">${student.nickname}</h3>
                     <p class="student-status">Ученик</p>
+                    ${guildInfo}
                 </div>
             </div>
             <div class="student-meta">
@@ -1132,6 +1140,8 @@ function renderMyStudents(students) {
         });
     });
 }
+
+
 function removeStudent(studentId) {
     fetch(`/api/mentors/students/${studentId}/remove`, { method: 'POST' })
         .then(res => res.ok ? res.json() : Promise.reject(res.json()))
@@ -1370,7 +1380,7 @@ async function loadGuildData() {
             const rankMessageEl = document.getElementById('guild-player-rank');
             const playerIndex = allPlayers.players.findIndex(p => p.id === currentPlayerId);
             if (playerIndex !== -1) {
-                rankMessageEl.textContent = `Ваш ранг в гильдии: #${playerIndex + 1} из ${allPlayers.players.length}`;
+                rankMessageEl.textContent = `Ваш ранг в альянсе: #${playerIndex + 1} из ${allPlayers.players.length}`;
                 rankMessageEl.style.display = 'block';
             } else {
                 rankMessageEl.style.display = 'none';
@@ -1405,6 +1415,7 @@ function renderRoleRatings(ratings) {
         container.innerHTML = content;
     }
 }
+
 function loadManagementPanel() {
     const pendingContainer = document.getElementById('pending-players-container');
     pendingContainer.style.display = 'none';
@@ -1491,39 +1502,76 @@ function loadManageablePlayers() {
             container.innerHTML = '<p class="error-message">Ошибка загрузки состава гильдии.</p>';
         });
 }
+
 function renderManageablePlayers(players) {
     const container = document.getElementById('manage-players-list');
     if (!container) return;
-    if (players.length === 0) {
-        container.innerHTML = '<p class="placeholder" style="position: static; height: auto;">В гильдии пока нет других участников.</p>';
-        return;
-    }
-    const isFounder = currentPlayerData.status === 'founder';
-    container.innerHTML = `
-        <table class="players-table">
-            <thead>
-                <tr><th>Игрок</th><th>Статус</th><th>Дата регистрации</th><th>Действия</th></tr>
-            </thead>
-            <tbody>
-                ${players.map(player => `
+
+    const tableBody = container.querySelector('tbody');
+    if (!tableBody) { // Если таблицы нет, возможно, был пустой ответ, создадим её
+        container.innerHTML = `
+            <table class="players-table">
+                <thead>
                     <tr>
-                        <td data-label="Игрок">${player.nickname}</td>
-                        <td data-label="Статус">${formatPlayerStatus(player.status)}</td>
-                        <td data-label="Дата регистрации">${new Date(player.created_at).toLocaleDateString()}</td>
-                        <td data-label="Действия">
-                            ${isFounder ? 
-                                (player.status === 'active' ? `<button class="btn btn-primary promote-btn" data-id="${player.id}" data-name="${player.nickname}">В наставники</button>` : '') +
-                                `<button class="btn btn-secondary delete-btn" data-id="${player.id}" data-name="${player.nickname}">Удалить</button>`
-                                : 'Нет прав'
-                            }
-                        </td>
+                        <th>Игрок</th>
+                        <th>Статус</th>
+                        <th>Гильдия</th>
+                        <th>Дата регистрации</th>
+                        <th>Действия</th>
                     </tr>
-                `).join('')}
-            </tbody>
-        </table>
-    `;
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        `;
+    }
+    
+    // <<< ИСПРАВЛЕНИЕ: Логика для пустого списка теперь не ломает структуру
+    if (players.length === 0) {
+        const table = container.querySelector('table');
+        if (table) table.style.display = 'none'; // Скрываем таблицу
+        
+        let placeholder = container.querySelector('.placeholder');
+        if (!placeholder) {
+            placeholder = document.createElement('p');
+            placeholder.className = 'placeholder';
+            placeholder.style.position = 'static';
+            placeholder.style.height = 'auto';
+            container.appendChild(placeholder);
+        }
+        placeholder.textContent = 'Нет игроков для управления.';
+        
+        return;
+    } else {
+        const table = container.querySelector('table');
+        if (table) table.style.display = '';
+        const placeholder = container.querySelector('.placeholder');
+        if (placeholder) placeholder.remove();
+    }
+
+
+    const isFounder = currentPlayerData.status === 'founder';
+    
+    const finalTableBody = container.querySelector('tbody');
+    
+    finalTableBody.innerHTML = players.map(player => `
+        <tr>
+            <td data-label="Игрок">${player.nickname}</td>
+            <td data-label="Статус">${formatPlayerStatus(player.status)}</td>
+            <td data-label="Гильдия">${player.guild_name || 'N/A'}</td>
+            <td data-label="Дата регистрации">${new Date(player.created_at).toLocaleDateString()}</td>
+            <td data-label="Действия">
+                ${isFounder ? 
+                    (player.status === 'active' ? `<button class="btn btn-primary promote-btn" data-id="${player.id}" data-name="${player.nickname}">В наставники</button>` : '') +
+                    `<button class="btn btn-secondary delete-btn" data-id="${player.id}" data-name="${player.nickname}">Удалить</button>`
+                    : 'Нет прав'
+                }
+            </td>
+        </tr>
+    `).join('');
+
     if (isFounder) {
-        container.querySelectorAll('.promote-btn').forEach(btn => {
+        finalTableBody.querySelectorAll('.promote-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const { id, name } = e.target.dataset;
                 if (confirm(`Вы уверены, что хотите повысить игрока "${name}" до Наставника?`)) {
@@ -1531,7 +1579,7 @@ function renderManageablePlayers(players) {
                 }
             });
         });
-        container.querySelectorAll('.delete-btn').forEach(btn => {
+        finalTableBody.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const { id, name } = e.target.dataset;
                 deletePlayer(id, name);
@@ -1539,6 +1587,7 @@ function renderManageablePlayers(players) {
         });
     }
 }
+
 function promotePlayer(playerId) {
     fetch(`/api/players/${playerId}/promote`, { method: 'POST' })
         .then(response => response.ok ? response.json() : Promise.reject(response.json()))

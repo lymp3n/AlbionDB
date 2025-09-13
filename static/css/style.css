@@ -125,7 +125,7 @@ body.login-page-bg {
     box-shadow: 0 4px 8px rgba(108, 92, 231, 0.25);
 }
 .btn-secondary { background-color: var(--light); color: var(--dark); border: 1px solid var(--border); }
-.btn-secondary:hover { background-color: #e3e4e9; }
+.btn-secondary:hover { background-color: #464646; }
 .btn-block { width: 100%; }
 .btn i.material-icons { margin-right: var(--spacing-sm); font-size: 18px; }
 .btn-icon {

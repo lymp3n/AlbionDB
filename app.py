@@ -521,14 +521,16 @@ def remove_student_assignment(student_id):
 @app.route('/api/guilds/manageable-players', methods=['GET'])
 @management_required
 def get_manageable_players():
-    """Возвращает всех игроков гильдии (кроме текущего) для управления."""
+    """Возвращает всех игроков (кроме текущего) для управления."""
     cursor = get_db().cursor()
+    # <<< ИСПРАВЛЕНИЕ: Заменено JOIN на LEFT JOIN для стабильности
     cursor.execute("""
-        SELECT id, nickname, status, created_at 
-        FROM players 
-        WHERE guild_id = ? AND status != 'pending' AND id != ?
-        ORDER BY nickname ASC
-    """, (g.management_guild_id, session['player_id']))
+        SELECT p.id, p.nickname, p.status, p.created_at, g.name as guild_name
+        FROM players p
+        LEFT JOIN guilds g ON p.guild_id = g.id
+        WHERE p.status != 'pending' AND p.id != ?
+        ORDER BY p.nickname ASC
+    """, (session['player_id'],))
     players = cursor.fetchall()
     return jsonify({'status': 'success', 'players': [dict(p) for p in players]})
 
@@ -697,7 +699,32 @@ def _calculate_dynamic_progress(goal_dict):
     # Ограничиваем значение прогресса от 0 до 100
     return max(0, min(100, round(progress)))
 
+# <<< ПРОВЕРКА: Убедитесь, что эта функция полностью заменена
+@app.route('/api/mentors/my-students', methods=['GET'])
+def get_my_students():
+    if 'player_id' not in session:
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
 
+    cursor = get_db().cursor()
+    query = """
+        SELECT
+            p.id,
+            p.nickname,
+            p.status,
+            p.description,
+            p.avatar_url,
+            g.name as guild_name,
+            (SELECT AVG(s.score) FROM sessions s WHERE s.player_id = p.id) as avg_score,
+            (SELECT COUNT(s.id) FROM sessions s WHERE s.player_id = p.id) as session_count
+        FROM players p
+        LEFT JOIN guilds g ON p.guild_id = g.id
+        WHERE p.mentor_id = ?
+    """
+    cursor.execute(query, (session['player_id'],))
+    students = [dict(s) for s in cursor.fetchall()]
+    return jsonify({'status': 'success', 'students': students})
+
+# <<< ПРОВЕРКА: Убедитесь, что эта функция полностью заменена
 @app.route('/api/goals/view', methods=['GET'])
 @login_required
 def get_goals_view():
@@ -719,7 +746,7 @@ def get_goals_view():
         my_goals = []
         for goal_row in my_goals_raw:
             goal_dict = dict(goal_row)
-            goal_dict['progress'] = _calculate_dynamic_progress(goal_dict) # Динамический расчет
+            goal_dict['progress'] = _calculate_dynamic_progress(goal_dict)
             my_goals.append(goal_dict)
 
         response_data = {'my_goals': my_goals, 'student_goals': []}
@@ -728,10 +755,20 @@ def get_goals_view():
         if current_player['status'] in ['mentor', 'founder', 'наставник']:
             managed_players = []
             if current_player['status'] in ['mentor', 'founder']:
-                cursor.execute("SELECT id, nickname, status, avatar_url FROM players WHERE guild_id = ? AND id != ? AND status != 'pending'", (current_player['guild_id'], current_player['id']))
+                cursor.execute("""
+                    SELECT p.id, p.nickname, p.status, p.avatar_url, g.name as guild_name 
+                    FROM players p
+                    LEFT JOIN guilds g ON p.guild_id = g.id
+                    WHERE p.id != ? AND p.status != 'pending'
+                """, (current_player['id'],))
                 managed_players = cursor.fetchall()
             elif current_player['status'] == 'наставник':
-                cursor.execute("SELECT id, nickname, status, avatar_url FROM players WHERE mentor_id = ?", (current_player['id'],))
+                cursor.execute("""
+                    SELECT p.id, p.nickname, p.status, p.avatar_url, g.name as guild_name 
+                    FROM players p
+                    LEFT JOIN guilds g ON p.guild_id = g.id
+                    WHERE p.mentor_id = ?
+                """, (current_player['id'],))
                 managed_players = cursor.fetchall()
             
             student_goals_data = []
@@ -751,7 +788,7 @@ def get_goals_view():
                 goals_by_player = defaultdict(list)
                 for goal_row in all_student_goals_raw:
                     goal_dict = dict(goal_row)
-                    goal_dict['progress'] = _calculate_dynamic_progress(goal_dict) # Динамический расчет
+                    goal_dict['progress'] = _calculate_dynamic_progress(goal_dict)
                     goals_by_player[goal_dict['player_id']].append(goal_dict)
 
                 for player in managed_players:
@@ -997,16 +1034,19 @@ def get_top_players(guild_id):
     min_sessions = request.args.get('min_sessions', 0, type=int)
     limit = request.args.get('limit', 10, type=int)
     cursor = get_db().cursor()
+    
+    # <<< ИЗМЕНЕНИЕ: Запрос теперь выбирает игроков из двух конкретных гильдий (альянса)
     query = '''
         SELECT p.id, p.nickname, p.avatar_url, AVG(s.score) as avg_score, COUNT(s.id) as session_count,
                (SELECT role FROM sessions WHERE player_id = p.id GROUP BY role ORDER BY COUNT(*) DESC LIMIT 1) as main_role
         FROM players p 
         LEFT JOIN sessions s ON p.id = s.player_id
-        LEFT JOIN players m ON p.mentor_id = m.id
-        WHERE p.guild_id = ?
+        JOIN guilds g ON p.guild_id = g.id
+        WHERE g.name IN ('Grey Knights', 'Mure')
         GROUP BY p.id HAVING session_count >= ?
     '''
-    cursor.execute(query, (guild_id, min_sessions))
+    # guild_id больше не используется в параметрах запроса, но оставлен в URL для совместимости
+    cursor.execute(query, (min_sessions,))
     players = [dict(row) for row in cursor.fetchall()]
     
     if players:
@@ -1026,30 +1066,6 @@ def get_top_players(guild_id):
 
     players_to_return = players if limit == 0 else players[:limit]
     return jsonify({'status': 'success', 'players': players_to_return})
-    
-@app.route('/api/guilds/<int:guild_id>/role-ratings', methods=['GET'])
-def get_role_ratings(guild_id):
-    db = get_db()
-    cursor = db.cursor()
-    roles = ['D-Tank', 'E-Tank', 'Healer', 'Support', 'DPS', 'Battlemount']
-    ratings = {}
-    
-    for role in roles:
-        query = """
-            SELECT p.nickname, AVG(s.score) as avg_score, COUNT(s.id) as session_count
-            FROM sessions s
-            JOIN players p ON s.player_id = p.id
-            WHERE p.guild_id = ? AND s.role = ?
-            GROUP BY s.player_id
-            HAVING session_count >= 3
-            ORDER BY avg_score DESC
-            LIMIT 5
-        """
-        cursor.execute(query, (guild_id, role))
-        players = cursor.fetchall()
-        ratings[role] = [{'nickname': p['nickname'], 'avg_score': round(p['avg_score'], 2)} for p in players]
-        
-    return jsonify({'status': 'success', 'ratings': ratings})
 
 @app.route('/api/players', methods=['GET'])
 @login_required
@@ -1209,26 +1225,29 @@ def get_player_sessions(player_id):
     return jsonify({'status': 'success', 'sessions': sessions})
 
 
-@app.route('/api/mentors/my-students', methods=['GET'])
-def get_my_students():
-    if 'player_id' not in session:
-        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
-
-    cursor = get_db().cursor()
-    query = """
-        SELECT
-            p.id,
-            p.nickname,
-            p.status,
-            p.description,
-            (SELECT AVG(s.score) FROM sessions s WHERE s.player_id = p.id) as avg_score,
-            (SELECT COUNT(s.id) FROM sessions s WHERE s.player_id = p.id) as session_count
-        FROM players p
-        WHERE p.mentor_id = ?
-    """
-    cursor.execute(query, (session['player_id'],))
-    students = [dict(s) for s in cursor.fetchall()]
-    return jsonify({'status': 'success', 'students': students})
+@app.route('/api/guilds/<int:guild_id>/role-ratings', methods=['GET'])
+def get_role_ratings(guild_id):
+    db = get_db()
+    cursor = db.cursor()
+    roles = ['D-Tank', 'E-Tank', 'Healer', 'Support', 'DPS', 'Battlemount']
+    ratings = {}
+    
+    for role in roles:
+        query = """
+            SELECT p.nickname, AVG(s.score) as avg_score, COUNT(s.id) as session_count
+            FROM sessions s
+            JOIN players p ON s.player_id = p.id
+            WHERE p.guild_id = ? AND s.role = ?
+            GROUP BY s.player_id
+            HAVING session_count >= 3
+            ORDER BY avg_score DESC
+            LIMIT 5
+        """
+        cursor.execute(query, (guild_id, role))
+        players = cursor.fetchall()
+        ratings[role] = [{'nickname': p['nickname'], 'avg_score': round(p['avg_score'], 2)} for p in players]
+        
+    return jsonify({'status': 'success', 'ratings': ratings})
 
 @app.route('/api/content', methods=['GET'])
 def get_content():
@@ -1701,17 +1720,18 @@ def get_my_mentees():
 @app.route('/api/management/assignment-info', methods=['GET'])
 @privilege_required
 def get_assignment_info():
-    guild_id = g.current_player_guild_id
     db = get_db()
     cursor = db.cursor()
     
+    # <<< ИЗМЕНЕНИЕ: Убран фильтр по guild_id
     cursor.execute("""
         SELECT id, nickname 
         FROM players 
-        WHERE guild_id = ? AND status = 'active' AND mentor_id IS NULL
-    """, (guild_id,))
+        WHERE status = 'active' AND mentor_id IS NULL
+    """)
     unassigned_players = [dict(p) for p in cursor.fetchall()]
-
+    
+    # <<< ИЗМЕНЕНИЕ: Убран фильтр по guild_id
     cursor.execute("""
         SELECT 
             p.id, 
@@ -1720,8 +1740,8 @@ def get_assignment_info():
             p.specialization,
             (SELECT COUNT(*) FROM players WHERE mentor_id = p.id) as student_count
         FROM players p
-        WHERE p.guild_id = ? AND p.status IN ('mentor', 'founder', 'наставник')
-    """, (guild_id,))
+        WHERE p.status IN ('mentor', 'founder', 'наставник')
+    """)
     mentors = [dict(m) for m in cursor.fetchall()]
 
     return jsonify({
