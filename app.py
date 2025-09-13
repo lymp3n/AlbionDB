@@ -30,15 +30,19 @@ app.config['AVATAR_UPLOAD_FOLDER'] = AVATAR_UPLOAD_FOLDER
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
-        # Получаем данные из переменных окружения (они будут заданы в Render)
         db = g._database = psycopg2.connect(
             host=os.environ.get('DB_HOST'),
             database=os.environ.get('DB_NAME'),
             user=os.environ.get('DB_USER'),
             password=os.environ.get('DB_PASSWORD'),
             port=os.environ.get('DB_PORT'),
-            cursor_factory=RealDictCursor  # Это позволяет получать результаты как словари
+            cursor_factory=RealDictCursor
         )
+        # <<< ВРЕМЕННО: Закомментирована проверка для первоначальной инициализации >>>
+        # with db.cursor() as cursor:
+        #     cursor.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'players');")
+        #     if not cursor.fetchone()[0]:
+        #         init_db()
     return db
 
 @app.teardown_appcontext
