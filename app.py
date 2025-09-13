@@ -346,16 +346,17 @@ def init_db():
 
 @app.before_request
 def log_request_info():
-    """
-    При каждом запросе обновляет время последней активности пользователя в базе данных.
-    Использует INSERT OR REPLACE для атомарного обновления или вставки записи.
-    """
     logger.debug(f"Request: {request.method} {request.path} | Session: {session}")
     if 'player_id' in session:
         try:
             db = get_db()
             cursor = db.cursor()
-            # Эта команда обновит запись, если player_id уже существует, или создаст новую.
+            # Проверяем, существует ли таблица 'players'. Если нет — инициализируем БД.
+            cursor.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'players');")
+            if not cursor.fetchone()[0]:
+                init_db()
+                logger.info("Database initialized on first request.")
+            # Обновляем активность игрока
             cursor.execute(
                 """
                 INSERT INTO online_activity (player_id, last_seen)
@@ -368,7 +369,7 @@ def log_request_info():
             db.commit()
         except Exception as e:
             logger.error(f"Failed to update online activity for player {session.get('player_id')}: {e}")
-
+            
 @app.after_request
 def log_response_info(response):
     logger.debug(f"Response status: {response.status}")
