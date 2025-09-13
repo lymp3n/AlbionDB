@@ -1819,7 +1819,7 @@ function renderSpotlightPlayer(player) {
     container.innerHTML = `
         <div class="spotlight-header">
             <i class="material-icons">emoji_events</i>
-            <h4>Игрок недели</h4>
+            <h4>Лучший игрок</h4>
         </div>
         <div class="spotlight-body">
             <div class="spotlight-avatar-wrapper">
