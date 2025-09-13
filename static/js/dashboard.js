@@ -1767,7 +1767,7 @@ async function loadGeneralData() {
         const endpoints = [
             `/api/statistics/guild/${currentGuildId}`,
             `/api/statistics/total-sessions?guild_id=${currentGuildId}`,
-            `/api/statistics/best-player-week?guild_id=${currentGuildId}`,
+            `/api/statistics/best-player-week`,
             '/api/statistics/guild-role-distribution',
             '/api/statistics/guild-error-types',
             '/api/statistics/top-errors',
@@ -1803,7 +1803,7 @@ function renderSpotlightPlayer(player) {
         container.innerHTML = `
             <div class="spotlight-header">
                 <i class="material-icons">emoji_events</i>
-                <h4>Игрок недели</h4>
+                <h4>Лучший игрок</h4>
             </div>
             <div class="placeholder" style="position: static; padding: 1rem 0;">
                 <p>Нет игрока, соответствующего критериям (мин. 3 сессии за неделю).</p>
