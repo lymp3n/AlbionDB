@@ -340,33 +340,39 @@ def init_db():
 # --- LOGGING MIDDLEWARE ---
 
 @app.before_request
-@app.before_request
 def log_request_info():
     logger.debug(f"Request: {request.method} {request.path} | Session: {session}")
-    if 'player_id' in session:
-        try:
-            db = get_db()
-            cursor = db.cursor()
-            # Проверяем, существует ли таблица 'players'. Если нет — инициализируем БД.
-            cursor.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'players');")
-            if not cursor.fetchone()[0]:
-                logger.info("Database not initialized. Running init_db()...")
-                init_db()
-                logger.info("Database initialized successfully on first request.")
+    # Пропускаем инициализацию для статических файлов, чтобы избежать лишних вызовов
+    if request.path.startswith('/static/'):
+        return
+        
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Проверяем, существует ли таблица 'players'. Если нет — инициализируем БД.
+        cursor.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'players');")
+        # ИСПРАВЛЕНИЕ: Обращаемся к результату по имени поля 'exists', а не по индексу [0]
+        if not cursor.fetchone()['exists']:
+            logger.info("Database not initialized. Running init_db()...")
+            init_db()
+            logger.info("Database initialized successfully on first request.")
+        
+        if 'player_id' in session:
             # Обновляем активность игрока с использованием корректного синтаксиса PostgreSQL
             cursor.execute(
                 """
                 INSERT INTO online_activity (player_id, last_seen)
-                VALUES (%s, %s)
+                VALUES (%s, NOW())
                 ON CONFLICT (player_id)
                 DO UPDATE SET last_seen = EXCLUDED.last_seen
                 """,
-                (session['player_id'], datetime.datetime.now(datetime.UTC))
+                (session['player_id'],)
             )
             db.commit()
-        except Exception as e:
-            logger.error(f"Failed to update online activity for player {session.get('player_id')}: {e}")
-            logger.error(traceback.format_exc())
+    except Exception as e:
+        logger.error(f"Failed to initialize DB or update online activity for player {session.get('player_id')}: {e}")
+        logger.error(traceback.format_exc())
 
 @app.after_request
 def log_response_info(response):
@@ -676,11 +682,11 @@ def send_static(path):
 
 # --- UTILITY FUNCTIONS ---
 def get_date_filter(period_str):
-    """Returns an SQL condition for date filtering."""
+    """Returns an SQL condition for date filtering for PostgreSQL."""
     if period_str == '7':
-        return " AND session_date >= DATETIME('now', '-7 days')"
+        return " AND session_date >= (NOW() - INTERVAL '7 days')"
     elif period_str == '30':
-        return " AND session_date >= DATETIME('now', '-30 days')"
+        return " AND session_date >= (NOW() - INTERVAL '30 days')"
     else: # 'all' or any other value
         return ""
 
@@ -1423,7 +1429,7 @@ def get_player_trend(player_id, as_json=True):
     period = request.args.get('period', '30' if as_json else 'all')
     date_filter = get_date_filter(period)
     
-    query = f"SELECT strftime('%Y-%W', session_date) as week, AVG(score) as avg_score FROM sessions WHERE player_id = %s {date_filter} GROUP BY week ORDER BY week"
+    query = f"SELECT to_char(session_date, 'YYYY-WW') as week, AVG(score) as avg_score FROM sessions WHERE player_id = %s {date_filter} GROUP BY week ORDER BY week"
     
     cursor = get_db().cursor()
     cursor.execute(query, (player_id,))
@@ -1564,7 +1570,7 @@ def get_top_errors():
 @app.route('/api/statistics/guild/<int:guild_id>', methods=['GET'])
 def get_guild_stats(guild_id):
     cursor = get_db().cursor()
-    cursor.execute("SELECT COUNT(DISTINCT p.id) as active_players, COUNT(s.id) as session_count, AVG(s.score) as avg_score FROM players p LEFT JOIN sessions s ON p.id = s.player_id WHERE p.guild_id = %s AND s.session_date >= DATETIME('now', '-30 days')", (guild_id,))
+    cursor.execute("SELECT COUNT(DISTINCT p.id) as active_players, COUNT(s.id) as session_count, AVG(s.score) as avg_score FROM players p LEFT JOIN sessions s ON p.id = s.player_id WHERE p.guild_id = %s AND s.session_date >= (NOW() - INTERVAL '30 days')", (guild_id,))
     stats = cursor.fetchone()
     return jsonify({'status': 'success', 'activePlayers': stats['active_players'] or 0, 'sessionCount': stats['session_count'] or 0, 'avgScore': stats['avg_score'] or 0})
 
@@ -1588,11 +1594,11 @@ def get_best_player_week():
                 p.nickname,
                 p.avatar_url,
                 AVG(s.score) as avg_score,
-                (SELECT role FROM sessions WHERE player_id = p.id AND session_date >= DATETIME('now', '-7 days') GROUP BY role ORDER BY COUNT(*) DESC LIMIT 1) as main_role,
-                (SELECT c.name FROM sessions s_c JOIN content c ON s_c.content_id = c.id WHERE s_c.player_id = p.id AND s_c.session_date >= DATETIME('now', '-7 days') GROUP BY c.id ORDER BY AVG(s_c.score) DESC LIMIT 1) as best_content
+                (SELECT role FROM sessions WHERE player_id = p.id AND session_date >= (NOW() - INTERVAL '7 days') GROUP BY role ORDER BY COUNT(*) DESC LIMIT 1) as main_role,
+                (SELECT c.name FROM sessions s_c JOIN content c ON s_c.content_id = c.id WHERE s_c.player_id = p.id AND s_c.session_date >= (NOW() - INTERVAL '7 days') GROUP BY c.id ORDER BY AVG(s_c.score) DESC LIMIT 1) as best_content
             FROM sessions s
             JOIN players p ON s.player_id = p.id
-            WHERE s.session_date >= DATETIME('now', '-7 days') AND p.guild_id = %s
+            WHERE s.session_date >= (NOW() - INTERVAL '7 days') AND p.guild_id = %s
             GROUP BY p.id
             HAVING COUNT(s.id) >= 3
         )
