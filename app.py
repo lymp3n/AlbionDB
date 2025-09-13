@@ -353,7 +353,12 @@ def log_request_info():
             cursor = db.cursor()
             # Эта команда обновит запись, если player_id уже существует, или создаст новую.
             cursor.execute(
-                "INSERT OR REPLACE INTO online_activity (player_id, last_seen) VALUES (%s, %s)",
+                """
+                INSERT INTO online_activity (player_id, last_seen)
+                VALUES (%s, %s)
+                ON CONFLICT (player_id)
+                DO UPDATE SET last_seen = EXCLUDED.last_seen
+                """,
                 (session['player_id'], datetime.datetime.now(datetime.UTC))
             )
             db.commit()
