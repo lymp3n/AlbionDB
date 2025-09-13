@@ -821,12 +821,14 @@ def get_goals_view():
         if current_player['status'] in ['mentor', 'founder', 'наставник']:
             managed_players = []
             if current_player['status'] in ['mentor', 'founder']:
+                # --- ИСПРАВЛЕНИЕ ---
+                # Добавлен фильтр по guild_id, чтобы не запрашивать всех игроков в системе.
                 cursor.execute("""
                     SELECT p.id, p.nickname, p.status, p.avatar_url, g.name as guild_name 
                     FROM players p
                     LEFT JOIN guilds g ON p.guild_id = g.id
-                    WHERE p.id != %s AND p.status != 'pending'
-                """, (current_player['id'],))
+                    WHERE p.guild_id = %s AND p.id != %s AND p.status != 'pending'
+                """, (current_player['guild_id'], current_player['id']))
                 managed_players = cursor.fetchall()
             elif current_player['status'] == 'наставник':
                 cursor.execute("""
@@ -840,7 +842,7 @@ def get_goals_view():
             student_goals_data = []
             managed_player_ids = [p['id'] for p in managed_players]
             if managed_player_ids:
-                placeholders = ','.join('%s' * len(managed_player_ids))
+                placeholders = ','.join(['%s'] * len(managed_player_ids))
                 goals_query = f"""
                     SELECT g.*, p_creator.nickname as created_by_name 
                     FROM goals g 
