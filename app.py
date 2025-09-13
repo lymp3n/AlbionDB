@@ -129,15 +129,13 @@ def privilege_required(f):
 
 
 # --- DATABASE INITIALIZATION (PostgreSQL Version) ---
+# --- DATABASE INITIALIZATION (PostgreSQL Version) ---
 def init_db():
     with app.app_context():
         db = get_db()
         cursor = db.cursor()
 
-        # В PostgreSQL внешние ключи включены по умолчанию, PRAGMA не нужна.
-        # cursor.execute('PRAGMA foreign_keys = ON') # УДАЛЯЕМ эту строку
-
-        # Создаем таблицу гильдий
+        # Создаем таблицу гильдий (нет зависимостей)
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS guilds (
             id SERIAL PRIMARY KEY,
@@ -152,16 +150,7 @@ def init_db():
         )
         ''')
 
-        # Создаем таблицу активности (онлайн)
-        cursor.execute('''
-        CREATE TABLE IF NOT EXISTS online_activity (
-            player_id INTEGER PRIMARY KEY,
-            last_seen TIMESTAMP NOT NULL,
-            FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
-        )
-        ''')
-
-        # Создаем таблицу игроков
+        # Создаем таблицу игроков (зависит от guilds)
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS players (
             id SERIAL PRIMARY KEY,
@@ -179,8 +168,17 @@ def init_db():
         )
         ''')
 
-        # Проверка и добавление колонки 'specialization', если ее нет
-        # В PostgreSQL лучше использовать запрос к information_schema
+        # >>> ИСПРАВЛЕНИЕ: Таблица online_activity перенесена сюда, ПОСЛЕ создания players
+        # Создаем таблицу активности (зависит от players)
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS online_activity (
+            player_id INTEGER PRIMARY KEY,
+            last_seen TIMESTAMP NOT NULL,
+            FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
+        )
+        ''')
+        
+        # Проверка и добавление колонки 'specialization' в 'players'
         cursor.execute("""
             SELECT column_name
             FROM information_schema.columns
@@ -190,7 +188,7 @@ def init_db():
             logger.info("Adding 'specialization' column to 'players' table.")
             cursor.execute("ALTER TABLE players ADD COLUMN specialization TEXT")
 
-        # Создаем таблицу контента
+        # Создаем таблицу контента (нет зависимостей)
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS content (
             id SERIAL PRIMARY KEY,
@@ -198,7 +196,7 @@ def init_db():
         )
         ''')
 
-        # Создаем таблицу сессий
+        # Создаем таблицу сессий (зависит от players и content)
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS sessions (
             id SERIAL PRIMARY KEY,
@@ -217,7 +215,7 @@ def init_db():
         )
         ''')
 
-        # Создаем таблицу рекомендаций
+        # Создаем таблицу рекомендаций (зависит от players)
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS recommendations (
             id SERIAL PRIMARY KEY,
@@ -232,7 +230,7 @@ def init_db():
         )
         ''')
 
-        # Создаем таблицу целей (goals)
+        # Создаем таблицу целей (зависит от players и content)
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS goals (
             id SERIAL PRIMARY KEY,
@@ -243,21 +241,18 @@ def init_db():
             status TEXT DEFAULT 'in_progress',
             due_date TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-            -- Поля для динамического расчета прогресса
             metric TEXT,
             metric_target REAL,
             metric_start_value REAL,
             metric_content_id INTEGER,
             metric_role TEXT,
-
             FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE,
             FOREIGN KEY (created_by_id) REFERENCES players(id) ON DELETE SET NULL,
             FOREIGN KEY (metric_content_id) REFERENCES content(id) ON DELETE SET NULL
         )
         ''')
 
-        # Создаем таблицу запросов помощи
+        # Создаем таблицу запросов помощи (зависит от players и guilds)
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS help_requests (
             id SERIAL PRIMARY KEY,
@@ -270,7 +265,7 @@ def init_db():
         )
         ''')
 
-        # Проверка и добавление колонок в таблицу 'goals', если их нет
+        # Проверка и добавление колонок в таблицу 'goals'
         cursor.execute("""
             SELECT column_name
             FROM information_schema.columns
@@ -286,7 +281,7 @@ def init_db():
 
         # Заполняем таблицу гильдий, если она пуста
         cursor.execute("SELECT COUNT(*) FROM guilds")
-        if cursor.fetchone()[0] == 0:
+        if cursor.fetchone()['count'] == 0:
             guilds_data = [
                 ("Grey Knights", "GK123", "FOUNDERGK_UIO123", "MENTORGK_UIO942", "TUTORGK_UIO051"),
                 ("Mure", "MURE456", "FOUNDERMURE_UIO321", "MENTORMURE_UIO249", "TUTORMURE_UIO150")
@@ -303,21 +298,21 @@ def init_db():
 
         # Заполняем таблицу контента, если она пуста
         cursor.execute("SELECT COUNT(*) FROM content")
-        if cursor.fetchone()[0] == 0:
+        if cursor.fetchone()['count'] == 0:
             contents = ['Замки', 'Клаймы', 'Открытый мир', 'HG 5v5', 'Авалон', 'Скримы']
             cursor.executemany("INSERT INTO content (name) VALUES (%s)", [(c,) for c in contents])
 
         # Заполняем таблицу игроков, если она пуста
         cursor.execute("SELECT COUNT(*) FROM players")
-        if cursor.fetchone()[0] == 0:
+        if cursor.fetchone()['count'] == 0:
             cursor.execute("SELECT id FROM guilds WHERE name = 'Grey Knights'")
             grey_knights_id_row = cursor.fetchone()
             cursor.execute("SELECT id FROM guilds WHERE name = 'Mure'")
             mure_id_row = cursor.fetchone()
 
             if grey_knights_id_row and mure_id_row:
-                grey_knights_id = grey_knights_id_row[0]
-                mure_id = mure_id_row[0]
+                grey_knights_id = grey_knights_id_row['id']
+                mure_id = mure_id_row['id']
 
                 players_to_insert = [
                     ("CORPUS", grey_knights_id, "founder", None, "Основатель гильдии Grey Knights", None, 'D-Tank/E-Tank'),
