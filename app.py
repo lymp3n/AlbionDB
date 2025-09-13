@@ -741,13 +741,15 @@ def _calculate_dynamic_progress(goal_dict):
     # Вычисляем текущее значение метрики
     current_value = 0
     if metric == 'avg_score':
-        cursor.execute(f"SELECT AVG(score) {full_query_suffix}", params)
+        cursor.execute(f"SELECT AVG(score) as avg {full_query_suffix}", params)
         result = cursor.fetchone()
-        current_value = result[0] if result and result[0] is not None else 0
+        current_value = result['avg'] if result and result['avg'] is not None else 0
     elif metric == 'session_count':
-        cursor.execute(f"SELECT COUNT(id) {full_query_suffix}", params)
+        # ИСПРАВЛЕНИЕ: Добавлен псевдоним 'count'
+        cursor.execute(f"SELECT COUNT(id) as count {full_query_suffix}", params)
         result = cursor.fetchone()
-        current_value = result[0] if result and result[0] is not None else 0
+        # ИСПРАВЛЕНИЕ: Обращение по имени 'count'
+        current_value = result['count'] if result and result['count'] is not None else 0
     
     # Рассчитываем прогресс в процентах
     start_value = goal_dict.get('metric_start_value') or 0
@@ -1023,15 +1025,11 @@ def get_online_members():
     cursor = db.cursor()
     timeout_seconds = 15 * 60  # 15 минут
     try:
-        # <<< ИСПРАВЛЕНИЕ: Заменено strftime на EXTRACT(EPOCH FROM ...)
         cursor.execute("DELETE FROM online_activity WHERE EXTRACT(EPOCH FROM (NOW() - last_seen)) > %s", (timeout_seconds,))
         db.commit()
         query = """
             SELECT 
-                p.id, 
-                p.nickname, 
-                p.status, 
-                p.avatar_url, 
+                p.id, p.nickname, p.status, p.avatar_url, 
                 g.name as guild_name,
                 oa.last_seen
             FROM online_activity oa
@@ -1040,10 +1038,12 @@ def get_online_members():
         """
         cursor.execute(query)
         online_members_list = []
-        current_time = datetime.datetime.now(datetime.UTC)
+        # ИСПРАВЛЕНИЕ: Используем timezone.utc для корректного сравнения
+        current_time = datetime.datetime.now(datetime.timezone.utc)
         for player_row in cursor.fetchall():
             player = dict(player_row)
-            last_seen_dt = datetime.datetime.fromisoformat(player['last_seen'])
+            # ИСПРАВЛЕНИЕ: psycopg2 уже возвращает объект datetime, парсинг не нужен
+            last_seen_dt = player['last_seen']
             duration_seconds = (current_time - last_seen_dt).total_seconds()
             online_members_list.append({
                 'player_id': player['id'],
@@ -1081,7 +1081,7 @@ def get_top_players(guild_id):
     limit = request.args.get('limit', 10, type=int)
     cursor = get_db().cursor()
     
-    # <<< ИЗМЕНЕНИЕ: Запрос теперь выбирает игроков из двух конкретных гильдий (альянса)
+    # ИСПРАВЛЕНИЕ: Добавлены p.nickname и p.avatar_url в GROUP BY
     query = '''
         SELECT p.id, p.nickname, p.avatar_url, AVG(s.score) as avg_score, COUNT(s.id) as session_count,
                (SELECT role FROM sessions WHERE player_id = p.id GROUP BY role ORDER BY COUNT(*) DESC LIMIT 1) as main_role
@@ -1089,9 +1089,9 @@ def get_top_players(guild_id):
         LEFT JOIN sessions s ON p.id = s.player_id
         JOIN guilds g ON p.guild_id = g.id
         WHERE g.name IN ('Grey Knights', 'Mure')
-        GROUP BY p.id HAVING session_count >= %s
+        GROUP BY p.id, p.nickname, p.avatar_url
+        HAVING COUNT(s.id) >= %s
     '''
-    # guild_id больше не используется в параметрах запроса, но оставлен в URL для совместимости
     cursor.execute(query, (min_sessions,))
     players = [dict(row) for row in cursor.fetchall()]
     
@@ -1280,12 +1280,12 @@ def get_role_ratings(guild_id):
     
     for role in roles:
         query = """
-            SELECT p.nickname, AVG(s.score) as avg_score, COUNT(s.id) as session_count
+            SELECT p.nickname, AVG(s.score) as avg_score
             FROM sessions s
             JOIN players p ON s.player_id = p.id
             WHERE p.guild_id = %s AND s.role = %s
-            GROUP BY s.player_id
-            HAVING session_count >= 3
+            GROUP BY p.id, p.nickname
+            HAVING COUNT(s.id) >= 3
             ORDER BY avg_score DESC
             LIMIT 5
         """
@@ -1606,15 +1606,18 @@ def get_best_player_week():
         return jsonify({'status': 'success', 'player': dict(player)})
     return jsonify({'status': 'success', 'player': None})
 
+# Стало (исправлено)
 @app.route('/api/mentoring/requests/count', methods=['GET'])
 @privilege_required
 def get_help_requests_count():
     guild_id = g.current_player_guild_id
     cursor = get_db().cursor()
     cursor.execute("SELECT COUNT(*) FROM help_requests WHERE guild_id = %s AND status = 'pending'", (guild_id,))
-    count = cursor.fetchone()[0]
+    # ИСПРАВЛЕНИЕ: Обращение по имени поля 'count'
+    count = cursor.fetchone()['count']
     return jsonify({'status': 'success', 'count': count})
 
+# Стало (исправлено)
 @app.route('/api/statistics/total-sessions', methods=['GET'])
 def get_total_sessions():
     guild_id = request.args.get('guild_id')
@@ -1622,13 +1625,15 @@ def get_total_sessions():
     
     guild_sessions = 0
     if guild_id:
-        cursor.execute("SELECT COUNT(s.id) FROM sessions s JOIN players p ON s.player_id = p.id WHERE p.guild_id = %s", (guild_id,))
+        cursor.execute("SELECT COUNT(s.id) as count FROM sessions s JOIN players p ON s.player_id = p.id WHERE p.guild_id = %s", (guild_id,))
         result = cursor.fetchone()
         if result:
-            guild_sessions = result[0]
+            # ИСПРАВЛЕНИЕ: Обращение по имени поля 'count'
+            guild_sessions = result['count']
             
-    cursor.execute("SELECT COUNT(id) FROM sessions")
-    total_sessions = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(id) as count FROM sessions")
+    # ИСПРАВЛЕНИЕ: Обращение по имени поля 'count'
+    total_sessions = cursor.fetchone()['count']
     
     return jsonify({'status': 'success', 'guild_sessions': guild_sessions, 'total': total_sessions})
 
@@ -1806,7 +1811,8 @@ def get_global_top_players():
                (SELECT role FROM sessions WHERE player_id = p.id GROUP BY role ORDER BY COUNT(*) DESC LIMIT 1) as main_role
         FROM players p 
         LEFT JOIN sessions s ON p.id = s.player_id
-        GROUP BY p.id HAVING session_count >= %s
+        GROUP BY p.id, p.nickname, p.avatar_url
+        HAVING COUNT(s.id) >= %s
     '''
     cursor.execute(query, (min_sessions,))
     players = [dict(row) for row in cursor.fetchall()]
