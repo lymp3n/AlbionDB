@@ -377,6 +377,11 @@ def log_response_info(response):
 # --- AUTHENTICATION ROUTES ---
 @app.route('/api/auth/login', methods=['POST'])
 def login():
+    """
+    Handles player login and registration.
+    This function has been corrected to properly handle new player registration with PostgreSQL
+    by using the `RETURNING *` clause to get the new player's data immediately after insertion.
+    """
     try:
         data = request.json
         nickname = data.get('nickname')
@@ -400,6 +405,7 @@ def login():
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
         if player:
+            # Logic for existing player
             if player['guild_id'] != guild['id']:
                 return jsonify({'success': False, 'error': 'Игрок с таким ником существует, но в другой гильдии'}), 409
 
@@ -415,22 +421,21 @@ def login():
             else: # active, pending
                 required_code_hash = guild['code']
 
-            if required_code_hash and hashed_password == required_code_hash:
-                pass
-            else:
+            if not (required_code_hash and hashed_password == required_code_hash):
                 return jsonify({'success': False, 'error': 'Неверный пароль для вашего профиля'}), 401
         
-        else:
-            guild_code = guild['code']
-            if hashed_password == guild_code:
+        else: 
+            # Logic for new player registration
+            if hashed_password == guild['code']:
+                # --- КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ ---
+                # Используем `RETURNING *` для получения данных нового игрока в одном запросе.
+                # Это исправляет ошибку, так как `cursor.lastrowid` не работает с psycopg2.
                 cursor.execute(
-                    'INSERT INTO players (nickname, guild_id, status) VALUES (%s, %s, %s)',
+                    'INSERT INTO players (nickname, guild_id, status) VALUES (%s, %s, %s) RETURNING *',
                     (nickname, guild['id'], 'pending')
                 )
+                player = cursor.fetchone() # Получаем запись нового игрока
                 db.commit()
-                player_id = cursor.lastrowid
-                cursor.execute('SELECT * FROM players WHERE id = %s', (player_id,))
-                player = cursor.fetchone()
             else:
                 return jsonify({'success': False, 'error': 'Неверный код гильдии для регистрации'}), 401
         
@@ -439,12 +444,22 @@ def login():
 
         session['player_id'] = player['id']
         return jsonify({
-            'success': True, 'playerId': player['id'], 'playerName': player['nickname'],
-            'guild': guild_name, 'status': player['status']
+            'success': True, 
+            'playerId': player['id'], 
+            'playerName': player['nickname'],
+            'guild': guild_name, 
+            'status': player['status']
         })
 
+    except psycopg2.errors.UniqueViolation:
+        db.rollback()
+        return jsonify({'success': False, 'error': "Игрок с таким никнеймом уже существует."}), 409
     except Exception as e:
         logger.error(f"Error in login: {e}\n{traceback.format_exc()}")
+        # In case of other errors, also rollback
+        db = getattr(g, '_database', None)
+        if db:
+            db.rollback()
         return jsonify({'success': False, 'error': "Внутренняя ошибка сервера"}), 500
 
 @app.route('/api/auth/logout', methods=['POST'])
@@ -689,7 +704,8 @@ ERROR_CATEGORIES = {
     'Позиционка': ['позиционк', 'позиция', 'далеко', 'положение', 'стоит не там', 'дистанция', 'кайт'],
     'Тайминг': ['тайминг', 'долго', 'не успеваешь', 'вовремя', 'поздно', 'реакция', 'быстрее', 'медленно'],
     'Механики': ['механик', 'кнопки', 'прожимаешь', 'ротация', 'умения', 'скиллы', 'кд', 'кулдаун', 'способност'],
-    'Коммуникация': ['информаци', 'инфа', 'говоришь', 'колл', 'связь', 'микрофон', 'молчишь', 'координ']
+    'Коммуникация': ['информаци', 'инфа', 'говоришь', 'колл', 'связь', 'микрофон', 'молчишь', 'координ'],
+    'Другое': []
 }
 
 def categorize_error_text(text):
@@ -1122,6 +1138,7 @@ def get_top_players(guild_id):
     players_to_return = players if limit == 0 else players[:limit]
     return jsonify({'status': 'success', 'players': players_to_return})
 
+# ЗАМЕНИТЬ СУЩЕСТВУЮЩУЮ ФУНКЦИЮ в app.py
 @app.route('/api/players', methods=['GET'])
 @login_required
 def get_players():
@@ -1145,17 +1162,21 @@ def get_players():
         LEFT JOIN players m ON p.mentor_id = m.id
     """
     params = ()
+    # --- ИСПРАВЛЕНИЕ: Убран фильтр по guild_id для менторов и основателей ---
     if user_status in ['mentor', 'founder']:
-        query_where = "WHERE p.guild_id = %s AND p.status != 'pending'"
-        params = (user_guild_id,)
+        # Теперь они видят всех игроков альянса, кроме себя
+        query_where = "WHERE p.status != 'pending' AND p.id != %s"
+        params = (user_id,)
     elif user_status == 'наставник':
+        # Наставники по-прежнему видят только своих учеников
         query_where = "WHERE p.mentor_id = %s"
         params = (user_id,)
     else: 
+        # Обычные игроки видят только себя
         query_where = "WHERE p.id = %s"
         params = (user_id,)
         
-    query_order = "ORDER BY p.mentor_id IS NULL ASC, p.nickname ASC"
+    query_order = "ORDER BY p.nickname ASC"
     final_query = f"{query_base} {query_where} {query_order}"
     
     cursor.execute(final_query, params)
@@ -1587,10 +1608,9 @@ def get_guild_ranking():
 
 @app.route('/api/statistics/best-player-week', methods=['GET'])
 def get_best_player_week():
-    guild_id = request.args.get('guild_id', type=int)
-    if not guild_id: return jsonify({'status': 'error', 'message': 'guild_id required'}), 400
-    
+    # ИСПРАВЛЕНИЕ: guild_id больше не требуется, ищем по всему альянсу
     cursor = get_db().cursor()
+    # ИСПРАВЛЕНИЕ: Период изменен на 14 дней, убран фильтр по guild_id
     query = """
         WITH PlayerWeekStats AS (
             SELECT
@@ -1598,17 +1618,17 @@ def get_best_player_week():
                 p.nickname,
                 p.avatar_url,
                 AVG(s.score) as avg_score,
-                (SELECT role FROM sessions WHERE player_id = p.id AND session_date >= (NOW() - INTERVAL '7 days') GROUP BY role ORDER BY COUNT(*) DESC LIMIT 1) as main_role,
-                (SELECT c.name FROM sessions s_c JOIN content c ON s_c.content_id = c.id WHERE s_c.player_id = p.id AND s_c.session_date >= (NOW() - INTERVAL '7 days') GROUP BY c.id ORDER BY AVG(s_c.score) DESC LIMIT 1) as best_content
+                (SELECT role FROM sessions WHERE player_id = p.id AND session_date >= (NOW() - INTERVAL '14 days') GROUP BY role ORDER BY COUNT(*) DESC LIMIT 1) as main_role,
+                (SELECT c.name FROM sessions s_c JOIN content c ON s_c.content_id = c.id WHERE s_c.player_id = p.id AND s_c.session_date >= (NOW() - INTERVAL '14 days') GROUP BY c.id ORDER BY AVG(s_c.score) DESC LIMIT 1) as best_content
             FROM sessions s
             JOIN players p ON s.player_id = p.id
-            WHERE s.session_date >= (NOW() - INTERVAL '7 days') AND p.guild_id = %s
+            WHERE s.session_date >= (NOW() - INTERVAL '14 days')
             GROUP BY p.id
             HAVING COUNT(s.id) >= 3
         )
         SELECT * FROM PlayerWeekStats ORDER BY avg_score DESC LIMIT 1
     """
-    cursor.execute(query, (guild_id,))
+    cursor.execute(query) # Больше не передаем guild_id
     player = cursor.fetchone()
     
     if player:
@@ -1745,6 +1765,7 @@ def get_mentors():
             
     return jsonify({'status': 'success', 'mentors': list(mentors.values())})
 
+# ЗАМЕНИТЬ СУЩЕСТВУЮЩУЮ ФУНКЦИЮ в app.py
 @app.route('/api/management/assign-mentor', methods=['POST'])
 @privilege_required
 def assign_mentor_to_player():
@@ -1757,14 +1778,17 @@ def assign_mentor_to_player():
 
     db = get_db()
     cursor = db.cursor()
-    cursor.execute("UPDATE players SET mentor_id = %s WHERE id = %s AND guild_id = %s", 
-                   (mentor_id, student_id, g.current_player_guild_id))
+    
+    # --- ИСПРАВЛЕНИЕ: Убран фильтр по guild_id, чтобы разрешить назначение между гильдиями ---
+    cursor.execute("UPDATE players SET mentor_id = %s WHERE id = %s", 
+                   (mentor_id, student_id))
     db.commit()
     
     if cursor.rowcount > 0:
         return jsonify({'status': 'success', 'message': 'Наставник успешно назначен.'})
     
-    return jsonify({'status': 'error', 'message': 'Не удалось назначить наставника. Проверьте данные.'}), 404
+    # Сообщение об ошибке также обновлено, так как проверка guild_id больше не актуальна
+    return jsonify({'status': 'error', 'message': 'Не удалось назначить наставника. Убедитесь, что ID игрока и наставника верны.'}), 404
 
 
 @app.route('/api/mentors/my-mentees', methods=['GET'])
@@ -1861,6 +1885,154 @@ def get_comparable_players():
     cursor.execute("SELECT id, nickname FROM players WHERE guild_id = %s ORDER BY nickname ASC", (player_guild['guild_id'],))
     players = cursor.fetchall()
     return jsonify({'status': 'success', 'players': [dict(p) for p in players]})
+
+# ВСТАВИТЬ В КОНЕЦ ФАЙЛА app.py (перед if __name__...)
+
+def _calculate_payouts_for_metric(top_10_players, metric_budget, min_payout):
+    """
+    Рассчитывает выплаты для ТОП-10 игроков по одной метрике
+    с учетом гарантированного минимума.
+    """
+    if not top_10_players:
+        return []
+
+    # Шаг 1: Рассчитываем суммарное значение метрики для ТОП-10
+    total_metric_value = sum(p['metric_value'] for p in top_10_players)
+    if total_metric_value == 0:
+        return [{'player_id': p['id'], 'nickname': p['nickname'], 'payout': 0} for p in top_10_players]
+
+    # Шаг 2: Рассчитываем первоначальные пропорциональные выплаты
+    initial_payouts = []
+    for p in top_10_players:
+        payout = (p['metric_value'] / total_metric_value) * metric_budget
+        initial_payouts.append({'player_id': p['id'], 'nickname': p['nickname'], 'metric_value': p['metric_value'], 'initial_payout': payout})
+
+    # Шаг 3: Корректируем выплаты с учетом минимума
+    deficit = 0
+    players_above_min = []
+    
+    for p in initial_payouts:
+        if p['initial_payout'] < min_payout:
+            deficit += min_payout - p['initial_payout']
+            p['final_payout'] = min_payout
+        else:
+            p['final_payout'] = p['initial_payout']
+            players_above_min.append(p)
+    
+    # Шаг 4: Если есть дефицит, компенсируем его за счет "лидеров"
+    if deficit > 0 and players_above_min:
+        total_leader_metric_value = sum(p['metric_value'] for p in players_above_min)
+        
+        if total_leader_metric_value > 0:
+            for leader in players_above_min:
+                reduction = (leader['metric_value'] / total_leader_metric_value) * deficit
+                # Убеждаемся, что выплата лидера не упадет ниже минимума
+                leader['final_payout'] = max(min_payout, leader['final_payout'] - reduction)
+
+    # Формируем итоговый результат
+    return [{'player_id': p['player_id'], 'nickname': p['nickname'], 'metric_value': p['metric_value'], 'payout': round(p['final_payout'])} for p in initial_payouts]
+
+
+@app.route('/api/founder/payroll-calculation', methods=['POST'])
+@founder_required
+def calculate_payroll():
+    try:
+        data = request.json
+        total_budget = float(data.get('total_budget', 0))
+        min_payout = float(data.get('min_payout', 2000000))
+        guild_id = g.founder_guild_id
+
+        db = get_db()
+        cursor = db.cursor()
+
+        # --- 1. Метрика: Качественный вклад (Avg Score * Session Count) ---
+        cursor.execute("""
+            SELECT 
+                p.id, 
+                p.nickname,
+                COUNT(s.id) as session_count,
+                COALESCE(AVG(s.score), 0) as avg_score,
+                (COUNT(s.id) * COALESCE(AVG(s.score), 0)) as metric_value
+            FROM players p
+            JOIN sessions s ON p.id = s.player_id
+            WHERE p.guild_id = %s AND s.session_date >= (NOW() - INTERVAL '14 days')
+            GROUP BY p.id, p.nickname
+            ORDER BY metric_value DESC
+            LIMIT 10
+        """, (guild_id,))
+        quality_top_10 = cursor.fetchall()
+
+        # --- 2. Метрика: Количество сессий ---
+        cursor.execute("""
+            SELECT 
+                p.id, 
+                p.nickname,
+                COUNT(s.id) as metric_value
+            FROM players p
+            JOIN sessions s ON p.id = s.player_id
+            WHERE p.guild_id = %s AND s.session_date >= (NOW() - INTERVAL '14 days')
+            GROUP BY p.id, p.nickname
+            ORDER BY metric_value DESC
+            LIMIT 10
+        """, (guild_id,))
+        sessions_top_10 = cursor.fetchall()
+        
+        # --- 3. Метрика: Прогресс по целям ---
+        cursor.execute("SELECT id, nickname FROM players WHERE guild_id = %s", (guild_id,))
+        guild_players = cursor.fetchall()
+        
+        goal_progress_data = []
+        for player in guild_players:
+            cursor.execute("SELECT * FROM goals WHERE player_id = %s AND status = 'in_progress'", (player['id'],))
+            active_goals = cursor.fetchall()
+            if not active_goals:
+                continue
+
+            total_progress = sum(_calculate_dynamic_progress(dict(goal)) for goal in active_goals)
+            if total_progress > 0:
+                goal_progress_data.append({'id': player['id'], 'nickname': player['nickname'], 'metric_value': total_progress})
+        
+        goal_progress_data.sort(key=lambda x: x['metric_value'], reverse=True)
+        goals_top_10 = goal_progress_data[:10]
+
+        # --- Расчет выплат для каждой метрики ---
+        quality_payouts = _calculate_payouts_for_metric(quality_top_10, total_budget * 0.5, min_payout)
+        goals_payouts = _calculate_payouts_for_metric(goals_top_10, total_budget * 0.3, min_payout)
+        sessions_payouts = _calculate_payouts_for_metric(sessions_top_10, total_budget * 0.2, min_payout)
+
+        # --- Агрегация результатов ---
+        final_payouts = defaultdict(lambda: {'nickname': '', 'total_payout': 0, 'breakdown': {}})
+        
+        for p in quality_payouts:
+            final_payouts[p['player_id']]['nickname'] = p['nickname']
+            final_payouts[p['player_id']]['total_payout'] += p['payout']
+            final_payouts[p['player_id']]['breakdown']['quality'] = p['payout']
+
+        for p in goals_payouts:
+            final_payouts[p['player_id']]['nickname'] = p['nickname']
+            final_payouts[p['player_id']]['total_payout'] += p['payout']
+            final_payouts[p['player_id']]['breakdown']['goals'] = p['payout']
+
+        for p in sessions_payouts:
+            final_payouts[p['player_id']]['nickname'] = p['nickname']
+            final_payouts[p['player_id']]['total_payout'] += p['payout']
+            final_payouts[p['player_id']]['breakdown']['sessions'] = p['payout']
+
+        # Сортировка итогового списка
+        sorted_final_payouts = sorted(final_payouts.items(), key=lambda item: item[1]['total_payout'], reverse=True)
+        
+        return jsonify({
+            'status': 'success',
+            'results': {
+                'quality': quality_payouts,
+                'goals': goals_payouts,
+                'sessions': sessions_payouts,
+                'summary': [{'player_id': pid, **data} for pid, data in sorted_final_payouts]
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error in payroll calculation: {e}\n{traceback.format_exc()}")
+        return jsonify({'status': 'error', 'message': 'Internal server error during calculation'}), 500
 
 if __name__ == '__main__':
     os.makedirs('data', exist_ok=True)

@@ -173,6 +173,10 @@ function initNavigation() {
                     document.getElementById('progress-content').style.display = 'block';
                     loadGoals();
                     break;
+                case 'Расчет выплат':
+                    document.getElementById('payroll-content').style.display = 'block';
+                    initPayrollSection();
+                    break;
                 case 'Настройки':
                     document.getElementById('settings-content').style.display = 'block';
                     loadSettings();
@@ -230,6 +234,11 @@ function initDashboard() {
     if (mentorViewBtn) {
         mentorViewBtn.style.display = isTopLevel ? 'flex' : 'none';
     }
+    const founderBtn = document.querySelector('.founder-btn');
+    if (founderBtn) {
+        founderBtn.style.display = (userStatus === 'founder') ? 'flex' : 'none';
+    }
+
     refreshActiveSection();
     loadSystemStatus();
     loadOnlineMembers();
@@ -2212,4 +2221,116 @@ function assignStudentToMentor(studentId) {
             }
         })
         .catch(() => showError('management-content', 'Произошла ошибка при назначении ученика.'));
+}
+
+// ВСТАВИТЬ В КОНЕЦ ФАЙЛА dashboard.js
+
+function initPayrollSection() {
+    // Устанавливаем бюджет по умолчанию в зависимости от гильдии
+    const budgetInput = document.getElementById('payroll-budget-input');
+    if (currentPlayerData.guild === 'Grey Knights') {
+        budgetInput.value = 25000000;
+    } else if (currentPlayerData.guild === 'Mure') {
+        budgetInput.value = 35000000;
+    }
+
+    const calcButton = document.getElementById('calculate-payroll-btn');
+    // Удаляем старый обработчик, чтобы избежать дублирования
+    calcButton.replaceWith(calcButton.cloneNode(true));
+    document.getElementById('calculate-payroll-btn').addEventListener('click', handlePayrollCalculation);
+}
+
+function handlePayrollCalculation() {
+    const totalBudget = document.getElementById('payroll-budget-input').value;
+    const minPayout = document.getElementById('payroll-min-payout-input').value;
+    const resultsContainer = document.getElementById('payroll-results-container');
+    const summaryList = document.getElementById('payroll-summary-list');
+
+    if (!totalBudget || totalBudget <= 0) {
+        showError('payroll-content', 'Пожалуйста, введите корректный общий бюджет.');
+        return;
+    }
+
+    resultsContainer.style.display = 'block';
+    summaryList.innerHTML = '<p>Идет расчет...</p>';
+    document.getElementById('payroll-quality-list').innerHTML = '<p>Идет расчет...</p>';
+    document.getElementById('payroll-goals-list').innerHTML = '<p>Идет расчет...</p>';
+    document.getElementById('payroll-sessions-list').innerHTML = '<p>Идет расчет...</p>';
+
+    fetch('/api/founder/payroll-calculation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ total_budget: parseFloat(totalBudget), min_payout: parseFloat(minPayout) })
+    })
+    .then(res => res.ok ? res.json() : Promise.reject(res.json()))
+    .then(data => {
+        if (data.status === 'success') {
+            renderPayrollResults(data.results);
+        } else {
+            throw new Error(data.message);
+        }
+    })
+    .catch(errPromise => {
+        errPromise.then(err => {
+            showError('payroll-content', err.message || 'Не удалось выполнить расчет.');
+            resultsContainer.style.display = 'none';
+        });
+    });
+}
+
+function renderPayrollResults(results) {
+    // Рендер итоговой таблицы
+    const summaryContainer = document.getElementById('payroll-summary-list');
+    if (results.summary.length > 0) {
+        summaryContainer.innerHTML = createPayrollTable(results.summary, true);
+    } else {
+        summaryContainer.innerHTML = '<p class="placeholder">Нет данных для формирования итогового отчета.</p>';
+    }
+
+    // Рендер таблиц по метрикам
+    document.getElementById('payroll-quality-list').innerHTML = createPayrollTable(results.quality, false, 'Кач. вклад');
+    document.getElementById('payroll-goals-list').innerHTML = createPayrollTable(results.goals, false, 'Прогресс (%)');
+    document.getElementById('payroll-sessions-list').innerHTML = createPayrollTable(results.sessions, false, 'Сессии');
+}
+
+function formatNumber(num) {
+    return new Intl.NumberFormat('ru-RU').format(num);
+}
+
+function createPayrollTable(data, isSummary = false, metricName = 'Значение') {
+    if (!data || data.length === 0) {
+        return '<p class="placeholder" style="position: static; height: auto;">Нет игроков в ТОП-10 по этой метрике.</p>';
+    }
+
+    let head, body;
+
+    if (isSummary) {
+        head = `<th>Игрок</th><th>Итог</th><th>Качество</th><th>Цели</th><th>Сессии</th>`;
+        body = data.map(p => `
+            <tr>
+                <td data-label="Игрок">${p.nickname}</td>
+                <td data-label="Итог"><strong>${formatNumber(p.total_payout)}</strong></td>
+                <td data-label="Качество">${p.breakdown.quality ? formatNumber(p.breakdown.quality) : '—'}</td>
+                <td data-label="Цели">${p.breakdown.goals ? formatNumber(p.breakdown.goals) : '—'}</td>
+                <td data-label="Сессии">${p.breakdown.sessions ? formatNumber(p.breakdown.sessions) : '—'}</td>
+            </tr>
+        `).join('');
+    } else {
+        head = `<th>#</th><th>Игрок</th><th>${metricName}</th><th>Выплата</th>`;
+        body = data.map((p, index) => `
+            <tr>
+                <td data-label="#">${index + 1}</td>
+                <td data-label="Игрок">${p.nickname}</td>
+                <td data-label="${metricName}">${formatNumber(p.metric_value.toFixed(0))}</td>
+                <td data-label="Выплата"><strong>${formatNumber(p.payout)}</strong></td>
+            </tr>
+        `).join('');
+    }
+
+    return `
+        <table class="players-table">
+            <thead><tr>${head}</tr></thead>
+            <tbody>${body}</tbody>
+        </table>
+    `;
 }

@@ -59,6 +59,10 @@
                     <i class="material-icons">school</i>
                     <span>Мои ученики</span>
                 </div>
+                <div class="nav-item founder-btn" style="display: none;">
+                    <i class="material-icons">paid</i>
+                    <span>Расчет выплат</span>
+                </div>
                 <div class="nav-item mentor-view-btn" style="display: none;">
                     <i class="material-icons">playlist_add_check</i>
                     <span>Запросы на разбор</span>
@@ -491,6 +495,49 @@
                     </div>
                 </div>
                 <button class="btn btn-primary save-settings">Сохранить изменения</button>
+            </section>
+            <section id="payroll-content" class="dashboard-section" style="display: none;">
+                <header class="dashboard-header">
+                    <h1><i class="material-icons">paid</i> Расчет выплат по схеме 1.1</h1>
+                </header>
+                <div class="profile-section">
+                    <h2><i class="material-icons">tune</i> Параметры расчета</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 16px;">
+                        Расчет производится на основе данных за последние 14 дней. Введите общий бюджет для распределения.
+                    </p>
+                    <div class="form-group">
+                        <label for="payroll-budget-input">Общий бюджет гильдии на 2 недели</label>
+                        <input type="number" id="payroll-budget-input" class="form-control" placeholder="Например, 25000000">
+                    </div>
+                    <div class="form-group">
+                        <label for="payroll-min-payout-input">Гарантированный минимум для ТОП-10</label>
+                        <input type="number" id="payroll-min-payout-input" class="form-control" value="2000000">
+                    </div>
+                    <button id="calculate-payroll-btn" class="btn btn-primary">
+                        <i class="material-icons">calculate</i> Рассчитать выплаты
+                    </button>
+                </div>
+
+                <div id="payroll-results-container" style="display: none; margin-top: 24px;">
+                    <div class="players-list-container">
+                        <h2><i class="material-icons">military_tech</i> Итоговые выплаты</h2>
+                        <div id="payroll-summary-list"></div>
+                    </div>
+                    <div class="charts-grid-general" style="margin-top: 24px;">
+                        <div class="players-list-container">
+                            <h3>ТОП-10: Качественный вклад (50%)</h3>
+                            <div id="payroll-quality-list"></div>
+                        </div>
+                        <div class="players-list-container">
+                            <h3>ТОП-10: Прогресс по целям (30%)</h3>
+                            <div id="payroll-goals-list"></div>
+                        </div>
+                        <div class="players-list-container">
+                            <h3>ТОП-10: Количество сессий (20%)</h3>
+                            <div id="payroll-sessions-list"></div>
+                        </div>
+                    </div>
+                </div>
             </section>
         </main>
     </div>
