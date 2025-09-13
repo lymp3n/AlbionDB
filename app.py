@@ -1,4 +1,5 @@
-import sqlite3
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from flask import Flask, request, jsonify, send_from_directory, render_template, redirect, session, g, Response
 from flask_cors import CORS
 import os
@@ -29,8 +30,15 @@ app.config['AVATAR_UPLOAD_FOLDER'] = AVATAR_UPLOAD_FOLDER
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
-        db = g._database = sqlite3.connect(DB_PATH)
-        db.row_factory = sqlite3.Row
+        # Получаем данные из переменных окружения (они будут заданы в Render)
+        db = g._database = psycopg2.connect(
+            host=os.environ.get('DB_HOST'),
+            database=os.environ.get('DB_NAME'),
+            user=os.environ.get('DB_USER'),
+            password=os.environ.get('DB_PASSWORD'),
+            port=os.environ.get('DB_PORT'),
+            cursor_factory=RealDictCursor  # Это позволяет получать результаты как словари
+        )
     return db
 
 @app.teardown_appcontext
@@ -48,7 +56,7 @@ def management_required(f):
         player_id = session['player_id']
         db = get_db()
         cursor = db.cursor()
-        cursor.execute("SELECT status, guild_id FROM players WHERE id = ?", (player_id,))
+        cursor.execute("SELECT status, guild_id FROM players WHERE id = %s", (player_id,))
         player = cursor.fetchone()
         if not player:
             return jsonify({'status': 'error', 'message': 'Player not found'}), 401
@@ -67,7 +75,7 @@ def login_required(f):
         
         db = get_db()
         cursor = db.cursor()
-        cursor.execute("SELECT id, status, guild_id FROM players WHERE id = ?", (session['player_id'],))
+        cursor.execute("SELECT id, status, guild_id FROM players WHERE id = %s", (session['player_id'],))
         player = cursor.fetchone()
 
         if not player:
@@ -109,7 +117,7 @@ def privilege_required(f):
             return jsonify({'status': 'error', 'message': 'Authentication required'}), 401
         player_id = session['player_id']
         cursor = get_db().cursor()
-        cursor.execute("SELECT status, guild_id FROM players WHERE id = ?", (player_id,))
+        cursor.execute("SELECT status, guild_id FROM players WHERE id = %s", (player_id,))
         player = cursor.fetchone()
         if not player or player['status'] not in ['mentor', 'founder', 'наставник']:
             return jsonify({'status': 'error', 'message': 'Доступ запрещен. Требуются права Наставника, Ментора или Основателя.'}), 403
@@ -121,16 +129,19 @@ def privilege_required(f):
     return decorated_function
 
 
-# --- DATABASE INITIALIZATION ---
+# --- DATABASE INITIALIZATION (PostgreSQL Version) ---
 def init_db():
     with app.app_context():
         db = get_db()
         cursor = db.cursor()
-        cursor.execute('PRAGMA foreign_keys = ON')
 
+        # В PostgreSQL внешние ключи включены по умолчанию, PRAGMA не нужна.
+        # cursor.execute('PRAGMA foreign_keys = ON') # УДАЛЯЕМ эту строку
+
+        # Создаем таблицу гильдий
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS guilds (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             name TEXT UNIQUE NOT NULL,
             code TEXT NOT NULL,
             founder_code TEXT,
@@ -141,7 +152,8 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         ''')
-        
+
+        # Создаем таблицу активности (онлайн)
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS online_activity (
             player_id INTEGER PRIMARY KEY,
@@ -150,9 +162,10 @@ def init_db():
         )
         ''')
 
+        # Создаем таблицу игроков
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS players (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             nickname TEXT UNIQUE NOT NULL,
             guild_id INTEGER NOT NULL,
             status TEXT DEFAULT 'active',
@@ -160,53 +173,80 @@ def init_db():
             mentor_id INTEGER,
             description TEXT,
             avatar_url TEXT,
-            specialization TEXT, 
+            specialization TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (guild_id) REFERENCES guilds(id) ON DELETE CASCADE,
             FOREIGN KEY (mentor_id) REFERENCES players(id) ON DELETE SET NULL
         )
         ''')
-        
-        try:
-            cursor.execute("SELECT specialization FROM players LIMIT 1")
-        except sqlite3.OperationalError:
+
+        # Проверка и добавление колонки 'specialization', если ее нет
+        # В PostgreSQL лучше использовать запрос к information_schema
+        cursor.execute("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'players' AND column_name = 'specialization';
+        """)
+        if cursor.fetchone() is None:
             logger.info("Adding 'specialization' column to 'players' table.")
             cursor.execute("ALTER TABLE players ADD COLUMN specialization TEXT")
 
+        # Создаем таблицу контента
         cursor.execute('''
-        CREATE TABLE IF NOT EXISTS content (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL)
+        CREATE TABLE IF NOT EXISTS content (
+            id SERIAL PRIMARY KEY,
+            name TEXT UNIQUE NOT NULL
+        )
         ''')
+
+        # Создаем таблицу сессий
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS sessions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, player_id INTEGER NOT NULL, content_id INTEGER NOT NULL,
-            score REAL NOT NULL, role TEXT NOT NULL, error_types TEXT, work_on TEXT, comments TEXT,
-            mentor_id INTEGER, session_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER NOT NULL,
+            content_id INTEGER NOT NULL,
+            score REAL NOT NULL,
+            role TEXT NOT NULL,
+            error_types TEXT,
+            work_on TEXT,
+            comments TEXT,
+            mentor_id INTEGER,
+            session_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE,
             FOREIGN KEY (content_id) REFERENCES content(id),
             FOREIGN KEY (mentor_id) REFERENCES players(id)
         )
         ''')
+
+        # Создаем таблицу рекомендаций
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS recommendations (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, player_id INTEGER NOT NULL, title TEXT NOT NULL, description TEXT,
-            priority TEXT DEFAULT 'medium', status TEXT DEFAULT 'pending', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            description TEXT,
+            priority TEXT DEFAULT 'medium',
+            status TEXT DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
         )
         ''')
-        # ЗАМЕНИТЬ ЭТОТ БЛОК ВНУТРИ init_db()
+
+        # Создаем таблицу целей (goals)
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS goals (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             player_id INTEGER NOT NULL,
             created_by_id INTEGER,
             title TEXT NOT NULL,
             description TEXT,
-            status TEXT DEFAULT 'in_progress', -- 'in_progress', 'completed'
+            status TEXT DEFAULT 'in_progress',
             due_date TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            
+
             -- Поля для динамического расчета прогресса
-            metric TEXT, -- 'avg_score', 'session_count', etc.
+            metric TEXT,
             metric_target REAL,
             metric_start_value REAL,
             metric_content_id INTEGER,
@@ -217,21 +257,27 @@ def init_db():
             FOREIGN KEY (metric_content_id) REFERENCES content(id) ON DELETE SET NULL
         )
         ''')
-        
 
+        # Создаем таблицу запросов помощи
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS help_requests (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, player_id INTEGER NOT NULL, guild_id INTEGER NOT NULL,
-            status TEXT DEFAULT 'pending', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER NOT NULL,
+            guild_id INTEGER NOT NULL,
+            status TEXT DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE,
             FOREIGN KEY (guild_id) REFERENCES guilds(id) ON DELETE CASCADE
         )
         ''')
 
-        # Проверка и добавление новых колонок в существующую таблицу, если их нет
-        try:
-            cursor.execute("SELECT metric FROM goals LIMIT 1")
-        except sqlite3.OperationalError:
+        # Проверка и добавление колонок в таблицу 'goals', если их нет
+        cursor.execute("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'goals' AND column_name = 'metric';
+        """)
+        if cursor.fetchone() is None:
             logger.info("Adding dynamic metric columns to 'goals' table.")
             cursor.execute("ALTER TABLE goals ADD COLUMN metric TEXT")
             cursor.execute("ALTER TABLE goals ADD COLUMN metric_target REAL")
@@ -239,9 +285,11 @@ def init_db():
             cursor.execute("ALTER TABLE goals ADD COLUMN metric_content_id INTEGER")
             cursor.execute("ALTER TABLE goals ADD COLUMN metric_role TEXT")
 
-        if cursor.execute("SELECT COUNT(*) FROM guilds").fetchone()[0] == 0:
+        # Заполняем таблицу гильдий, если она пуста
+        cursor.execute("SELECT COUNT(*) FROM guilds")
+        if cursor.fetchone()[0] == 0:
             guilds_data = [
-                ("Grey Knights", "GK123", "FOUNDERGK_UIO123", "MENTORGK_UIO942", "TUTORGK_UIO051"), 
+                ("Grey Knights", "GK123", "FOUNDERGK_UIO123", "MENTORGK_UIO942", "TUTORGK_UIO051"),
                 ("Mure", "MURE456", "FOUNDERMURE_UIO321", "MENTORMURE_UIO249", "TUTORMURE_UIO150")
             ]
             for name, code, founder_code, mentor_code, tutor_code in guilds_data:
@@ -250,15 +298,19 @@ def init_db():
                 hashed_mentor_code = hashlib.sha256(mentor_code.encode()).hexdigest()
                 hashed_tutor_code = hashlib.sha256(tutor_code.encode()).hexdigest()
                 cursor.execute(
-                    "INSERT INTO guilds (name, code, founder_code, mentor_code, tutor_code) VALUES (?, ?, ?, ?, ?)",
+                    "INSERT INTO guilds (name, code, founder_code, mentor_code, tutor_code) VALUES (%s, %s, %s, %s, %s)",
                     (name, hashed_code, hashed_founder_code, hashed_mentor_code, hashed_tutor_code)
                 )
 
-        if cursor.execute("SELECT COUNT(*) FROM content").fetchone()[0] == 0:
+        # Заполняем таблицу контента, если она пуста
+        cursor.execute("SELECT COUNT(*) FROM content")
+        if cursor.fetchone()[0] == 0:
             contents = ['Замки', 'Клаймы', 'Открытый мир', 'HG 5v5', 'Авалон', 'Скримы']
-            cursor.executemany("INSERT INTO content (name) VALUES (?)", [(c,) for c in contents])
+            cursor.executemany("INSERT INTO content (name) VALUES (%s)", [(c,) for c in contents])
 
-        if cursor.execute("SELECT COUNT(*) FROM players").fetchone()[0] == 0:
+        # Заполняем таблицу игроков, если она пуста
+        cursor.execute("SELECT COUNT(*) FROM players")
+        if cursor.fetchone()[0] == 0:
             cursor.execute("SELECT id FROM guilds WHERE name = 'Grey Knights'")
             grey_knights_id_row = cursor.fetchone()
             cursor.execute("SELECT id FROM guilds WHERE name = 'Mure'")
@@ -267,14 +319,17 @@ def init_db():
             if grey_knights_id_row and mure_id_row:
                 grey_knights_id = grey_knights_id_row[0]
                 mure_id = mure_id_row[0]
-                
+
                 players_to_insert = [
                     ("CORPUS", grey_knights_id, "founder", None, "Основатель гильдии Grey Knights", None, 'D-Tank/E-Tank'),
                     ("lympeen", grey_knights_id, "mentor", 1, "Ментор альянса", None, 'Support'),
                     ("VoldeDron", grey_knights_id, "active", 2, "Активный участник", None, None),
                     ("misterhe111", mure_id, "founder", None, "Основатель гильдии Mure", None, 'Healer')
                 ]
-                cursor.executemany("INSERT INTO players (nickname, guild_id, status, mentor_id, description, avatar_url, specialization) VALUES (?, ?, ?, ?, ?, ?, ?)", players_to_insert)
+                cursor.executemany(
+                    "INSERT INTO players (nickname, guild_id, status, mentor_id, description, avatar_url, specialization) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                    players_to_insert
+                )
                 logger.info("Successfully inserted initial players.")
             else:
                 logger.error("Could not find required guilds 'Grey Knights' or 'Mure' to seed initial players.")
@@ -298,7 +353,7 @@ def log_request_info():
             cursor = db.cursor()
             # Эта команда обновит запись, если player_id уже существует, или создаст новую.
             cursor.execute(
-                "INSERT OR REPLACE INTO online_activity (player_id, last_seen) VALUES (?, ?)",
+                "INSERT OR REPLACE INTO online_activity (player_id, last_seen) VALUES (%s, %s)",
                 (session['player_id'], datetime.datetime.now(datetime.UTC))
             )
             db.commit()
@@ -325,12 +380,12 @@ def login():
         db = get_db()
         cursor = db.cursor()
         
-        cursor.execute('SELECT * FROM guilds WHERE name = ?', (guild_name,))
+        cursor.execute('SELECT * FROM guilds WHERE name = %s', (guild_name,))
         guild = cursor.fetchone()
         if not guild:
             return jsonify({'success': False, 'error': 'Гильдия не найдена'}), 404
 
-        cursor.execute('SELECT * FROM players WHERE nickname = ?', (nickname,))
+        cursor.execute('SELECT * FROM players WHERE nickname = %s', (nickname,))
         player = cursor.fetchone()
         
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
@@ -360,12 +415,12 @@ def login():
             guild_code = guild['code']
             if hashed_password == guild_code:
                 cursor.execute(
-                    'INSERT INTO players (nickname, guild_id, status) VALUES (?, ?, ?)',
+                    'INSERT INTO players (nickname, guild_id, status) VALUES (%s, %s, %s)',
                     (nickname, guild['id'], 'pending')
                 )
                 db.commit()
                 player_id = cursor.lastrowid
-                cursor.execute('SELECT * FROM players WHERE id = ?', (player_id,))
+                cursor.execute('SELECT * FROM players WHERE id = %s', (player_id,))
                 player = cursor.fetchone()
             else:
                 return jsonify({'success': False, 'error': 'Неверный код гильдии для регистрации'}), 401
@@ -400,7 +455,7 @@ def get_my_recent_sessions():
         SELECT s.session_date, s.score, s.role, c.name as content_name
         FROM sessions s
         JOIN content c ON s.content_id = c.id
-        WHERE s.player_id = ?
+        WHERE s.player_id = %s
         ORDER BY s.session_date DESC
         LIMIT 5
     ''', (player_id,))
@@ -414,13 +469,13 @@ def get_player_details_for_management(player_id):
     db = get_db()
     cursor = db.cursor()
 
-    cursor.execute("SELECT guild_id FROM players WHERE id = ?", (player_id,))
+    cursor.execute("SELECT guild_id FROM players WHERE id = %s", (player_id,))
     target_player_guild = cursor.fetchone()
     
     if not target_player_guild or target_player_guild['guild_id'] != g.management_guild_id:
         return jsonify({'status': 'error', 'message': 'Player not found in your guild'}), 404
 
-    cursor.execute("SELECT id, nickname, status, balance, created_at, mentor_id FROM players WHERE id = ?", (player_id,))
+    cursor.execute("SELECT id, nickname, status, balance, created_at, mentor_id FROM players WHERE id = %s", (player_id,))
     player_profile = cursor.fetchone()
 
     cursor.execute('''
@@ -428,7 +483,7 @@ def get_player_details_for_management(player_id):
         FROM sessions s
         JOIN content c ON s.content_id = c.id
         LEFT JOIN players p_mentor ON s.mentor_id = p_mentor.id
-        WHERE s.player_id = ?
+        WHERE s.player_id = %s
         ORDER BY s.session_date DESC
         LIMIT 7
     ''', (player_id,))
@@ -448,7 +503,7 @@ def get_player_details_for_management(player_id):
 @founder_required
 def get_pending_players():
     cursor = get_db().cursor()
-    cursor.execute("SELECT id, nickname, created_at FROM players WHERE guild_id = ? AND status = 'pending' ORDER BY created_at DESC", (g.founder_guild_id,))
+    cursor.execute("SELECT id, nickname, created_at FROM players WHERE guild_id = %s AND status = 'pending' ORDER BY created_at DESC", (g.founder_guild_id,))
     players = cursor.fetchall()
     return jsonify({'status': 'success', 'players': [{'id': p['id'], 'nickname': p['nickname'], 'date': p['created_at']} for p in players]})
 
@@ -457,7 +512,7 @@ def get_pending_players():
 def approve_player(player_id):
     db = get_db()
     cursor = db.cursor()
-    cursor.execute("UPDATE players SET status = 'active' WHERE id = ? AND guild_id = ? AND status = 'pending'", (player_id, g.founder_guild_id))
+    cursor.execute("UPDATE players SET status = 'active' WHERE id = %s AND guild_id = %s AND status = 'pending'", (player_id, g.founder_guild_id))
     db.commit()
     if cursor.rowcount > 0:
         return jsonify({'status': 'success', 'message': 'Player approved'})
@@ -468,7 +523,7 @@ def approve_player(player_id):
 def deny_player(player_id):
     db = get_db()
     cursor = db.cursor()
-    cursor.execute("DELETE FROM players WHERE id = ? AND guild_id = ? AND status = 'pending'", (player_id, g.founder_guild_id))
+    cursor.execute("DELETE FROM players WHERE id = %s AND guild_id = %s AND status = 'pending'", (player_id, g.founder_guild_id))
     db.commit()
     if cursor.rowcount > 0:
         return jsonify({'status': 'success', 'message': 'Player denied and removed'})
@@ -480,7 +535,7 @@ def promote_player_to_tutor(player_id):
     db = get_db()
     cursor = db.cursor()
 
-    cursor.execute("SELECT status FROM players WHERE id = ? AND guild_id = ?", (player_id, g.founder_guild_id))
+    cursor.execute("SELECT status FROM players WHERE id = %s AND guild_id = %s", (player_id, g.founder_guild_id))
     player = cursor.fetchone()
 
     if not player:
@@ -489,7 +544,7 @@ def promote_player_to_tutor(player_id):
     if player['status'] != 'active':
         return jsonify({'status': 'error', 'message': 'Только активных игроков можно повысить.'}), 400
 
-    cursor.execute("UPDATE players SET status = 'наставник' WHERE id = ?", (player_id,))
+    cursor.execute("UPDATE players SET status = 'наставник' WHERE id = %s", (player_id,))
     db.commit()
 
     if cursor.rowcount > 0:
@@ -504,9 +559,9 @@ def remove_student_assignment(student_id):
     cursor = db.cursor()
 
     if g.current_player_status in ['mentor', 'наставник']:
-        cursor.execute("UPDATE players SET mentor_id = NULL WHERE id = ? AND mentor_id = ?", (student_id, g.current_player_id))
+        cursor.execute("UPDATE players SET mentor_id = NULL WHERE id = %s AND mentor_id = %s", (student_id, g.current_player_id))
     elif g.current_player_status == 'founder':
-        cursor.execute("UPDATE players SET mentor_id = NULL WHERE id = ? AND guild_id = ?", (student_id, g.current_player_guild_id))
+        cursor.execute("UPDATE players SET mentor_id = NULL WHERE id = %s AND guild_id = %s", (student_id, g.current_player_guild_id))
     else:
         return jsonify({'status': 'error', 'message': 'Доступ запрещен.'}), 403
 
@@ -528,7 +583,7 @@ def get_manageable_players():
         SELECT p.id, p.nickname, p.status, p.created_at, g.name as guild_name
         FROM players p
         LEFT JOIN guilds g ON p.guild_id = g.id
-        WHERE p.status != 'pending' AND p.id != ?
+        WHERE p.status != 'pending' AND p.id != %s
         ORDER BY p.nickname ASC
     """, (session['player_id'],))
     players = cursor.fetchall()
@@ -542,7 +597,7 @@ def delete_player(player_id):
     db = get_db()
     cursor = db.cursor()
     
-    cursor.execute("SELECT guild_id, status FROM players WHERE id = ?", (player_id,))
+    cursor.execute("SELECT guild_id, status FROM players WHERE id = %s", (player_id,))
     player_to_delete = cursor.fetchone()
 
     if not player_to_delete:
@@ -554,7 +609,7 @@ def delete_player(player_id):
     if player_to_delete['status'] == 'founder':
         return jsonify({'status': 'error', 'message': 'Founder cannot be deleted'}), 403
 
-    cursor.execute("DELETE FROM players WHERE id = ?", (player_id,))
+    cursor.execute("DELETE FROM players WHERE id = %s", (player_id,))
     db.commit()
     
     if cursor.rowcount > 0:
@@ -571,7 +626,7 @@ def index():
     
     db = get_db()
     cursor = db.cursor()
-    cursor.execute("SELECT status FROM players WHERE id = ?", (session['player_id'],))
+    cursor.execute("SELECT status FROM players WHERE id = %s", (session['player_id'],))
     player = cursor.fetchone()
 
     if player and player['status'] == 'pending':
@@ -591,7 +646,7 @@ def serve_page(filename):
 
     db = get_db()
     cursor = db.cursor()
-    cursor.execute("SELECT status FROM players WHERE id = ?", (session['player_id'],))
+    cursor.execute("SELECT status FROM players WHERE id = %s", (session['player_id'],))
     player = cursor.fetchone()
     player_status = player['status'] if player else None
 
@@ -659,17 +714,17 @@ def _calculate_dynamic_progress(goal_dict):
     due_date = goal_dict['due_date']
     
     # Собираем базовый запрос и условия
-    query_parts = ["FROM sessions WHERE player_id = ? AND session_date >= ?"]
+    query_parts = ["FROM sessions WHERE player_id = %s AND session_date >= %s"]
     params = [player_id, start_date]
 
     if due_date:
-        query_parts.append("AND session_date <= ?")
+        query_parts.append("AND session_date <= %s")
         params.append(due_date)
     if content_id:
-        query_parts.append("AND content_id = ?")
+        query_parts.append("AND content_id = %s")
         params.append(content_id)
     if role:
-        query_parts.append("AND role = ?")
+        query_parts.append("AND role = %s")
         params.append(role)
 
     full_query_suffix = " ".join(query_parts)
@@ -718,7 +773,7 @@ def get_my_students():
             (SELECT COUNT(s.id) FROM sessions s WHERE s.player_id = p.id) as session_count
         FROM players p
         LEFT JOIN guilds g ON p.guild_id = g.id
-        WHERE p.mentor_id = ?
+        WHERE p.mentor_id = %s
     """
     cursor.execute(query, (session['player_id'],))
     students = [dict(s) for s in cursor.fetchall()]
@@ -738,7 +793,7 @@ def get_goals_view():
             SELECT g.*, p_creator.nickname as created_by_name 
             FROM goals g 
             LEFT JOIN players p_creator ON g.created_by_id = p_creator.id 
-            WHERE g.player_id = ? 
+            WHERE g.player_id = %s 
             ORDER BY g.status ASC, g.due_date DESC, g.created_at DESC
         """, (current_player['id'],))
         
@@ -759,7 +814,7 @@ def get_goals_view():
                     SELECT p.id, p.nickname, p.status, p.avatar_url, g.name as guild_name 
                     FROM players p
                     LEFT JOIN guilds g ON p.guild_id = g.id
-                    WHERE p.id != ? AND p.status != 'pending'
+                    WHERE p.id != %s AND p.status != 'pending'
                 """, (current_player['id'],))
                 managed_players = cursor.fetchall()
             elif current_player['status'] == 'наставник':
@@ -767,14 +822,14 @@ def get_goals_view():
                     SELECT p.id, p.nickname, p.status, p.avatar_url, g.name as guild_name 
                     FROM players p
                     LEFT JOIN guilds g ON p.guild_id = g.id
-                    WHERE p.mentor_id = ?
+                    WHERE p.mentor_id = %s
                 """, (current_player['id'],))
                 managed_players = cursor.fetchall()
             
             student_goals_data = []
             managed_player_ids = [p['id'] for p in managed_players]
             if managed_player_ids:
-                placeholders = ','.join('?' * len(managed_player_ids))
+                placeholders = ','.join('%s' * len(managed_player_ids))
                 goals_query = f"""
                     SELECT g.*, p_creator.nickname as created_by_name 
                     FROM goals g 
@@ -827,13 +882,13 @@ def create_goal():
     # --- Логика для расчета стартового значения метрики ---
     start_value = 0
     if metric:
-        query_parts = ["FROM sessions WHERE player_id = ?"]
+        query_parts = ["FROM sessions WHERE player_id = %s"]
         params = [player_id]
         if metric_content_id:
-            query_parts.append("AND content_id = ?")
+            query_parts.append("AND content_id = %s")
             params.append(metric_content_id)
         if metric_role:
-            query_parts.append("AND role = ?")
+            query_parts.append("AND role = %s")
             params.append(metric_role)
         
         query_suffix = " ".join(query_parts)
@@ -856,7 +911,7 @@ def create_goal():
     cursor.execute(
         """INSERT INTO goals 
             (player_id, created_by_id, title, description, due_date, metric, metric_target, metric_start_value, metric_content_id, metric_role) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
         (player_id, g.player['id'], title, description, due_date, metric, metric_target, start_value, metric_content_id, metric_role)
     )
     db.commit()
@@ -869,7 +924,7 @@ def update_goal(goal_id):
     db = get_db()
     cursor = db.cursor()
 
-    cursor.execute("SELECT * FROM goals WHERE id = ?", (goal_id,))
+    cursor.execute("SELECT * FROM goals WHERE id = %s", (goal_id,))
     goal = cursor.fetchone()
     if not goal:
         return jsonify({'status': 'error', 'message': 'Goal not found'}), 404
@@ -887,7 +942,7 @@ def update_goal(goal_id):
             pass
 
     cursor.execute(
-        "UPDATE goals SET title = ?, description = ?, due_date = ? WHERE id = ?",
+        "UPDATE goals SET title = %s, description = %s, due_date = %s WHERE id = %s",
         (title, description, due_date, goal_id)
     )
     db.commit()
@@ -899,12 +954,12 @@ def delete_goal(goal_id):
     db = get_db()
     cursor = db.cursor()
     
-    cursor.execute("SELECT player_id FROM goals WHERE id = ?", (goal_id,))
+    cursor.execute("SELECT player_id FROM goals WHERE id = %s", (goal_id,))
     goal = cursor.fetchone()
     if not goal:
         return jsonify({'status': 'error', 'message': 'Goal not found'}), 404
 
-    cursor.execute("SELECT guild_id, mentor_id FROM players WHERE id = ?", (goal['player_id'],))
+    cursor.execute("SELECT guild_id, mentor_id FROM players WHERE id = %s", (goal['player_id'],))
     target_player = cursor.fetchone()
 
     is_allowed = False
@@ -918,7 +973,7 @@ def delete_goal(goal_id):
     if not is_allowed:
         return jsonify({'status': 'error', 'message': 'You do not have permission to delete this goal'}), 403
 
-    cursor.execute("DELETE FROM goals WHERE id = ?", (goal_id,))
+    cursor.execute("DELETE FROM goals WHERE id = %s", (goal_id,))
     db.commit()
     
     if cursor.rowcount > 0:
@@ -940,7 +995,7 @@ def system_status():
     
     user_status = 'offline'
     if 'player_id' in session:
-        cursor.execute("SELECT status FROM players WHERE id = ?", (session['player_id'],))
+        cursor.execute("SELECT status FROM players WHERE id = %s", (session['player_id'],))
         player = cursor.fetchone()
         user_status = player['status'] if player else 'offline'
 
@@ -967,7 +1022,7 @@ def get_online_members():
 
     try:
         # 1. Удаляем старые сессии, чтобы не запрашивать их каждый раз
-        cursor.execute("DELETE FROM online_activity WHERE (strftime('%s', 'now') - strftime('%s', last_seen)) > ?", (timeout_seconds,))
+        cursor.execute("DELETE FROM online_activity WHERE (strftime('%s', 'now') - strftime('%s', last_seen)) > %s", (timeout_seconds,))
         db.commit()
 
         # 2. Получаем всех активных игроков с их данными
@@ -1023,7 +1078,7 @@ def get_guilds():
 @app.route('/api/guilds/<int:guild_id>', methods=['GET'])
 def get_guild(guild_id):
     cursor = get_db().cursor()
-    cursor.execute("SELECT g.*, (SELECT COUNT(*) FROM players WHERE guild_id = g.id) as members FROM guilds g WHERE g.id = ?", (guild_id,))
+    cursor.execute("SELECT g.*, (SELECT COUNT(*) FROM players WHERE guild_id = g.id) as members FROM guilds g WHERE g.id = %s", (guild_id,))
     guild = cursor.fetchone()
     if not guild:
         return jsonify({'status': 'error', 'message': 'Guild not found'}), 404
@@ -1043,7 +1098,7 @@ def get_top_players(guild_id):
         LEFT JOIN sessions s ON p.id = s.player_id
         JOIN guilds g ON p.guild_id = g.id
         WHERE g.name IN ('Grey Knights', 'Mure')
-        GROUP BY p.id HAVING session_count >= ?
+        GROUP BY p.id HAVING session_count >= %s
     '''
     # guild_id больше не используется в параметрах запроса, но оставлен в URL для совместимости
     cursor.execute(query, (min_sessions,))
@@ -1091,13 +1146,13 @@ def get_players():
     """
     params = ()
     if user_status in ['mentor', 'founder']:
-        query_where = "WHERE p.guild_id = ? AND p.status != 'pending'"
+        query_where = "WHERE p.guild_id = %s AND p.status != 'pending'"
         params = (user_guild_id,)
     elif user_status == 'наставник':
-        query_where = "WHERE p.mentor_id = ?"
+        query_where = "WHERE p.mentor_id = %s"
         params = (user_id,)
     else: 
-        query_where = "WHERE p.id = ?"
+        query_where = "WHERE p.id = %s"
         params = (user_id,)
         
     query_order = "ORDER BY p.mentor_id IS NULL ASC, p.nickname ASC"
@@ -1120,7 +1175,7 @@ def get_current_player():
         FROM players p
         JOIN guilds g ON p.guild_id = g.id
         LEFT JOIN players m ON p.mentor_id = m.id
-        WHERE p.id = ?
+        WHERE p.id = %s
     """, (session['player_id'],))
     player = cursor.fetchone()
 
@@ -1168,7 +1223,7 @@ def upload_avatar():
         avatar_url = f"/{filepath.replace(os.path.sep, '/')}"
         db = get_db()
         cursor = db.cursor()
-        cursor.execute("UPDATE players SET avatar_url = ? WHERE id = ?", (avatar_url, session['player_id']))
+        cursor.execute("UPDATE players SET avatar_url = %s WHERE id = %s", (avatar_url, session['player_id']))
         db.commit()
         return jsonify({'status': 'success', 'avatar_url': avatar_url})
 
@@ -1186,7 +1241,7 @@ def update_current_player_profile():
     
     db = get_db()
     cursor = db.cursor()
-    cursor.execute("UPDATE players SET description = ?, specialization = ? WHERE id = ?", 
+    cursor.execute("UPDATE players SET description = %s, specialization = %s WHERE id = %s", 
                    (description, specialization, player_id))
     db.commit()
     
@@ -1199,7 +1254,7 @@ def update_current_player_profile():
 @app.route('/api/players/<int:player_id>/export', methods=['GET'])
 def export_player_data(player_id):
     cursor = get_db().cursor()
-    cursor.execute('SELECT s.*, c.name as content_name FROM sessions s JOIN content c ON s.content_id = c.id WHERE s.player_id = ?', (player_id,))
+    cursor.execute('SELECT s.*, c.name as content_name FROM sessions s JOIN content c ON s.content_id = c.id WHERE s.player_id = %s', (player_id,))
     sessions = cursor.fetchall()
     output = io.StringIO()
     writer = csv.writer(output)
@@ -1216,7 +1271,7 @@ def get_player_sessions(player_id):
         SELECT s.session_date, s.score, s.role, s.error_types, c.name as content_name
         FROM sessions s
         JOIN content c ON s.content_id = c.id
-        WHERE s.player_id = ?
+        WHERE s.player_id = %s
         ORDER BY s.session_date DESC
         LIMIT 5
     """
@@ -1237,7 +1292,7 @@ def get_role_ratings(guild_id):
             SELECT p.nickname, AVG(s.score) as avg_score, COUNT(s.id) as session_count
             FROM sessions s
             JOIN players p ON s.player_id = p.id
-            WHERE p.guild_id = ? AND s.role = ?
+            WHERE p.guild_id = %s AND s.role = %s
             GROUP BY s.player_id
             HAVING session_count >= 3
             ORDER BY avg_score DESC
@@ -1270,7 +1325,7 @@ def save_session():
     cursor = db.cursor()
     cursor.execute('''
         INSERT INTO sessions (player_id, content_id, score, role, error_types, work_on, comments, mentor_id, session_date)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
     ''', (
         player_id_to_log, data['contentId'], data['score'], data['role'],
         data.get('errorTypes'), data.get('workOn'), data.get('comments'),
@@ -1288,7 +1343,7 @@ def get_player_stats(player_id):
     period = request.args.get('period', '7')
     date_filter = get_date_filter(period)
     
-    query = f"SELECT AVG(score) as avg_score, COUNT(*) as session_count, MAX(session_date) as last_update FROM sessions WHERE player_id = ? {date_filter}"
+    query = f"SELECT AVG(score) as avg_score, COUNT(*) as session_count, MAX(session_date) as last_update FROM sessions WHERE player_id = %s {date_filter}"
     
     cursor = get_db().cursor()
     cursor.execute(query, (player_id,))
@@ -1302,7 +1357,7 @@ def get_comparison_with_average(player_id):
         period = request.args.get('period', 'all')
         date_filter = get_date_filter(period)
 
-        cursor.execute(f"SELECT AVG(score) as avg_score FROM sessions WHERE player_id = ? {date_filter}", (player_id,))
+        cursor.execute(f"SELECT AVG(score) as avg_score FROM sessions WHERE player_id = %s {date_filter}", (player_id,))
         player_score_row = cursor.fetchone()
         player_score = (player_score_row['avg_score'] or 0) if player_score_row else 0
         
@@ -1311,7 +1366,7 @@ def get_comparison_with_average(player_id):
                 SELECT AVG(s.score) as avg_score 
                 FROM players p 
                 JOIN sessions s ON p.id = s.player_id 
-                WHERE p.guild_id = (SELECT guild_id FROM players WHERE id = ?) {date_filter.replace("AND", "AND s.")}
+                WHERE p.guild_id = (SELECT guild_id FROM players WHERE id = %s) {date_filter.replace("AND", "AND s.")}
                 GROUP BY p.id
             )"""
         cursor.execute(query, (player_id,))
@@ -1325,10 +1380,10 @@ def get_comparison_with_average(player_id):
 
 def _get_player_comparison_stats(player_id):
     cursor = get_db().cursor()
-    cursor.execute("SELECT AVG(score) as avg_score, COUNT(id) as session_count FROM sessions WHERE player_id = ?", (player_id,))
+    cursor.execute("SELECT AVG(score) as avg_score, COUNT(id) as session_count FROM sessions WHERE player_id = %s", (player_id,))
     stats = cursor.fetchone()
     
-    cursor.execute("SELECT error_types, work_on FROM sessions WHERE player_id = ?", (player_id,))
+    cursor.execute("SELECT error_types, work_on FROM sessions WHERE player_id = %s", (player_id,))
     error_counts = defaultdict(int)
     for row in cursor.fetchall():
         full_text = f"{row['error_types'] or ''} {row['work_on'] or ''}"
@@ -1378,7 +1433,7 @@ def get_player_trend(player_id, as_json=True):
     period = request.args.get('period', '30' if as_json else 'all')
     date_filter = get_date_filter(period)
     
-    query = f"SELECT strftime('%Y-%W', session_date) as week, AVG(score) as avg_score FROM sessions WHERE player_id = ? {date_filter} GROUP BY week ORDER BY week"
+    query = f"SELECT strftime('%Y-%W', session_date) as week, AVG(score) as avg_score FROM sessions WHERE player_id = %s {date_filter} GROUP BY week ORDER BY week"
     
     cursor = get_db().cursor()
     cursor.execute(query, (player_id,))
@@ -1392,7 +1447,7 @@ def get_player_role_scores(player_id, as_json=True):
     period = request.args.get('period', 'all')
     date_filter = get_date_filter(period)
     
-    query = f"SELECT role, AVG(score) as avg_score FROM sessions WHERE player_id = ? {date_filter} GROUP BY role ORDER BY avg_score DESC"
+    query = f"SELECT role, AVG(score) as avg_score FROM sessions WHERE player_id = %s {date_filter} GROUP BY role ORDER BY avg_score DESC"
     
     cursor = get_db().cursor()
     cursor.execute(query, (player_id,))
@@ -1410,7 +1465,7 @@ def get_player_content_scores(player_id):
     query = f"""
         SELECT c.name as content, AVG(s.score) as avg_score 
         FROM sessions s JOIN content c ON s.content_id = c.id 
-        WHERE s.player_id = ? {date_filter.replace("AND", "AND s.")} 
+        WHERE s.player_id = %s {date_filter.replace("AND", "AND s.")} 
         GROUP BY c.id ORDER BY avg_score DESC
     """
     
@@ -1424,7 +1479,7 @@ def get_player_error_types(player_id):
     period = request.args.get('period', 'all')
     date_filter = get_date_filter(period)
     
-    query = f"SELECT error_types, work_on FROM sessions WHERE player_id = ? AND (error_types IS NOT NULL AND error_types != '' OR work_on IS NOT NULL AND work_on != '') {date_filter}"
+    query = f"SELECT error_types, work_on FROM sessions WHERE player_id = %s AND (error_types IS NOT NULL AND error_types != '' OR work_on IS NOT NULL AND work_on != '') {date_filter}"
     
     cursor = get_db().cursor()
     cursor.execute(query, (player_id,))
@@ -1448,7 +1503,7 @@ def get_error_distribution(player_id):
         SELECT c.name as content, COUNT(s.id) as count
         FROM sessions s
         JOIN content c ON s.content_id = c.id
-        WHERE s.player_id = ? AND (s.error_types IS NOT NULL AND s.error_types != '' OR s.work_on IS NOT NULL AND s.work_on != '') {date_filter.replace("AND", "AND s.")}
+        WHERE s.player_id = %s AND (s.error_types IS NOT NULL AND s.error_types != '' OR s.work_on IS NOT NULL AND s.work_on != '') {date_filter.replace("AND", "AND s.")}
         GROUP BY c.name
     """
     cursor = get_db().cursor()
@@ -1461,7 +1516,7 @@ def get_error_score_correlation(player_id):
     period = request.args.get('period', 'all')
     date_filter = get_date_filter(period)
     
-    query = f"SELECT score, error_types, work_on FROM sessions WHERE player_id = ? {date_filter}"
+    query = f"SELECT score, error_types, work_on FROM sessions WHERE player_id = %s {date_filter}"
     
     cursor = get_db().cursor()
     cursor.execute(query, (player_id,))
@@ -1478,7 +1533,7 @@ def get_error_score_correlation(player_id):
 @app.route('/api/recommendations/player/<int:player_id>', methods=['GET'])
 def get_player_recommendations(player_id):
     cursor = get_db().cursor()
-    cursor.execute("SELECT * FROM recommendations WHERE player_id = ?", (player_id,))
+    cursor.execute("SELECT * FROM recommendations WHERE player_id = %s", (player_id,))
     recs = cursor.fetchall()
     return jsonify({'status': 'success', 'recommendations': [dict(r) for r in recs]})
 
@@ -1519,7 +1574,7 @@ def get_top_errors():
 @app.route('/api/statistics/guild/<int:guild_id>', methods=['GET'])
 def get_guild_stats(guild_id):
     cursor = get_db().cursor()
-    cursor.execute("SELECT COUNT(DISTINCT p.id) as active_players, COUNT(s.id) as session_count, AVG(s.score) as avg_score FROM players p LEFT JOIN sessions s ON p.id = s.player_id WHERE p.guild_id = ? AND s.session_date >= DATETIME('now', '-30 days')", (guild_id,))
+    cursor.execute("SELECT COUNT(DISTINCT p.id) as active_players, COUNT(s.id) as session_count, AVG(s.score) as avg_score FROM players p LEFT JOIN sessions s ON p.id = s.player_id WHERE p.guild_id = %s AND s.session_date >= DATETIME('now', '-30 days')", (guild_id,))
     stats = cursor.fetchone()
     return jsonify({'status': 'success', 'activePlayers': stats['active_players'] or 0, 'sessionCount': stats['session_count'] or 0, 'avgScore': stats['avg_score'] or 0})
 
@@ -1547,7 +1602,7 @@ def get_best_player_week():
                 (SELECT c.name FROM sessions s_c JOIN content c ON s_c.content_id = c.id WHERE s_c.player_id = p.id AND s_c.session_date >= DATETIME('now', '-7 days') GROUP BY c.id ORDER BY AVG(s_c.score) DESC LIMIT 1) as best_content
             FROM sessions s
             JOIN players p ON s.player_id = p.id
-            WHERE s.session_date >= DATETIME('now', '-7 days') AND p.guild_id = ?
+            WHERE s.session_date >= DATETIME('now', '-7 days') AND p.guild_id = %s
             GROUP BY p.id
             HAVING COUNT(s.id) >= 3
         )
@@ -1565,7 +1620,7 @@ def get_best_player_week():
 def get_help_requests_count():
     guild_id = g.current_player_guild_id
     cursor = get_db().cursor()
-    cursor.execute("SELECT COUNT(*) FROM help_requests WHERE guild_id = ? AND status = 'pending'", (guild_id,))
+    cursor.execute("SELECT COUNT(*) FROM help_requests WHERE guild_id = %s AND status = 'pending'", (guild_id,))
     count = cursor.fetchone()[0]
     return jsonify({'status': 'success', 'count': count})
 
@@ -1576,7 +1631,7 @@ def get_total_sessions():
     
     guild_sessions = 0
     if guild_id:
-        cursor.execute("SELECT COUNT(s.id) FROM sessions s JOIN players p ON s.player_id = p.id WHERE p.guild_id = ?", (guild_id,))
+        cursor.execute("SELECT COUNT(s.id) FROM sessions s JOIN players p ON s.player_id = p.id WHERE p.guild_id = %s", (guild_id,))
         result = cursor.fetchone()
         if result:
             guild_sessions = result[0]
@@ -1602,7 +1657,7 @@ def assign_student(student_id):
     mentor_id = session['player_id']
     db = get_db()
     cursor = db.cursor()
-    cursor.execute("UPDATE players SET mentor_id = ? WHERE id = ? AND guild_id = ?", 
+    cursor.execute("UPDATE players SET mentor_id = %s WHERE id = %s AND guild_id = %s", 
                    (mentor_id, student_id, g.management_guild_id))
     db.commit()
     if cursor.rowcount > 0:
@@ -1619,18 +1674,18 @@ def request_mentor_help():
     db = get_db()
     cursor = db.cursor()
     
-    cursor.execute("SELECT guild_id FROM players WHERE id = ?", (player_id,))
+    cursor.execute("SELECT guild_id FROM players WHERE id = %s", (player_id,))
     player = cursor.fetchone()
     if not player:
         return jsonify({'status': 'error', 'message': 'Player not found'}), 404
     guild_id = player['guild_id']
 
-    cursor.execute("SELECT id FROM help_requests WHERE player_id = ? AND status = 'pending'", (player_id,))
+    cursor.execute("SELECT id FROM help_requests WHERE player_id = %s AND status = 'pending'", (player_id,))
     existing_request = cursor.fetchone()
     if existing_request:
         return jsonify({'status': 'error', 'message': 'У вас уже есть активный запрос о помощи.'}), 409
         
-    cursor.execute("INSERT INTO help_requests (player_id, guild_id) VALUES (?, ?)", (player_id, guild_id))
+    cursor.execute("INSERT INTO help_requests (player_id, guild_id) VALUES (%s, %s)", (player_id, guild_id))
     db.commit()
     
     return jsonify({'status': 'success', 'message': 'Запрос о помощи отправлен менторам.'})
@@ -1645,7 +1700,7 @@ def get_help_requests():
         SELECT hr.id, p.nickname, hr.created_at
         FROM help_requests hr
         JOIN players p ON hr.player_id = p.id
-        WHERE hr.guild_id = ? AND hr.status = 'pending'
+        WHERE hr.guild_id = %s AND hr.status = 'pending'
         ORDER BY hr.created_at ASC
     """
     cursor.execute(query, (guild_id,))
@@ -1660,7 +1715,7 @@ def mark_request_as_reviewed(request_id):
     db = get_db()
     cursor = db.cursor()
 
-    cursor.execute("UPDATE help_requests SET status = 'reviewed' WHERE id = ? AND guild_id = ?", (request_id, guild_id))
+    cursor.execute("UPDATE help_requests SET status = 'reviewed' WHERE id = %s AND guild_id = %s", (request_id, guild_id))
     db.commit()
     
     if cursor.rowcount > 0:
@@ -1697,7 +1752,7 @@ def assign_mentor_to_player():
 
     db = get_db()
     cursor = db.cursor()
-    cursor.execute("UPDATE players SET mentor_id = ? WHERE id = ? AND guild_id = ?", 
+    cursor.execute("UPDATE players SET mentor_id = %s WHERE id = %s AND guild_id = %s", 
                    (mentor_id, student_id, g.current_player_guild_id))
     db.commit()
     
@@ -1713,7 +1768,7 @@ def get_my_mentees():
         return jsonify({'status': 'error', 'message': 'Authentication required'}), 401
     mentor_id = session['player_id']
     cursor = get_db().cursor()
-    cursor.execute("SELECT id, nickname, status FROM players WHERE mentor_id = ?", (mentor_id,))
+    cursor.execute("SELECT id, nickname, status FROM players WHERE mentor_id = %s", (mentor_id,))
     mentees = cursor.fetchall()
     return jsonify({'status': 'success', 'mentees': [dict(m) for m in mentees]})
 
@@ -1760,7 +1815,7 @@ def get_global_top_players():
                (SELECT role FROM sessions WHERE player_id = p.id GROUP BY role ORDER BY COUNT(*) DESC LIMIT 1) as main_role
         FROM players p 
         LEFT JOIN sessions s ON p.id = s.player_id
-        GROUP BY p.id HAVING session_count >= ?
+        GROUP BY p.id HAVING session_count >= %s
     '''
     cursor.execute(query, (min_sessions,))
     players = [dict(row) for row in cursor.fetchall()]
@@ -1792,12 +1847,12 @@ def get_comparable_players():
     player_id = session['player_id']
     cursor = get_db().cursor()
 
-    cursor.execute("SELECT guild_id FROM players WHERE id = ?", (player_id,))
+    cursor.execute("SELECT guild_id FROM players WHERE id = %s", (player_id,))
     player_guild = cursor.fetchone()
     if not player_guild:
         return jsonify({'status': 'error', 'message': 'Player not found'}), 404
 
-    cursor.execute("SELECT id, nickname FROM players WHERE guild_id = ? ORDER BY nickname ASC", (player_guild['guild_id'],))
+    cursor.execute("SELECT id, nickname FROM players WHERE guild_id = %s ORDER BY nickname ASC", (player_guild['guild_id'],))
     players = cursor.fetchall()
     return jsonify({'status': 'success', 'players': [dict(p) for p in players]})
 
